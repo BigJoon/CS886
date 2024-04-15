@@ -1,10 +1,10 @@
 # CS886
-## Waterloo Academic
+## Waterloo Academic(워털루 학부 강의)
 
 AI Learning Course transcribe
 
-| Lecture Number | 주제 | 날짜 | Slides | References |
-|----------------|-------|------|--------|------------|
-| 1 | Foundation Models and its Applications | Jan 10th | [Slides](link) |  |
-| 2 | Course Logistics | Jan 10th |  | - Building Teams<br>- [Slides Requirements](link)<br>- [Project Requirements](link) |
-| 3 | RNN & CNN | Jan 17th | [Slides](link)<br>[Video](link) | |
+| 강의 번호 | 주제 | 날짜 | Slides | 
+|----------------|-------|------|--------|
+| 1 | Foundation Models and its Applications | Jan 10th |
+| 2 | Course Logistics | Jan 10th |  | 
+| 3 | RNN & CNN | Jan 17th | |
