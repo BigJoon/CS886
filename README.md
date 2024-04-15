@@ -3,7 +3,7 @@
 
 AI Learning Course transcribe
 
-| Lecture Number | Topic | Date | Slides | References |
+| Lecture Number | 주제 | 날짜 | Slides | References |
 |----------------|-------|------|--------|------------|
 | 1 | Foundation Models and its Applications | Jan 10th | [Slides](link) |  |
 | 2 | Course Logistics | Jan 10th |  | - Building Teams<br>- [Slides Requirements](link)<br>- [Project Requirements](link) |
