@@ -6,7 +6,9 @@ AI Learning Course transcribe <br>
 
 워털루 대학에 감사를 표하며, 해당 자료는 상업용이 아닌 교육용 자료로만 활용 됩니다.<br>
 We are Grateful to the University of Waterloo, and this material will only be used for educational purposes and not for commercial purposes.
-
+<br>
+해당 자막은 OpenAI의 Whisper medium 모델로 생성 되었습니다. OpenAI에게 역시 감사를 표합니다.
+<br>The subtitles were created with OpenAI's Whisper medium model. Thanks also to OpenAI.<br><br>
 ### Intorduction to Foundation Models
 | 강의 번호 | 주제 | 날짜 | 영상 여부 | 
 |----------------|-------|------|--------|
