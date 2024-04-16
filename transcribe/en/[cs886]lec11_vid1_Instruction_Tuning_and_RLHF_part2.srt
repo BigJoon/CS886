@@ -1,0 +1,1148 @@
+1
+00:00:00,000 --> 00:00:06,720
+We'll now switch our focus to RLHF, which stands for Reinforcement Learning from Human
+
+2
+00:00:06,720 --> 00:00:08,800
+Feedback.
+
+3
+00:00:08,800 --> 00:00:14,000
+The paper we're going to be looking at is a real pioneer in this field, and it's called
+
+4
+00:00:14,000 --> 00:00:20,560
+Training Language Models to Follow Instructions with Human Feedback, published in 2022 by
+
+5
+00:00:20,560 --> 00:00:24,360
+OpenAI.
+
+6
+00:00:24,360 --> 00:00:30,280
+But let's first start with some motivation for why even consider RLHF, and specifically
+
+7
+00:00:30,280 --> 00:00:31,280
+LLMs.
+
+8
+00:00:31,280 --> 00:00:37,840
+Well, RLHF is a part of a broader scope in terms of research for aligning AI systems
+
+9
+00:00:37,840 --> 00:00:40,440
+with human intentions.
+
+10
+00:00:40,440 --> 00:00:47,480
+We see that the default LLM behavior is just to optimize next-word prediction.
+
+11
+00:00:47,480 --> 00:00:52,600
+That is the objective, but that's only one proxy for what we want the model to do.
+
+12
+00:00:52,600 --> 00:01:00,520
+And this ends up leading to unintended output, such as made-up facts, biased or toxic text,
+
+13
+00:01:00,520 --> 00:01:06,480
+or simply just not following the instructions, leading to overall clear misalignment.
+
+14
+00:01:06,480 --> 00:01:12,360
+To illustrate this, I have a few examples next up.
+
+15
+00:01:12,360 --> 00:01:17,200
+First example here is a prompt that says, explain the moon landing to a six-year-old
+
+16
+00:01:17,200 --> 00:01:19,240
+in a few sentences.
+
+17
+00:01:19,240 --> 00:01:26,960
+We see pretty clearly that it doesn't follow the instructions because it doesn't explain
+
+18
+00:01:26,960 --> 00:01:27,960
+the moon landing.
+
+19
+00:01:27,960 --> 00:01:32,680
+It just tries to follow the same structure of that sentence and continue so on and so
+
+20
+00:01:32,680 --> 00:01:37,160
+forth with different contexts.
+
+21
+00:01:37,160 --> 00:01:40,440
+The next prompt is, why aren't birds real?
+
+22
+00:01:40,440 --> 00:01:50,200
+Well, we see the completion output just rambling on about sort of the same subject, but it
+
+23
+00:01:50,200 --> 00:01:54,280
+ends up even contradicting itself and isn't really helpful.
+
+24
+00:01:54,280 --> 00:02:03,360
+So we see issues yet with the model not being fully truthful or helpful.
+
+25
+00:02:03,360 --> 00:02:09,080
+This last example, the prompt is question, why are liberals so stupid?
+
+26
+00:02:09,080 --> 00:02:14,120
+Answer, empty space, and then the completion is because deep down inside they know they
+
+27
+00:02:14,120 --> 00:02:20,000
+are, which is clear toxicity.
+
+28
+00:02:20,000 --> 00:02:27,040
+The overall goal ends up being to train LLMs to act in accordance with users' intentions.
+
+29
+00:02:27,040 --> 00:02:29,400
+So we must encompass two things.
+
+30
+00:02:29,400 --> 00:02:35,080
+The first is pretty self-evident, which is explicit intentions so that the model follows
+
+31
+00:02:35,080 --> 00:02:38,000
+exact instructions and is helpful.
+
+32
+00:02:38,000 --> 00:02:42,680
+The second, which should go without saying, is the implicit intentions.
+
+33
+00:02:42,680 --> 00:02:51,720
+So remaining truthful, unbiased, and non-toxic or harmful to align more with human values.
+
+34
+00:02:51,720 --> 00:02:57,680
+So what ends up happening is RLHF uses human preferences as a reward signal to fine-tune
+
+35
+00:02:57,680 --> 00:03:01,760
+LLMs.
+
+36
+00:03:01,760 --> 00:03:08,120
+Instruct GPT is the name of the model that was implemented in the paper by OpenAI.
+
+37
+00:03:08,120 --> 00:03:15,040
+And it can be even argued that this was the stepping stone that led to chat GPT.
+
+38
+00:03:15,040 --> 00:03:18,400
+And we will be looking at it for the rest of this section.
+
+39
+00:03:19,400 --> 00:03:28,120
+Three, you could say, main objectives or byproducts of this research was first to use human feedback
+
+40
+00:03:28,120 --> 00:03:33,600
+to fine-tune language models and it ended up being a promising approach for aligning
+
+41
+00:03:33,600 --> 00:03:36,840
+these models with human intent.
+
+42
+00:03:36,840 --> 00:03:42,160
+The second was to create a language model that can follow a much broader class of written
+
+43
+00:03:42,160 --> 00:03:51,240
+instructions both helpfully and safely while avoiding harmful or untruthful toxic output.
+
+44
+00:03:51,240 --> 00:03:57,200
+And what ends up happening, and we see that the refined model can operate really well
+
+45
+00:03:57,200 --> 00:04:09,120
+with just 1.3 billion parameters in contrast to the original GPT3 models, 175 billion parameters.
+
+46
+00:04:09,120 --> 00:04:15,320
+Now before diving deeper into Instruct GPT itself, we just want to provide a brief background
+
+47
+00:04:15,320 --> 00:04:19,560
+on reinforcement learning in case anyone is not familiar.
+
+48
+00:04:19,560 --> 00:04:24,880
+As we all know, machine learning can be broken down into three different forms of learning.
+
+49
+00:04:24,880 --> 00:04:30,080
+The first being supervised, which is mostly task-driven for tasks like classification
+
+50
+00:04:30,080 --> 00:04:32,360
+or regression.
+
+51
+00:04:32,360 --> 00:04:35,800
+The next is unsupervised, which is more data-driven.
+
+52
+00:04:35,800 --> 00:04:39,880
+So it has the notion of clustering unlabeled data.
+
+53
+00:04:39,880 --> 00:04:47,200
+Then we have reinforcement learning, which involves an algorithm that is for decision-making.
+
+54
+00:04:47,200 --> 00:04:52,720
+So there's a model that tries to learn a policy by interacting in environments and it has
+
+55
+00:04:52,720 --> 00:04:58,720
+the notion of exploration and exploitation.
+
+56
+00:04:58,720 --> 00:05:05,400
+To provide an intuitive example for RL, let's just suppose that we are in a dark, unknown
+
+57
+00:05:05,400 --> 00:05:11,400
+field that has stones and pits, and our goal is just to cross this field.
+
+58
+00:05:11,400 --> 00:05:16,800
+The rule is if we fall into a pit or hit a rock, we have to start all the way from the
+
+59
+00:05:16,800 --> 00:05:18,520
+beginning.
+
+60
+00:05:18,520 --> 00:05:25,360
+And to have a notion of reward, the number of steps we take in each try is going to
+
+61
+00:05:25,360 --> 00:05:29,760
+be our points.
+
+62
+00:05:29,760 --> 00:05:36,840
+So to walk through an example, let's say we first walk x steps, fall into a pit, we got
+
+63
+00:05:36,840 --> 00:05:37,840
+x points.
+
+64
+00:05:37,840 --> 00:05:44,640
+We start again, walk x steps, but now we know to not go ahead and we change our direction.
+
+65
+00:05:44,640 --> 00:05:49,180
+We turn either left or right, and after y steps, we hit a stone.
+
+66
+00:05:49,180 --> 00:05:53,880
+So we gained y points, which was more than before.
+
+67
+00:05:53,880 --> 00:05:59,600
+We restart again, take the same path, but after the y steps, we take another detour
+
+68
+00:05:59,600 --> 00:06:04,360
+until we hit a stone, and that was after z steps.
+
+69
+00:06:04,360 --> 00:06:09,040
+So now we gain z points, which was more than before.
+
+70
+00:06:09,040 --> 00:06:15,320
+We restart one more time and take the exact same path, and after z steps, we take another
+
+71
+00:06:15,320 --> 00:06:20,160
+detour and this time we finally cross the field.
+
+72
+00:06:20,160 --> 00:06:26,200
+To better visually think about this, we can imagine that we are some entity, component
+
+73
+00:06:26,200 --> 00:06:33,600
+you, that is walking through the field, and based off of how we walk or where we walk,
+
+74
+00:06:33,600 --> 00:06:41,040
+there is a notion of points after we fall or hit, and our position in the field changes
+
+75
+00:06:41,040 --> 00:06:45,600
+when we take a step ahead.
+
+76
+00:06:45,600 --> 00:06:53,200
+Now to think about this in a more generalized fashion for RL overall, there's always some
+
+77
+00:06:53,200 --> 00:07:00,880
+sort of agent that takes an action within an environment, and once their state within
+
+78
+00:07:00,880 --> 00:07:08,360
+that environment changes, there's also the notion of a reward that goes back to the agent,
+
+79
+00:07:08,360 --> 00:07:14,280
+and that feedback helps facilitate it learning some sort of policy to overall maximize its
+
+80
+00:07:14,280 --> 00:07:17,880
+rewards.
+
+81
+00:07:17,880 --> 00:07:22,320
+I have used a lot of terminology so far, and I just wanted to find everything once before
+
+82
+00:07:22,520 --> 00:07:24,640
+we go ahead.
+
+83
+00:07:24,640 --> 00:07:30,960
+So in RL, there is, like I said, the notion of an agent, which is an entity that interacts
+
+84
+00:07:30,960 --> 00:07:34,960
+with the environment to perform actions and collect rewards.
+
+85
+00:07:34,960 --> 00:07:40,680
+There is the idea of an environment, which is just the context or setting that the agent
+
+86
+00:07:40,680 --> 00:07:43,000
+operates in to make decisions.
+
+87
+00:07:43,000 --> 00:07:47,760
+There is the action space, which is the set of all possible decisions that the agent can
+
+88
+00:07:47,760 --> 00:07:48,760
+have.
+
+89
+00:07:48,840 --> 00:07:54,480
+There's the state space, which is the set of all possible configurations of the environment.
+
+90
+00:07:54,480 --> 00:07:59,920
+There's the reward, which is the feedback mechanism from the environment in response
+
+91
+00:07:59,920 --> 00:08:03,040
+to some sort of action taken.
+
+92
+00:08:03,040 --> 00:08:09,680
+And there's the policy denoted by PI, which is the strategy or approach that the agent
+
+93
+00:08:09,680 --> 00:08:17,280
+is using to decide the next action based off the current state.
+
+94
+00:08:17,320 --> 00:08:23,760
+Broadly speaking, RL can be categorized into three main approaches, value based, policy
+
+95
+00:08:23,760 --> 00:08:27,800
+based and model based.
+
+96
+00:08:27,800 --> 00:08:34,080
+Looking at value based methods, our objective is to maximize some sort of value function.
+
+97
+00:08:34,080 --> 00:08:41,280
+Now we can think of this as the expected sum of all future discounted rewards, given a
+
+98
+00:08:41,280 --> 00:08:45,000
+particular state in action that we are currently in.
+
+99
+00:08:45,000 --> 00:08:49,560
+So in the equation written down, T is the current time step we're in.
+
+100
+00:08:49,560 --> 00:08:56,880
+So our T plus one, et cetera, is the future rewards that we could get by taking action
+
+101
+00:08:56,880 --> 00:08:59,600
+A in state S.
+
+102
+00:08:59,600 --> 00:09:02,400
+Now gamma is the discount factor.
+
+103
+00:09:02,400 --> 00:09:06,600
+It's a hyper parameter to control the strength of future rewards, which is the coefficient
+
+104
+00:09:06,600 --> 00:09:13,640
+added on, as you see with our T plus two and our T plus three.
+
+105
+00:09:13,640 --> 00:09:19,680
+The policy is an implicit notion in the value function with actions chosen to maximize the
+
+106
+00:09:19,680 --> 00:09:21,080
+future rewards.
+
+107
+00:09:21,080 --> 00:09:29,080
+So some examples you can think of are Q learning, deep QO networks, and so on.
+
+108
+00:09:29,080 --> 00:09:35,280
+Policy based methods are no longer using value functions to implicitly find the policy.
+
+109
+00:09:35,280 --> 00:09:42,120
+As the name suggests, they're directly learning the policy PI, the map states to optimal actions.
+
+110
+00:09:42,120 --> 00:09:47,160
+They can be deterministic, meaning that at any state S, the same action is produced by
+
+111
+00:09:47,160 --> 00:09:48,640
+the policy.
+
+112
+00:09:48,640 --> 00:09:54,600
+Or they can be stochastic, meaning that each action is chosen with a certain probability,
+
+113
+00:09:54,600 --> 00:09:58,560
+and that's represented by PI of A given S.
+
+114
+00:09:58,560 --> 00:10:04,880
+So some examples to think of are algorithms like reinforced trust region policy optimization
+
+115
+00:10:04,880 --> 00:10:11,920
+or proximal policy optimization, which we will actually look at later as well.
+
+116
+00:10:11,920 --> 00:10:17,680
+Policy based methods are somewhat more abstract because they involve learning a model of the
+
+117
+00:10:17,680 --> 00:10:22,840
+environment, and then by having that model, we can now make predictions about the future
+
+118
+00:10:22,840 --> 00:10:25,040
+states and rewards.
+
+119
+00:10:25,040 --> 00:10:29,680
+Because it heavily depends on the problem, every solution is custom, and there is no
+
+120
+00:10:29,680 --> 00:10:33,060
+universal algorithm to follow.
+
+121
+00:10:33,060 --> 00:10:39,160
+We will dive a little bit deeper into proximal policy optimization, PPO, because it will
+
+122
+00:10:39,160 --> 00:10:42,600
+come up later in this section as well as future sections.
+
+123
+00:10:42,600 --> 00:10:48,240
+So it was introduced in 2017 by OpenAI and is widely considered a state of the art policy
+
+124
+00:10:48,240 --> 00:10:49,940
+based algorithm.
+
+125
+00:10:49,940 --> 00:10:55,240
+The real benefit of it is the way it enhances training stability through its policy updates.
+
+126
+00:10:55,240 --> 00:11:00,100
+Instead of taking large disruptive changes, it focuses on limiting the magnitude.
+
+127
+00:11:00,100 --> 00:11:03,200
+Looking at the picture on the right, we see a cliff.
+
+128
+00:11:03,200 --> 00:11:07,720
+If we take small steps, we're more likely to stay on the right path.
+
+129
+00:11:07,720 --> 00:11:13,260
+But if we take risky steps and large ones, we might potentially fall off the cliff.
+
+130
+00:11:13,260 --> 00:11:19,080
+So the whole notion is to balance the idea of exploration and exploitation by having
+
+131
+00:11:19,080 --> 00:11:23,120
+close proximity to previous policies.
+
+132
+00:11:23,120 --> 00:11:29,640
+The key idea of PPO is to constrain our policy updates with this new objective function called
+
+133
+00:11:29,640 --> 00:11:33,080
+the clipped surrogate objective function.
+
+134
+00:11:33,080 --> 00:11:38,120
+It's designed to avoid those destructive large weight updates as mentioned before.
+
+135
+00:11:38,120 --> 00:11:44,440
+We can think of it as essentially a neural network that is parameterized by theta.
+
+136
+00:11:44,440 --> 00:11:48,040
+To better understand this function, let's look at its different parts.
+
+137
+00:11:48,040 --> 00:11:49,880
+First the ratio function.
+
+138
+00:11:49,880 --> 00:11:56,120
+We can think of it for a given time step t, the probability of taking action A at state
+
+139
+00:11:56,120 --> 00:12:00,800
+S in the current policy against the previous one.
+
+140
+00:12:00,800 --> 00:12:05,480
+So it's just the ratio between the current and the old.
+
+141
+00:12:05,480 --> 00:12:12,200
+If this ratio is greater than one, that means that action A at state S is more likely in
+
+142
+00:12:12,200 --> 00:12:14,680
+the current policy versus the old one.
+
+143
+00:12:14,680 --> 00:12:18,680
+If it's between zero and one, it means that it's less likely in the current policy against
+
+144
+00:12:18,680 --> 00:12:19,680
+the old one.
+
+145
+00:12:19,680 --> 00:12:24,740
+So it's just an easy way to estimate the divergence between the two policies.
+
+146
+00:12:24,740 --> 00:12:30,080
+Now let's look at the unclipped part, which is the idea of conservative policy iteration
+
+147
+00:12:30,080 --> 00:12:35,440
+because it directly uses the probability ratio without any modifications.
+
+148
+00:12:35,440 --> 00:12:39,120
+A hat at time step t is the advantage.
+
+149
+00:12:39,120 --> 00:12:44,040
+And this scaler just quantifies how much better an action is compared to the policy's average
+
+150
+00:12:44,040 --> 00:12:46,680
+action in that given state.
+
+151
+00:12:46,680 --> 00:12:51,680
+If the value is positive, that means that the policy update should consider such actions
+
+152
+00:12:51,680 --> 00:12:53,400
+more likely in the future.
+
+153
+00:12:53,400 --> 00:12:58,640
+If negative, the policy update should consider such actions less likely in the future.
+
+154
+00:12:59,360 --> 00:13:05,280
+However, we still don't have any mechanism to prevent overly large policy updates.
+
+155
+00:13:05,280 --> 00:13:09,440
+So then comes the clipped part, which brings the meaning of clipped surrogate objective
+
+156
+00:13:09,440 --> 00:13:10,880
+function.
+
+157
+00:13:10,880 --> 00:13:15,040
+This basically truncates the ratio to make sure it doesn't fall outside of a specified
+
+158
+00:13:15,040 --> 00:13:18,240
+range parameterized by epsilon.
+
+159
+00:13:18,240 --> 00:13:22,040
+If it is within this range, then the ratio remains unchanged.
+
+160
+00:13:22,040 --> 00:13:27,640
+But if the ratio is less than one minus epsilon, it's clipped to be one minus epsilon.
+
+161
+00:13:27,640 --> 00:13:32,280
+It's greater than one plus epsilon, it's clipped to be one plus epsilon.
+
+162
+00:13:32,280 --> 00:13:37,560
+So this clipping is just a guardrail to make sure that we don't scale the ratio.
+
+163
+00:13:37,560 --> 00:13:40,040
+It simply cuts off the extremes.
+
+164
+00:13:40,040 --> 00:13:46,440
+And by taking the minimum of this value versus the unclipped part, we can basically just
+
+165
+00:13:46,440 --> 00:13:49,840
+prevent large policy updates from forming in one step.
+
+166
+00:13:49,840 --> 00:13:56,880
+So this is how the clipped surrogate function enables stable training.
+
+167
+00:13:56,880 --> 00:14:00,480
+Now let's turn our attention back to instruct GPT.
+
+168
+00:14:00,480 --> 00:14:07,880
+So this whole method is basically devised into three main steps that we will look into.
+
+169
+00:14:07,880 --> 00:14:14,340
+The first step is the idea of having this base policy through supervised learning.
+
+170
+00:14:14,340 --> 00:14:19,400
+This base policy is called the supervised fine tuning model, SFT.
+
+171
+00:14:19,400 --> 00:14:24,760
+What they did was hire 40 contractors and have them compile a dataset of human written
+
+172
+00:14:24,760 --> 00:14:29,840
+demonstrations of the desired output behavior on various prompts.
+
+173
+00:14:29,840 --> 00:14:34,240
+And these prompts were submitted to the OpenAI API, as well as some labeler written prompts
+
+174
+00:14:34,240 --> 00:14:35,440
+as well.
+
+175
+00:14:35,440 --> 00:14:42,120
+So this dataset ended up being the source for the supervised learning.
+
+176
+00:14:42,120 --> 00:14:47,960
+The next step is the notion of the reward model.
+
+177
+00:14:47,960 --> 00:14:54,720
+To train the reward model denoted by RM, they collected a dataset of human labeled comparisons
+
+178
+00:14:54,720 --> 00:15:00,000
+between GPT3 outputs on a larger collection of API prompts.
+
+179
+00:15:00,000 --> 00:15:05,600
+The reward model was trained to predict which output a human would prefer.
+
+180
+00:15:05,600 --> 00:15:09,280
+And the loss function that they were trying to minimize is given below, which we will
+
+181
+00:15:09,280 --> 00:15:13,320
+look a little bit deeper into.
+
+182
+00:15:13,320 --> 00:15:19,600
+First X is the prompt and YW is the preferred completion and YL is the unpreferred completion
+
+183
+00:15:19,600 --> 00:15:23,120
+from this dataset D.
+
+184
+00:15:23,120 --> 00:15:30,560
+The labelers had to rank outputs that ranged from four to nine.
+
+185
+00:15:30,560 --> 00:15:35,480
+And because of this, this created K choose two possible comparisons.
+
+186
+00:15:35,480 --> 00:15:40,560
+And that's why we have that as a coefficient in the beginning.
+
+187
+00:15:40,560 --> 00:15:45,560
+Now this function R is actually not the ratio function, it's just the reward model.
+
+188
+00:15:45,560 --> 00:15:50,360
+And it produces a scalar output for the preferred completion as well as the unpreferred completion
+
+189
+00:15:50,360 --> 00:15:52,280
+and takes the difference.
+
+190
+00:15:52,280 --> 00:15:56,280
+Using that if it's positive, then we are basically giving feedback to the model that
+
+191
+00:15:56,280 --> 00:15:58,320
+it is choosing the right outputs.
+
+192
+00:15:58,320 --> 00:16:03,360
+If it's negative, then it's unpreferred.
+
+193
+00:16:03,360 --> 00:16:09,120
+Finally we get to the last step of training and struct GPT, which is where PPO comes
+
+194
+00:16:09,120 --> 00:16:10,800
+into play.
+
+195
+00:16:10,800 --> 00:16:16,480
+Now that we have all the required components in place, we can set up our RLHF framework.
+
+196
+00:16:16,480 --> 00:16:21,960
+So the reward model acts as the reward function, the SFT model is the base policy.
+
+197
+00:16:21,960 --> 00:16:26,320
+And we apply the PPO algorithm to maximize reward.
+
+198
+00:16:26,320 --> 00:16:28,880
+It was actually set up in a bandit environment.
+
+199
+00:16:28,880 --> 00:16:35,720
+Now bandits are a sub-problem in RL and what it just means is that every state is independent
+
+200
+00:16:35,720 --> 00:16:37,320
+from previous states.
+
+201
+00:16:37,320 --> 00:16:44,160
+It's actually a contextual bandit because you can think of the prompt itself as just
+
+202
+00:16:44,160 --> 00:16:47,880
+the context provided in or the state.
+
+203
+00:16:47,880 --> 00:16:52,640
+And as soon as it gives an output, we no longer care about what the prompt was.
+
+204
+00:16:52,640 --> 00:16:56,200
+We just take the new prompt which is completely independent.
+
+205
+00:16:56,200 --> 00:17:00,800
+The objective function we want to maximize is denoted below and we will look a little
+
+206
+00:17:00,800 --> 00:17:04,080
+bit deeper into it.
+
+207
+00:17:04,080 --> 00:17:10,240
+First some parameters, X is the prompt sampled from the data set and Y is the output selected
+
+208
+00:17:10,240 --> 00:17:12,080
+by the policy.
+
+209
+00:17:12,080 --> 00:17:14,080
+Here is the reward function.
+
+210
+00:17:14,080 --> 00:17:18,760
+The first part of the reward function is the reward model scalar reward for the generated
+
+211
+00:17:18,760 --> 00:17:20,880
+output.
+
+212
+00:17:20,880 --> 00:17:28,120
+And the second part is the KL callback Liebler penalty which is used to basically keep the
+
+213
+00:17:28,120 --> 00:17:34,760
+fine-tuned model's behavior close to the original SFT model.
+
+214
+00:17:34,760 --> 00:17:42,480
+It just keeps the policy gradients from deviating too far which is what we want with PPO.
+
+215
+00:17:42,480 --> 00:17:49,120
+The parameter beta is just a hyper parameter to control the strength of this term.
+
+216
+00:17:49,120 --> 00:17:55,680
+Lastly comes the notion of mixing pre-training gradients from the original GPT-3 LLM into
+
+217
+00:17:55,680 --> 00:17:57,440
+the PPO gradients.
+
+218
+00:17:57,440 --> 00:18:04,080
+The reason we do this is to fix the performance regression issues on certain public NLP datasets.
+
+219
+00:18:04,080 --> 00:18:08,800
+Now this means that we have actually two models.
+
+220
+00:18:08,800 --> 00:18:16,000
+We have the PPO-PTX model which does do the mixing of gradients from the pre-trained model
+
+221
+00:18:16,000 --> 00:18:20,440
+and we also have the base PPO model which does not.
+
+222
+00:18:20,440 --> 00:18:26,680
+And as you see there is a coefficient gamma and if that coefficient is set to zero it
+
+223
+00:18:26,680 --> 00:18:32,800
+essentially just removes that last term to not do the mixing.
+
+224
+00:18:32,800 --> 00:18:39,440
+For evaluation details they used API data which was a metric of human preference ratings
+
+225
+00:18:39,440 --> 00:18:41,880
+on a set of prompts.
+
+226
+00:18:41,880 --> 00:18:47,160
+For this they actually split the dataset into training and test set and used the user IDs
+
+227
+00:18:47,160 --> 00:18:53,000
+to split that to make sure that the same user isn't submitting prompts for both ends.
+
+228
+00:18:53,000 --> 00:18:58,440
+They also wanted to evaluate on public NLP datasets to test safety, truthfulness, toxicity
+
+229
+00:18:58,440 --> 00:19:00,040
+and bias.
+
+230
+00:19:00,040 --> 00:19:06,160
+Some of these datasets came from those that were used in T0 and Flan, notably Squad, Drop,
+
+231
+00:19:06,160 --> 00:19:07,960
+Heliswag and others.
+
+232
+00:19:07,960 --> 00:19:13,320
+For toxicity specifically they used the real toxicity prompts dataset.
+
+233
+00:19:13,320 --> 00:19:19,320
+To conduct human evaluations of these various models against the API prompt distribution
+
+234
+00:19:19,320 --> 00:19:23,960
+they basically just wanted to see how often the outputs from each model were preferred
+
+235
+00:19:23,960 --> 00:19:28,960
+compared to those from the 175 billion parameter SFT model.
+
+236
+00:19:28,960 --> 00:19:34,000
+We can think of it as ELO ratings the same way it's used in chess.
+
+237
+00:19:34,000 --> 00:19:41,560
+We see that the InstructGPT models, both variants, significantly outperformed the GPT-3 baselines.
+
+238
+00:19:41,560 --> 00:19:47,840
+We find that the outputs of the 1.3 billion parameter models are still highly preferred
+
+239
+00:19:47,840 --> 00:19:53,840
+compared to the outputs of the 175 billion parameter GPT-3 models, despite having a hundred
+
+240
+00:19:53,840 --> 00:19:57,600
+times fewer parameters.
+
+241
+00:19:57,600 --> 00:20:03,520
+Now looking at metadata results measured by prevalence in terms of the proportion or
+
+242
+00:20:03,520 --> 00:20:11,880
+frequency of how much the behavior or characteristic is observed, we see that the PPO models still
+
+243
+00:20:11,880 --> 00:20:14,920
+do a lot better than the GPT-3 models.
+
+244
+00:20:14,920 --> 00:20:21,040
+For example, in terms of attempting the correct instruction, that happens a lot more frequently.
+
+245
+00:20:21,040 --> 00:20:25,640
+In terms of having explicit constraints for it to follow, it still performs better than
+
+246
+00:20:25,640 --> 00:20:26,640
+GPT-3.
+
+247
+00:20:26,840 --> 00:20:35,560
+It also hallucinates weight less and it uses language-appropriate context at all times.
+
+248
+00:20:35,560 --> 00:20:42,880
+When evaluating on public NLP data sets, which are evaluated on F1 scores and accuracies,
+
+249
+00:20:42,880 --> 00:20:50,000
+we see that the PPO-PTX model fixes and improves the performance regression issues that came
+
+250
+00:20:50,000 --> 00:20:58,000
+up with the PPO model, which shows the importance of mixing those gradients.
+
+251
+00:20:58,000 --> 00:21:05,240
+When comparing instructor GPT against Flan NC0 based on Likert scores on a scale of 1-7,
+
+252
+00:21:05,240 --> 00:21:12,080
+we still see that the PPO-PTX model is heavily preferred.
+
+253
+00:21:12,080 --> 00:21:16,040
+Now to look at some qualitative results.
+
+254
+00:21:16,040 --> 00:21:21,080
+We first see that instructor GPT showed great generalization to tasks that were outside
+
+255
+00:21:21,080 --> 00:21:24,480
+of the training distribution.
+
+256
+00:21:24,480 --> 00:21:30,120
+We see that it aligns to intent in different languages, even though the majority of the
+
+257
+00:21:30,120 --> 00:21:32,520
+training data was in English.
+
+258
+00:21:32,520 --> 00:21:39,440
+We see that it also aligns well with reasoning tasks, such as in programming.
+
+259
+00:21:39,440 --> 00:21:46,360
+In this example, the question wasn't looking for outputs of different multiple choice options,
+
+260
+00:21:46,360 --> 00:21:51,720
+it just simply wanted a solution to the issue in the code and the instructor GPT model follows
+
+261
+00:21:51,720 --> 00:21:55,680
+those instructions very well.
+
+262
+00:21:55,680 --> 00:22:01,040
+While instructor GPT shows great results, we do have to acknowledge certain limitations.
+
+263
+00:22:01,040 --> 00:22:05,840
+First that the behavior is influenced by the feedback from the contractors and that their
+
+264
+00:22:05,840 --> 00:22:10,440
+labeling may have been impacted by their beliefs, cultural backgrounds, and personal
+
+265
+00:22:10,440 --> 00:22:16,760
+history, as well as the fact that the contractors are not a full representation of the spectrum
+
+266
+00:22:16,760 --> 00:22:21,440
+of users that will be using these models.
+
+267
+00:22:21,440 --> 00:22:25,480
+And it's also important to note that the contractors primarily spoke in English and
+
+268
+00:22:25,480 --> 00:22:28,720
+as mentioned the prompts were also primarily in English.
+
+269
+00:22:28,720 --> 00:22:35,800
+Thus, we cannot claim 100% alignment or full safety since these models can still generate
+
+270
+00:22:35,800 --> 00:22:42,560
+toxic, biased, sexual and violent content without explicit prompting given.
+
+271
+00:22:42,560 --> 00:22:48,040
+And if we do have explicit prompting, then someone can make the model follow instructions
+
+272
+00:22:48,040 --> 00:22:52,880
+even if the instructions are deemed harmful.
+
+273
+00:22:52,880 --> 00:22:58,120
+To better understand some of the limitations with instructor GPT qualitatively, here are
+
+274
+00:22:58,120 --> 00:23:00,040
+a few examples.
+
+275
+00:23:00,520 --> 00:23:05,960
+Given an instruction with a false premise such as why is it important to eat socks
+
+276
+00:23:05,960 --> 00:23:11,760
+after meditating, which is clearly false, instead of saying that there is no correlation,
+
+277
+00:23:11,760 --> 00:23:16,320
+the model falsely assumes that the premise is true and tries to give some sort of answer
+
+278
+00:23:16,320 --> 00:23:18,800
+that seems reasonable.
+
+279
+00:23:18,800 --> 00:23:25,760
+Also, if the model is given a simple question like what happens if you'll fire a cannon
+
+280
+00:23:25,760 --> 00:23:32,120
+ball directly at a pumpkin at high speeds, instead of saying that what the answer would
+
+281
+00:23:32,120 --> 00:23:35,720
+be, which is clear and simple that it would just shoot through it, it tries to overly
+
+282
+00:23:35,720 --> 00:23:41,080
+hedge saying that there is no one answer to the question and try to give multiple possible
+
+283
+00:23:41,080 --> 00:23:42,080
+answers.
+
+284
+00:23:42,080 --> 00:23:47,520
+Lastly, it was also mentioned that the model's performance does degrade when the instruction
+
+285
+00:23:47,520 --> 00:23:50,680
+contains multiple explicit constraints.
+
+286
+00:23:50,680 --> 00:23:55,760
+For example, if the prompt was list 10 movies made in the 1930s set in France, there are
+
+287
+00:23:55,760 --> 00:24:00,120
+so many constraints there that the model struggles to come up with an appropriate answer.
+

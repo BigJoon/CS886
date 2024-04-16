@@ -1,0 +1,3544 @@
+1
+00:00:00,000 --> 00:00:07,920
+So, hi everyone, my name is Shengyu Chen and this is Eric Huang, and today we're going
+
+2
+00:00:07,920 --> 00:00:13,840
+to present multi-model models pre-training.
+
+3
+00:00:13,840 --> 00:00:17,280
+So a quick overview of what we are going to cover today.
+
+4
+00:00:17,280 --> 00:00:22,240
+So first we're going to talk about some introduction and background, specifically where I talk
+
+5
+00:00:22,240 --> 00:00:26,760
+about multi-model representations and multi-model tasks.
+
+6
+00:00:26,760 --> 00:00:32,280
+And then following that we're going to talk about seven different multi-model pre-training
+
+7
+00:00:32,280 --> 00:00:38,840
+papers and we group them by their main contributions.
+
+8
+00:00:38,840 --> 00:00:44,640
+And then at the end we're going to have a review and summarization section.
+
+9
+00:00:44,640 --> 00:00:49,760
+And please save your question at the end of each paper because we have a lot to cover
+
+10
+00:00:49,760 --> 00:00:51,640
+today.
+
+11
+00:00:51,640 --> 00:00:54,080
+So first introduction and background.
+
+12
+00:00:54,080 --> 00:01:02,760
+Most of multi-model representations, multi-modality is a scientific study of heterogeneous and
+
+13
+00:01:02,760 --> 00:01:08,200
+interconnected data and by heterogeneous we mean that it can be like task image, audio
+
+14
+00:01:08,200 --> 00:01:11,320
+and different format of the data.
+
+15
+00:01:11,320 --> 00:01:18,920
+And our goal is to represent and summarize multi-model data in a joint representation
+
+16
+00:01:18,920 --> 00:01:24,760
+such that the complementary information is preserved in the joint representation and
+
+17
+00:01:24,760 --> 00:01:28,480
+the redundant parts of the multi-modalities are filtered out.
+
+18
+00:01:28,480 --> 00:01:36,160
+So here's a visualization of three different modalities, namely that the task image and
+
+19
+00:01:36,160 --> 00:01:40,640
+the audio, they can be represented in the joint space.
+
+20
+00:01:40,640 --> 00:01:44,440
+And today's presentation will only focus on vision language pre-training.
+
+21
+00:01:44,440 --> 00:01:50,880
+So we're not going to cover about, for example, the audio data.
+
+22
+00:01:50,880 --> 00:01:57,760
+And some tasks for multi-model models.
+
+23
+00:01:57,760 --> 00:02:01,040
+So there are two different, two main different tasks.
+
+24
+00:02:01,040 --> 00:02:04,640
+One is the understanding, the other one is the generation task.
+
+25
+00:02:04,640 --> 00:02:08,840
+So for understanding we can have image text retrieval.
+
+26
+00:02:08,840 --> 00:02:13,760
+So this is basically predict whether a given image text pair is aligned or not.
+
+27
+00:02:13,760 --> 00:02:19,240
+And then we have the natural language visual reasoning and LBR.
+
+28
+00:02:19,240 --> 00:02:23,840
+So given a pair of image and text, we need to determine whether the text statement is
+
+29
+00:02:23,840 --> 00:02:25,920
+true about the images.
+
+30
+00:02:25,920 --> 00:02:28,280
+So here's an example.
+
+31
+00:02:28,280 --> 00:02:35,680
+We have two set of pictures and the description is that there are two trains in total, traveling
+
+32
+00:02:35,680 --> 00:02:36,680
+the same direction.
+
+33
+00:02:36,680 --> 00:02:41,680
+So the talking bit is correct, one is wrong.
+
+34
+00:02:41,680 --> 00:02:53,520
+And then another task in understanding is the visual question answering VQA in short.
+
+35
+00:02:53,520 --> 00:02:58,160
+So given the image and the question, the model needs to select the correct answer from a
+
+36
+00:02:58,160 --> 00:03:00,320
+multi-choice list.
+
+37
+00:03:00,320 --> 00:03:06,800
+For example, in this picture you can ask question like, is the tray on top of the table black
+
+38
+00:03:06,800 --> 00:03:09,480
+or light brown?
+
+39
+00:03:09,480 --> 00:03:14,280
+We expect the model to answer light brown.
+
+40
+00:03:14,280 --> 00:03:19,720
+And for the generation task, mainly the image captioning.
+
+41
+00:03:19,720 --> 00:03:24,160
+So we want the model to generate a natural language description about the content of
+
+42
+00:03:24,160 --> 00:03:25,720
+an image.
+
+43
+00:03:25,720 --> 00:03:27,680
+So here's an example.
+
+44
+00:03:27,680 --> 00:03:34,080
+We want the model to generate, for example, like a man with yellow tie looks concerned.
+
+45
+00:03:34,080 --> 00:03:43,040
+And we can also formulate the VQA as an open-ended VQA and then it becomes a generation task.
+
+46
+00:03:43,040 --> 00:03:51,760
+And then just some history about the BLP methods prior to 2020.
+
+47
+00:03:51,760 --> 00:03:59,480
+For example, the visual bird that simply concatenate the visual region features and the word embeddings
+
+48
+00:03:59,480 --> 00:04:07,120
+of pair tags as input to a transformer model and then use self-attention to implicitly
+
+49
+00:04:07,120 --> 00:04:11,880
+align elements of tasks, tags, and image regions.
+
+50
+00:04:11,880 --> 00:04:12,880
+So here's an example.
+
+51
+00:04:12,880 --> 00:04:22,480
+We have some object detectors to track the visual features as in here.
+
+52
+00:04:22,480 --> 00:04:32,480
+And then we have a caption, meaning to allow you to know the field, you can tag it in together
+
+53
+00:04:32,480 --> 00:04:36,080
+to them through the platform and block.
+
+54
+00:04:36,080 --> 00:04:44,840
+And then we can add different VQA functions as an output to train the models.
+
+55
+00:04:44,840 --> 00:04:50,520
+And then we hope that through self-attention we can learn, for example, a heat map between
+
+56
+00:04:50,520 --> 00:05:03,280
+the visual features, between the visual features, and the track features.
+
+57
+00:05:03,280 --> 00:05:07,000
+So we're going to begin to talk about our papers today.
+
+58
+00:05:07,000 --> 00:05:13,160
+So the first group is about the visual representation improvement.
+
+59
+00:05:13,160 --> 00:05:16,600
+The first paper we're going to talk about is OSCAR.
+
+60
+00:05:17,000 --> 00:05:21,920
+Semantics aligned pre-training for visual language tasks.
+
+61
+00:05:21,920 --> 00:05:26,920
+The main contribution about this paper is the semantic alignments between text and images
+
+62
+00:05:26,920 --> 00:05:31,520
+using object tags.
+
+63
+00:05:31,520 --> 00:05:39,240
+So as we can see before, the challenges about visual bird is one, ambiguity, the image region
+
+64
+00:05:39,240 --> 00:05:46,280
+overlapping at different positions results in ambiguities for the extracted visual embeddings.
+
+65
+00:05:47,160 --> 00:05:51,000
+The second challenge is the lack of explicit alignments.
+
+66
+00:05:51,000 --> 00:06:00,200
+So there is no explicitly labeled alignments between regions of the objects in the image text pairs.
+
+67
+00:06:00,200 --> 00:06:05,000
+So the motivation of OSCAR is to use salient objects.
+
+68
+00:06:05,000 --> 00:06:08,920
+So they can be accurately detected by the object detectors.
+
+69
+00:06:08,920 --> 00:06:12,520
+And they are often mentioned in the paired text.
+
+70
+00:06:12,600 --> 00:06:16,520
+They can be used as the anchor points for learning semantic alignments between image
+
+71
+00:06:16,520 --> 00:06:18,920
+region features and the word embeddings.
+
+72
+00:06:18,920 --> 00:06:23,080
+So here is an example of a dog sitting on a couch.
+
+73
+00:06:23,080 --> 00:06:29,240
+So here dog and couch, they are salient objects because they can be detected in the images
+
+74
+00:06:29,240 --> 00:06:33,720
+and they are also included in the text.
+
+75
+00:06:33,720 --> 00:06:37,400
+So how they extract the anchor points.
+
+76
+00:06:37,480 --> 00:06:45,640
+So the OSCAR authors, they extract the visual embeddings first using the faster RCNN
+
+77
+00:06:46,680 --> 00:06:51,240
+to extract the visual semantics of each regions as v prime and z.
+
+78
+00:06:52,200 --> 00:06:56,120
+v prime is a region feature and z is the region position.
+
+79
+00:06:57,960 --> 00:07:02,600
+They concatenate them together to form a position sensitive region feature vector
+
+80
+00:07:03,160 --> 00:07:10,280
+and they use a trainable linear projection to transfer the v prime and z into v
+
+81
+00:07:11,880 --> 00:07:14,840
+which is a vector of hidden dimension h.
+
+82
+00:07:16,200 --> 00:07:21,240
+And here in this graph, we can see the reader features their print source.
+
+83
+00:07:25,480 --> 00:07:27,960
+And then they extract the word embeddings.
+
+84
+00:07:28,520 --> 00:07:33,480
+So first, they extract the tag embeddings using the faster RCNN.
+
+85
+00:07:35,720 --> 00:07:43,000
+So after they extract the visual objects, they can also get the text and they feed the tag to
+
+86
+00:07:44,040 --> 00:07:50,520
+the bird tokenizer to get word tokens queued which is also h-dimensional.
+
+87
+00:07:51,480 --> 00:08:00,280
+And here you can see the tag seeker data for each sector as compared to the region embeddings.
+
+88
+00:08:01,640 --> 00:08:07,080
+And then they use bird tokenizers to extract the text or the caption
+
+89
+00:08:08,440 --> 00:08:17,640
+into text embeddings w, the embedded text into word tokens w which is also a h-dimensional vector.
+
+90
+00:08:17,640 --> 00:08:23,400
+And then what they do is simply concatenate all of them.
+
+91
+00:08:25,480 --> 00:08:31,000
+So here we have the caption tokens, we have the tokens from the other tag,
+
+92
+00:08:31,560 --> 00:08:34,760
+we have the embeddings from our images.
+
+93
+00:08:36,360 --> 00:08:43,960
+And then after they put them together, we can look at different embeddings from two different views.
+
+94
+00:08:44,760 --> 00:08:47,960
+One is the modality view which shows here.
+
+95
+00:08:48,600 --> 00:08:58,040
+So in modality view, we can view the text modality which is a bird token in the text modality.
+
+96
+00:08:58,680 --> 00:09:06,120
+And then we can combine the region features and the associated object text as an image modality.
+
+97
+00:09:06,120 --> 00:09:11,400
+And our goal is to distinguish the representations between a text and an image.
+
+98
+00:09:12,200 --> 00:09:15,560
+We can also look at them from a dictionary view.
+
+99
+00:09:15,560 --> 00:09:22,360
+So in dictionary view, we have linguistic semantic space where we put the word tokens
+
+100
+00:09:22,360 --> 00:09:27,240
+and the object text together and then we put the image region features separately.
+
+101
+00:09:27,240 --> 00:09:32,280
+And then our goal is to distinguish the semantic spaces between text and images.
+
+102
+00:09:33,000 --> 00:09:42,440
+So to design the loss for modality view, we have, recall that we have text modality as in w.
+
+103
+00:09:42,440 --> 00:09:47,640
+And then we concatenate the object tag and region feature as h prime.
+
+104
+00:09:47,640 --> 00:09:55,400
+And then Oscar pollute the h prime such that it contains a set of images where 50% of the tags
+
+105
+00:09:55,400 --> 00:09:57,560
+are replaced with different tags.
+
+106
+00:09:57,720 --> 00:10:02,840
+And they train a binary classifier f to predict whether the image text modality pair
+
+107
+00:10:02,840 --> 00:10:06,040
+contains the original image or the polluting ones.
+
+108
+00:10:06,040 --> 00:10:14,040
+And then we can have a contrastive loss which simply measures how good the binary classifier is.
+
+109
+00:10:14,040 --> 00:10:19,880
+And our goal is to address the word embedding space where a text is similar to its paired images
+
+110
+00:10:19,880 --> 00:10:22,440
+and this similar to the polluted images.
+
+111
+00:10:22,600 --> 00:10:25,160
+So this is the loss for modality view.
+
+112
+00:10:26,760 --> 00:10:29,720
+And then they design loss for dictionary view.
+
+113
+00:10:31,000 --> 00:10:37,320
+So in this to recall, we concatenate the word token embedding and the object tag embedding as h.
+
+114
+00:10:37,320 --> 00:10:40,520
+And then region feature is treated separately.
+
+115
+00:10:41,160 --> 00:10:50,120
+And then for this one, they replace 15% of the tokens in h is written in h prime.
+
+116
+00:10:50,200 --> 00:10:56,120
+Of the tokens in h is replaced with a mask token which is very similar to what Bert did.
+
+117
+00:10:57,240 --> 00:11:03,640
+So similar to mask language models like Bert, we want to predict the mask text tokens h
+
+118
+00:11:04,200 --> 00:11:08,760
+based on surrounding text tokens and all the other image features v.
+
+119
+00:11:10,200 --> 00:11:12,280
+And then we have the mask token loss.
+
+120
+00:11:13,160 --> 00:11:18,280
+So our goal is to ground the word embedding in the region context.
+
+121
+00:11:20,360 --> 00:11:22,360
+Yes.
+
+122
+00:11:30,200 --> 00:11:32,200
+Yeah.
+
+123
+00:11:33,880 --> 00:11:35,880
+Yeah.
+
+124
+00:11:41,320 --> 00:11:43,320
+Um
+
+125
+00:11:45,320 --> 00:11:47,320
+That's the point. Um
+
+126
+00:11:50,680 --> 00:12:00,360
+I think what they did is to mainly like the mask, uh, the word, uh, so the image, uh,
+
+127
+00:12:04,120 --> 00:12:08,760
+No, I mean, like, you know, like, like, like this part, uh, so for the gift,
+
+128
+00:12:08,760 --> 00:12:12,440
+they give the, uh, the image region and the object tag.
+
+129
+00:12:12,440 --> 00:12:16,120
+And they basically they want you to use this one.
+
+130
+00:12:16,120 --> 00:12:18,120
+You want to predict what, uh,
+
+131
+00:12:20,360 --> 00:12:22,360
+for each image.
+
+132
+00:12:22,360 --> 00:12:24,360
+Each image you use.
+
+133
+00:12:25,240 --> 00:12:27,880
+Each image makes the language that's between
+
+134
+00:12:29,160 --> 00:12:30,600
+I have seen in California.
+
+135
+00:12:30,600 --> 00:12:32,600
+Yeah.
+
+136
+00:12:32,600 --> 00:12:36,120
+Um, like 15% or in h,
+
+137
+00:12:37,320 --> 00:12:39,320
+h is w and q.
+
+138
+00:12:39,800 --> 00:12:41,800
+Yeah.
+
+139
+00:12:48,600 --> 00:12:51,080
+Yeah, I'm not sure, like, probably different than the other.
+
+140
+00:12:51,800 --> 00:12:53,560
+Um,
+
+141
+00:12:53,560 --> 00:12:55,080
+I guess a little piece.
+
+142
+00:12:55,080 --> 00:12:57,080
+So like only one of the objects.
+
+143
+00:12:58,840 --> 00:12:59,800
+Yeah.
+
+144
+00:12:59,800 --> 00:13:00,120
+Yeah.
+
+145
+00:13:00,120 --> 00:13:05,800
+At that case, it's, uh, if both of them are dropped, I guess they need some, like, uh,
+
+146
+00:13:05,880 --> 00:13:08,680
+detailed, uh, to, to help with the watch.
+
+147
+00:13:08,680 --> 00:13:10,680
+To be maintained like the same color.
+
+148
+00:13:10,680 --> 00:13:13,160
+To see the object text and the image content.
+
+149
+00:13:13,880 --> 00:13:16,840
+Like, I was, let's see what response would be one.
+
+150
+00:13:16,840 --> 00:13:17,640
+I think they do.
+
+151
+00:13:17,640 --> 00:13:18,520
+Yeah.
+
+152
+00:13:18,520 --> 00:13:19,960
+Yeah.
+
+153
+00:13:19,960 --> 00:13:22,040
+So maybe that's another way to help the lady.
+
+154
+00:13:29,080 --> 00:13:35,080
+And then, uh, we put both laws together, uh, and then we have the total pre-training laws.
+
+155
+00:13:35,880 --> 00:13:41,240
+Uh, the trainable parameters are the linear projection metrics, uh, that can map the region
+
+156
+00:13:41,240 --> 00:13:45,640
+features, uh, to the same dimension as the, uh, word embeddings.
+
+157
+00:13:45,640 --> 00:13:47,160
+And they also train a bird.
+
+158
+00:13:47,960 --> 00:13:54,840
+Um, and then the data set they use is, uh, 6.5 million image text pairs, uh, consisting of
+
+159
+00:13:54,840 --> 00:13:56,200
+four million unique images.
+
+160
+00:13:58,440 --> 00:14:00,840
+And then here is the quantitative results.
+
+161
+00:14:01,560 --> 00:14:07,160
+Uh, note that, uh, they compare the Oscar with, uh, the previous, uh, soda models.
+
+162
+00:14:07,880 --> 00:14:11,640
+Uh, the Oscar views 6.5 million, uh, uh, data set.
+
+163
+00:14:12,200 --> 00:14:14,520
+Uh, in the other part, we use over 91.
+
+164
+00:14:14,520 --> 00:14:23,160
+Um, so we can see the Oscar face already outperforms the largest soda, uh, using less data set.
+
+165
+00:14:24,680 --> 00:14:30,760
+Um, so this, um, highlights the Oscar's parameter efficiency, uh, partially because
+
+166
+00:14:31,560 --> 00:14:36,920
+the use of object tags has the input point, uh, and this can use the learning of these
+
+167
+00:14:36,920 --> 00:14:37,800
+mental climates.
+
+168
+00:14:43,080 --> 00:14:43,560
+Sorry.
+
+169
+00:14:51,080 --> 00:14:57,880
+So like, uh, the, the image text retrieval, I think they use cocoa, uh, cocoa, um, image
+
+170
+00:14:57,880 --> 00:15:11,160
+captioning, um, I guess that's also, um, yeah, yeah.
+
+171
+00:15:18,760 --> 00:15:20,440
+Like our 30 K and two QA.
+
+172
+00:15:20,440 --> 00:15:20,680
+Yeah.
+
+173
+00:15:20,680 --> 00:15:26,600
+They are like pretty common, uh, data sets, uh, that will be used for, uh, other following models.
+
+174
+00:15:28,840 --> 00:15:34,040
+Um, and then, uh, the author is further analyzed the effect of the object text.
+
+175
+00:15:34,680 --> 00:15:40,760
+Uh, so as we can see for three different tasks, uh, the training using predicted tags,
+
+176
+00:15:41,400 --> 00:15:46,360
+which basically given the, uh, the region features, you want to predict what the region,
+
+177
+00:15:46,360 --> 00:15:52,280
+uh, the corresponding tags are, uh, they, the, using the predicted tags, uh, takes less than
+
+178
+00:15:52,280 --> 00:15:57,640
+half of the training time to achieve the final performance of, without using any tags.
+
+179
+00:15:58,760 --> 00:16:05,400
+This shows the efficiency of utilizing the object tags for, uh, the, and then further,
+
+180
+00:16:05,400 --> 00:16:11,000
+if you use the ground truth tags, it can reduce the training time by another 50%
+
+181
+00:16:12,200 --> 00:16:18,440
+to achieve the final performance compared with using, uh, the predicted, uh, tags.
+
+182
+00:16:22,120 --> 00:16:24,520
+And then the, uh, qualitative results.
+
+183
+00:16:24,920 --> 00:16:32,440
+Um, so the author visualize, uh, the text and image embeddings, uh, in a two dimensional
+
+184
+00:16:32,440 --> 00:16:33,160
+visualization.
+
+185
+00:16:34,520 --> 00:16:39,640
+And then they find that without using any tag, we can see here, for example,
+
+186
+00:16:40,920 --> 00:16:46,120
+the image embedding per person and text embedding per person, they are pretty far away.
+
+187
+00:16:47,000 --> 00:16:50,360
+Versus, uh, in Oscar, they are very close.
+
+188
+00:16:51,320 --> 00:17:00,760
+And same as, uh, so that's one, uh, observation, uh, so the same object between two modalities
+
+189
+00:17:00,760 --> 00:17:02,120
+is quoted, right?
+
+190
+00:17:02,120 --> 00:17:08,520
+And then for interclass, uh, the classes of related semantics are a quarter, but this thing
+
+191
+00:17:08,520 --> 00:17:15,480
+is called, what they mean is, for example, like in this region on the right, uh, this is the
+
+192
+00:17:15,480 --> 00:17:17,080
+embeddings for all the elements.
+
+193
+00:17:17,800 --> 00:17:22,840
+And then we have the embeddings for example, for transportation and for the printers and
+
+194
+00:17:22,840 --> 00:17:23,480
+so on.
+
+195
+00:17:23,480 --> 00:17:29,400
+And one interesting observation was, well, first of all, kind of like,
+
+196
+00:17:29,400 --> 00:17:32,680
+both of these types of things can be added.
+
+197
+00:17:33,320 --> 00:17:35,000
+So I think that's kind of fun.
+
+198
+00:17:37,480 --> 00:17:43,880
+And then the limitations about Oscar, um, so it requires a very powerful object detector
+
+199
+00:17:43,880 --> 00:17:45,880
+to handle a very complex scene.
+
+200
+00:17:47,080 --> 00:17:51,800
+And it doesn't work very well when the salient objects are missing in the text.
+
+201
+00:17:51,800 --> 00:17:58,040
+For example, this picture just has a bunch of, uh, boots, but the caption is a few good
+
+202
+00:17:58,040 --> 00:18:00,040
+reasons to start with controlling things.
+
+203
+00:18:04,360 --> 00:18:09,880
+Hello everyone, uh, starting from here, I'm going to introduce the paper Vimbo,
+
+204
+00:18:09,880 --> 00:18:13,560
+revisiting visual representations in visual language models.
+
+205
+00:18:13,560 --> 00:18:20,120
+And this paper is focusing on extracting better visual representation rather than just fusion
+
+206
+00:18:21,000 --> 00:18:22,600
+the multimodal information.
+
+207
+00:18:25,880 --> 00:18:28,920
+Here's the information about the background and motivation of Vimbo.
+
+208
+00:18:28,920 --> 00:18:34,920
+And before that, we have to state that VLP typically consists of two stages.
+
+209
+00:18:34,920 --> 00:18:39,480
+The first one is an object detection model that is pertrained to encode an image and
+
+210
+00:18:39,480 --> 00:18:42,040
+the visual objects in the image to representations.
+
+211
+00:18:42,840 --> 00:18:48,760
+And then we have a cross model fusion model that is pertrained to blend the text and visual
+
+212
+00:18:48,760 --> 00:18:49,560
+representations.
+
+213
+00:18:50,600 --> 00:18:55,880
+In recent years, a lot of work has shown that the success of visual language portraying VLP
+
+214
+00:18:55,880 --> 00:18:57,720
+in the visual language via our tasks.
+
+215
+00:18:57,720 --> 00:19:00,920
+For example, the via, uh, the view bird and Oscar.
+
+216
+00:19:01,480 --> 00:19:07,160
+So we can have the architecture of object detection to the model plus the cross model
+
+217
+00:19:07,160 --> 00:19:08,360
+fusion model.
+
+218
+00:19:08,360 --> 00:19:14,440
+But however, in vision language fusion model, the OD model improvement is always untouched.
+
+219
+00:19:15,160 --> 00:19:18,840
+And we know that the visual feature is very important in VLP tasks.
+
+220
+00:19:19,480 --> 00:19:24,760
+So actually we can leverage the large scale object attribute detection model like the
+
+221
+00:19:24,760 --> 00:19:31,560
+Resnext 152c4 to improve the performance of VLP tasks.
+
+222
+00:19:31,560 --> 00:19:35,560
+And we can also use the larger dataset like visual genome VG dataset.
+
+223
+00:19:38,760 --> 00:19:45,960
+In this part, we're going to talk about how Vimbo improves the vision in visual language.
+
+224
+00:19:46,600 --> 00:19:51,400
+Just inspired by the great success of the pertrained language models, the paradigm of
+
+225
+00:19:51,400 --> 00:19:55,720
+the mainstream works are actually designed in this fashion.
+
+226
+00:19:55,720 --> 00:20:00,920
+Firstly, we can develop a much more diverse, richer and larger training datasets.
+
+227
+00:20:00,920 --> 00:20:04,680
+And then we gain new insights in object detection algorithms.
+
+228
+00:20:05,480 --> 00:20:09,320
+And then we leverage more powerful GPUs for training bigger models.
+
+229
+00:20:09,960 --> 00:20:16,440
+However, this paper focuses on improving the object centric visual representations
+
+230
+00:20:16,440 --> 00:20:19,320
+from the vision side of the VLP work.
+
+231
+00:20:20,040 --> 00:20:23,320
+Specifically, they developed a new object detection model.
+
+232
+00:20:23,320 --> 00:20:27,880
+They can produce better visual features if images than the classic OD model.
+
+233
+00:20:28,440 --> 00:20:32,360
+By enriching the visual object and attribute categories,
+
+234
+00:20:32,840 --> 00:20:36,760
+enlarging the model size and training on a much larger OD dataset.
+
+235
+00:20:40,840 --> 00:20:47,160
+Now we're going to see some little experiments and examples about how they
+
+236
+00:20:47,160 --> 00:20:48,840
+improve the vision in visual languages.
+
+237
+00:20:49,960 --> 00:20:54,920
+Before that, we want to say that actually they pertrained a large scale object attribute
+
+238
+00:20:54,920 --> 00:21:01,320
+detection model based on the Resnext 152c4, let's call it c4 over here.
+
+239
+00:21:01,320 --> 00:21:06,280
+And the new model is better designed for VL tasks and is bigger and trained on much
+
+240
+00:21:06,280 --> 00:21:10,520
+larger amounts of data combining multiple public object detection datasets.
+
+241
+00:21:11,080 --> 00:21:16,600
+So compare with common object classes in typical OD models in the left figure,
+
+242
+00:21:16,600 --> 00:21:21,000
+the rich and diverse region features from their model in the right figure
+
+243
+00:21:21,000 --> 00:21:23,000
+are crucial for vision language tasks.
+
+244
+00:21:23,640 --> 00:21:30,200
+For concept detected by both models, for example, the boy attributes from their model often
+
+245
+00:21:31,560 --> 00:21:36,520
+offer richer information like young barefoot shirtless, standing,
+
+246
+00:21:36,520 --> 00:21:41,720
+serving, smiling, little playing, looking blonde, there are all the attributes information.
+
+247
+00:21:46,280 --> 00:21:52,920
+So to improve the OD model for VL tasks, they utilize four public object detection datasets
+
+248
+00:21:53,640 --> 00:21:57,720
+because most datasets do not have attribute annotations.
+
+249
+00:21:58,680 --> 00:22:02,680
+They adopt a pre-training and fine-tuning strategy to build their OD model.
+
+250
+00:22:03,640 --> 00:22:08,680
+Firstly, they pertrain an OD model on a large scale corpus consisting of the combination of
+
+251
+00:22:08,680 --> 00:22:12,360
+four public datasets by sampling, balancing, and merging.
+
+252
+00:22:13,080 --> 00:22:19,880
+And then fine-tune the OD model on VG to inject attribute information to add an attribute branch
+
+253
+00:22:19,880 --> 00:22:25,720
+to the pre-trained OD model, making it capable of detecting both objects and attributes.
+
+254
+00:22:28,520 --> 00:22:34,120
+Now we're going to revisit the VL model to reinforce our understanding.
+
+255
+00:22:34,760 --> 00:22:38,520
+And deep learning-based VL models typically consist of two modules,
+
+256
+00:22:39,240 --> 00:22:44,840
+an image understanding module vision, and a cross-modal understanding module VL.
+
+257
+00:22:45,960 --> 00:22:47,960
+Here we can give some definition.
+
+258
+00:22:47,960 --> 00:22:50,760
+Vision is the image understanding module.
+
+259
+00:22:50,760 --> 00:22:52,840
+VL is the cross-modal understanding module.
+
+260
+00:22:52,840 --> 00:22:55,400
+And IMG actually means the vision.
+
+261
+00:22:55,400 --> 00:23:00,520
+And Q is the semantic representation of the image, like the object tag.
+
+262
+00:23:01,080 --> 00:23:05,880
+And V is the distribution representation of the image, like the visual representation.
+
+263
+00:23:05,880 --> 00:23:10,360
+And W is the language or text, just like the question in VQA.
+
+264
+00:23:11,000 --> 00:23:16,600
+And Y could be the output or text, just like the answer to be predicted in VQA tasks.
+
+265
+00:23:17,560 --> 00:23:24,840
+So the convention in VL model is just like firstly we unify vision and language modeling VL
+
+266
+00:23:24,840 --> 00:23:25,800
+with transformer.
+
+267
+00:23:26,440 --> 00:23:31,080
+And then we portray the unified VL with large-scale text image corpora.
+
+268
+00:23:35,080 --> 00:23:38,360
+Now let's briefly talk about the dataset they use in pre-training.
+
+269
+00:23:39,320 --> 00:23:44,680
+They build their pre-training corpus based on three types of existing vision and VL datasets.
+
+270
+00:23:45,480 --> 00:23:47,480
+Firstly, the image captioning datasets.
+
+271
+00:23:47,480 --> 00:23:53,480
+Secondly, the visual QA datasets, including GQA and thirdly, image tagging datasets.
+
+272
+00:23:53,480 --> 00:23:59,560
+And there are two terms in the OSCAR plus pre-training loss, as in the equation,
+
+273
+00:23:59,560 --> 00:24:02,120
+which is the most important part about the paper.
+
+274
+00:24:02,120 --> 00:24:10,360
+Here, lossMTL is the masked token loss defined on the text modality for image animation,
+
+275
+00:24:10,360 --> 00:24:12,360
+just following closely OSCAR.
+
+276
+00:24:12,840 --> 00:24:17,480
+And then the lossCl3 is a novel three-way contrastive loss to effectively
+
+277
+00:24:17,480 --> 00:24:22,200
+optimize training objectives used for VQA and text image matching.
+
+278
+00:24:25,080 --> 00:24:28,920
+Here we're going to talk about the specifics of the loss function.
+
+279
+00:24:29,560 --> 00:24:33,560
+For the lossMTL, the word tokens of the image caption is W.
+
+280
+00:24:33,560 --> 00:24:38,360
+And word tokens of object text Q share the same linguistic semantic space.
+
+281
+00:24:39,000 --> 00:24:42,840
+And the lossMTL is applied on tokens of both W and Q.
+
+282
+00:24:43,640 --> 00:24:49,960
+So we define the discrete token sequence as H equals to W and Q.
+
+283
+00:24:51,160 --> 00:24:53,800
+And then we apply the lossMTL for pre-training.
+
+284
+00:24:54,440 --> 00:25:00,040
+At each iteration, we can randomly mask each input token in H with a probability
+
+285
+00:25:00,040 --> 00:25:04,520
+and replace the mask1 HI with a special token mask.
+
+286
+00:25:05,480 --> 00:25:10,840
+The goal of this training is to predict these masked tokens based on their surrounding tokens
+
+287
+00:25:10,840 --> 00:25:14,040
+and image features by minimizing the negative likelihood,
+
+288
+00:25:14,920 --> 00:25:17,560
+by minimizing the negative log likelihood, actually.
+
+289
+00:25:18,440 --> 00:25:20,520
+So totally the same process as BERT.
+
+290
+00:25:23,240 --> 00:25:29,640
+Now we're going to talk about the lossCl3, which takes into account two types of training samples
+
+291
+00:25:29,640 --> 00:25:34,600
+X. And we take a VQA example over here, like the question, answer,
+
+292
+00:25:34,600 --> 00:25:37,240
+and image features triplets of the VQA dataset.
+
+293
+00:25:38,280 --> 00:25:43,080
+To compute the contrastive losses, the negative examples need to be constructed.
+
+294
+00:25:43,720 --> 00:25:49,720
+And we can construct the negative or unmatched triplets for training samples and the polluted
+
+295
+00:25:49,720 --> 00:25:56,440
+answers. So now to classify whether a question and answer image triplet contains a polluted
+
+296
+00:25:56,440 --> 00:25:59,000
+answer is an answer selection task for VQA.
+
+297
+00:26:00,760 --> 00:26:06,520
+Since the encoding of CLS token in BERT can be viewed as a representation of the triplet W,
+
+298
+00:26:06,520 --> 00:26:13,400
+Q, and V, we can apply a fully connected layer on the top of it as a three-way classifier F
+
+299
+00:26:14,040 --> 00:26:17,960
+to predict whether the triplet is matched or contains a polluted Q.
+
+300
+00:26:19,000 --> 00:26:24,600
+So now we can easily build the training set by sampling from all Qs in the corpus.
+
+301
+00:26:25,240 --> 00:26:30,520
+Now the training model is trying to predict if the given triplet contains the true answer for the
+
+302
+00:26:30,520 --> 00:26:37,800
+question. Here we can talk about the training models and the architecture and the parameters.
+
+303
+00:26:38,360 --> 00:26:44,440
+They portray the model initialized with BERT and to ensure that the image region features have the
+
+304
+00:26:44,440 --> 00:26:50,440
+same input embedding size in BERT, they need to transform region features using a linear projection
+
+305
+00:26:50,440 --> 00:26:59,080
+via the matrix W. So the trainable parameters are theta, including BERT, theta BERT, and W parameters.
+
+306
+00:27:02,920 --> 00:27:08,120
+So far we already talked about how to unify text embedding and image embedding through
+
+307
+00:27:08,120 --> 00:27:13,800
+multimodal pre-training models to have a unified embedding. And now we're talking about how to
+
+308
+00:27:13,800 --> 00:27:19,960
+use the unified embedding to finish the downstream tasks. I'm taking two types of downstream tasks.
+
+309
+00:27:20,520 --> 00:27:26,040
+As examples, and we start with generation tasks. For example, image captioning.
+
+310
+00:27:27,240 --> 00:27:33,480
+And the captioning task is to generate a natural language caption for an image. Firstly,
+
+311
+00:27:33,480 --> 00:27:39,240
+we fine-tune the model using the sequence-to-sequence objective. So each training sample is converted
+
+312
+00:27:39,240 --> 00:27:45,080
+to a triplet consisting of a caption, a set of image region features, and a set of object text.
+
+313
+00:27:45,960 --> 00:27:52,040
+And then we randomly mask out the captioned tokens and use the encoding of the remaining
+
+314
+00:27:52,040 --> 00:27:57,160
+context to predict the mask's token in the unidirectional generation process.
+
+315
+00:27:58,440 --> 00:28:05,400
+So during inference, we first encode the image regions, object tags, and a special token CLS
+
+316
+00:28:05,400 --> 00:28:12,920
+in BERT as input. Then the model starts to generate using the mask token mechanism,
+
+317
+00:28:12,920 --> 00:28:22,120
+just totally like in BERT. Here we're going to talk about the VQA and GQA about the
+
+318
+00:28:22,120 --> 00:28:29,000
+understanding tasks. VQA and GQA are two widely used understanding tasks for evaluating VL models,
+
+319
+00:28:29,000 --> 00:28:34,120
+and the tasks require the model to answer natural language questions based on an image.
+
+320
+00:28:35,080 --> 00:28:39,000
+So for each question, the model picks an answer from a shared answer set.
+
+321
+00:28:39,720 --> 00:28:45,560
+We'll fine-tune our VQA task. We construct one input sequence, which contains the concatenation
+
+322
+00:28:45,560 --> 00:28:56,520
+of a given question and the object text and region features, and then the CLS token output
+
+323
+00:28:56,520 --> 00:29:02,680
+from the model is fed to a task-specific linear classifier for prediction.
+
+324
+00:29:03,240 --> 00:29:09,240
+Specifically, we treat VQA as a multi-label classification problem, assigning a soft target
+
+325
+00:29:09,240 --> 00:29:14,120
+score to each answer based on its relevancy to the human answer responses, and then we
+
+326
+00:29:14,120 --> 00:29:19,240
+fine-tune the model by minimizing the cross entropy loss computed using the predicted scores
+
+327
+00:29:19,240 --> 00:29:27,000
+and the soft target scores. And at inference stage, we can just simply use a soft max function
+
+328
+00:29:27,000 --> 00:29:27,800
+for prediction.
+
+329
+00:29:32,920 --> 00:29:37,720
+This paper actually tells us how to improve performance using more sophisticated object
+
+330
+00:29:37,720 --> 00:29:43,800
+detection models and fine-tuning for VL tasks. However, with the rise of large language models,
+
+331
+00:29:43,800 --> 00:29:49,480
+the entire AI community, including the CV and NLP, is paying more and more attention to the
+
+332
+00:29:49,480 --> 00:29:56,200
+possibility of completing downstream tasks using only zero shot. So in the following,
+
+333
+00:29:56,200 --> 00:30:01,480
+we will introduce one of the most important milestones to open the gate to zero shot in
+
+334
+00:30:01,480 --> 00:30:12,200
+multi-modal models, CLIP. Starting from here, we're going to talk about the contrastive
+
+335
+00:30:12,200 --> 00:30:17,000
+language image per training that is kind of different from the two papers that we just
+
+336
+00:30:17,000 --> 00:30:25,080
+talked about. For example, now let's review again the main representation learning paradigm in CV.
+
+337
+00:30:26,200 --> 00:30:30,760
+Firstly, we need to build a connection between the image and text, such as using the image and
+
+338
+00:30:30,760 --> 00:30:36,600
+text pair data set to learn the representation from each other, just like Oscar does. Then we
+
+339
+00:30:36,600 --> 00:30:41,240
+can obtain more data for weekly supervised pre-training, but no matter how many classes
+
+340
+00:30:41,240 --> 00:30:47,080
+there are, in the data set, the final classifier is actually static and limited, because we still
+
+341
+00:30:47,080 --> 00:30:53,000
+have to fix it to the certain number of classes for classification, and this definitely limits the
+
+342
+00:30:53,000 --> 00:31:01,240
+zero shot capability of the model, just like in view. So combining these two methods, we can
+
+343
+00:31:01,240 --> 00:31:08,280
+consider obtaining a large number of pairs of text and image from the internet to expand the data,
+
+344
+00:31:08,280 --> 00:31:13,480
+and then we figured out a way to have representations for classification without using a static
+
+345
+00:31:13,480 --> 00:31:20,920
+classifier. And learning directly from raw text about images is a good idea, which leverages
+
+346
+00:31:21,480 --> 00:31:24,040
+a much broader source of supervision.
+
+347
+00:31:28,360 --> 00:31:33,960
+From here, we're going to see the famous paper, CLIP, Learning Transferable Visual Models
+
+348
+00:31:33,960 --> 00:31:39,160
+from Natural Language Supervision, and this paper is focusing on introducing self-supervised
+
+349
+00:31:39,160 --> 00:31:47,640
+signals widely used in NLP intervention. Now we're going to see the background and motivation
+
+350
+00:31:47,640 --> 00:31:54,360
+by CLIP. A lot of recent work has shown that the success of pre-training models in NLP viewed,
+
+351
+00:31:54,360 --> 00:32:01,080
+like the GPT family, and we already see that the zero shot CV tasks had seen the improved
+
+352
+00:32:01,080 --> 00:32:07,640
+performance in network and more targeted weak supervision. But just as I mentioned before,
+
+353
+00:32:07,640 --> 00:32:13,560
+actually the SOTA CV system still has some problem, for example, the fixed set of pre-determined object
+
+354
+00:32:13,800 --> 00:32:22,600
+categories, or the low generality and usability. So CLIP is trying to design a bigger model that
+
+355
+00:32:22,600 --> 00:32:27,640
+close this gap by using the big data sets and the larger model size.
+
+356
+00:32:31,560 --> 00:32:36,120
+This paper demonstrates that the simple pre-training task of predicting which caption
+
+357
+00:32:36,120 --> 00:32:42,280
+goes with which image is already an efficient and scalable way to learn SOTA image representations,
+
+358
+00:32:42,280 --> 00:32:48,600
+and after pre-training, Natural Language is used to reference the learned visual concepts,
+
+359
+00:32:48,600 --> 00:32:55,480
+which enable zero shot transfer of the model to downstream tasks. So CLIP can perform many types
+
+360
+00:32:55,480 --> 00:33:01,880
+of fine-grained object classification, and the model is often competitive with a fully supervised
+
+361
+00:33:01,880 --> 00:33:08,040
+baseline without the need for any data set specific training, just like in this figure shows.
+
+362
+00:33:08,440 --> 00:33:19,240
+Here we're going to talk about the method of CLIP. And before that, we still have to clear about
+
+363
+00:33:20,200 --> 00:33:26,440
+a problem. The problem is that we want to use the Natural Language supervision signals to train
+
+364
+00:33:26,440 --> 00:33:33,240
+a better visual model. And if we can get a large amount of text, image pair data from the internet
+
+365
+00:33:33,240 --> 00:33:39,080
+with no need to label data anymore, then we can use this data to train larger models,
+
+366
+00:33:39,080 --> 00:33:47,560
+even if the data is noisy. So in CLIP, firstly, they constructed a new data set of 400 million
+
+367
+00:33:47,560 --> 00:33:52,840
+image and text pairs collected from a variety of publicly-available sources on the internet,
+
+368
+00:33:53,720 --> 00:33:58,840
+and then they need to set a pre-training optimization objective. And then they build the
+
+369
+00:33:58,840 --> 00:34:07,560
+entire system and they start the pre-training task. Here we discuss the details of the pre-training task,
+
+370
+00:34:07,560 --> 00:34:13,560
+which is the most important part of this paper, CLIP. Actually, a lot of work jointly trained an
+
+371
+00:34:13,560 --> 00:34:20,360
+image CNN and text transformer from scratch to predict the caption of an image. They try to
+
+372
+00:34:20,360 --> 00:34:28,760
+predict the exact words of the text accompanying each image. And this is a very difficult task
+
+373
+00:34:28,920 --> 00:34:35,080
+actually due to the wide variety of descriptions, comments, and related texts that co-occur with
+
+374
+00:34:35,080 --> 00:34:42,360
+the images. Although this kind of generative models of images can learn the high-quality image
+
+375
+00:34:42,360 --> 00:34:49,960
+representation, they still require an order of magnitude more compute than the contrastive
+
+376
+00:34:49,960 --> 00:34:58,360
+models with the same performance. So noting these findings, they explore training a system to predict
+
+377
+00:34:58,440 --> 00:35:05,000
+only which text as a whole is paired with which image instead of the exact words of the text.
+
+378
+00:35:06,040 --> 00:35:12,200
+And the experiments observe a further four times of efficiency improvement in the rate of zero
+
+379
+00:35:12,200 --> 00:35:20,680
+shall transfer to ImageNet. Now we're going to talk about the pre-training in details.
+
+380
+00:35:21,800 --> 00:35:28,200
+Given the batch of n pairs, CLIP is trained to predict which of the n by n possible pairings
+
+381
+00:35:28,600 --> 00:35:35,160
+across a batch actually occurred. So to do this, CLIP learns a multimodal embedding space by jointly
+
+382
+00:35:35,160 --> 00:35:40,280
+training an image encoder and text encoder to maximize the cosine similarity of the image
+
+383
+00:35:40,280 --> 00:35:47,320
+and text embeddings of the n real pairs in the batch, while minimizing the cosine similarity
+
+384
+00:35:47,320 --> 00:35:55,640
+of the embeddings of the n squared minus n incorrect pairings. And then they try to optimize
+
+385
+00:35:55,640 --> 00:36:04,200
+the symmetric loss, they try to optimize the symmetric cross entropy loss over these similarity
+
+386
+00:36:04,200 --> 00:36:13,480
+scores. In specifics, transformer is selected as the text encoder and ResNet or VIT can be selected
+
+387
+00:36:13,480 --> 00:36:23,800
+as the image encoder. For example, the step one, we extract the feature representations of each
+
+388
+00:36:23,800 --> 00:36:31,400
+modality from two encoders. And from steps two to three, we obtain the joint multimodal embedding
+
+389
+00:36:31,400 --> 00:36:39,240
+of the same dimension through linear transformation and normalization. As step four, we perform the
+
+390
+00:36:39,240 --> 00:36:45,560
+scale pairwise cosine similarities, pairwise cosine similarities to obtain the cosine
+
+391
+00:36:45,560 --> 00:36:52,280
+similarities matrix. Finally, in step five, we just calculate the symmetric contrastive loss
+
+392
+00:36:52,360 --> 00:36:54,040
+through the cross entropy loss function.
+
+393
+00:36:58,600 --> 00:37:03,640
+We know this pseudocode is kind of confusing, so I'm writing my code over here to enunciate what
+
+394
+00:37:03,640 --> 00:37:12,440
+we do using Torch. To compute the cross entropy loss, we can design two functions, the contrastive
+
+395
+00:37:12,440 --> 00:37:17,640
+loss and CLIP loss. And in the contrastive loss, we can leverage the Torch function,
+
+396
+00:37:18,440 --> 00:37:23,160
+union function across entropy, and we can set the corresponding lodges.
+
+397
+00:37:24,600 --> 00:37:31,720
+And we first compute the loss i for the image encoding, and then we compute the loss t
+
+398
+00:37:31,720 --> 00:37:39,560
+for the text embedding, and then we calculate the average of the loss i and the loss t.
+
+399
+00:37:40,360 --> 00:37:41,880
+And then we can have the final loss.
+
+400
+00:37:42,280 --> 00:37:52,040
+Okay, after pre-training, we have a problem which is how to do the inference. Actually,
+
+401
+00:37:52,040 --> 00:37:58,600
+in computer vision, zero-shot learning usually refers to the study of generalizing to unseen
+
+402
+00:37:58,600 --> 00:38:03,720
+object categories in image classification. So CLIP's contrastive pre-training method
+
+403
+00:38:03,720 --> 00:38:10,040
+actually makes zero-shot classification very easy. For example, we have an image to predict.
+
+404
+00:38:10,840 --> 00:38:16,840
+First, we get its image embedding, and then we create a data set classifier from label text,
+
+405
+00:38:16,840 --> 00:38:23,480
+and all the labels are all encoded by the text encoder to obtain the corresponding text embedding,
+
+406
+00:38:23,480 --> 00:38:28,520
+and then we calculate the cosine similarity respectively. And then the prediction label
+
+407
+00:38:28,520 --> 00:38:35,240
+with the highest similarity is the top one prediction label. So in this way, the classification tax
+
+408
+00:38:36,040 --> 00:38:40,040
+is no longer limited to a fixed data set or a fixed number of labels.
+
+409
+00:38:42,440 --> 00:38:47,640
+And actually, in pre-training, usually the text data is a full sentence describing the image in
+
+410
+00:38:47,640 --> 00:38:54,680
+some way, so to help bridge this distribution gap, we can use the prompt template like a photo of a
+
+411
+00:38:54,680 --> 00:39:01,160
+label. As a good default that helps specify the text is about the content of the image,
+
+412
+00:39:01,960 --> 00:39:06,920
+and this often improves the performance over the baseline of using only the label text,
+
+413
+00:39:06,920 --> 00:39:13,240
+just similar to the prompt engineering discussion around other larger language models,
+
+414
+00:39:13,240 --> 00:39:19,480
+and zero-shot performance can be significantly improved by customizing the prompt text to each text.
+
+415
+00:39:21,080 --> 00:39:27,480
+And prompt engineering helps specify the category on many fine-grained image classification data sets.
+
+416
+00:39:28,280 --> 00:39:35,960
+For example, on a data set about animals, we can use the prompt like a photo of a label,
+
+417
+00:39:35,960 --> 00:39:41,880
+a type of pet, as prompt. So this can help provide a context very well.
+
+418
+00:39:45,800 --> 00:39:49,480
+Over here, we can look at the zero-shot classification result from Clip,
+
+419
+00:39:50,120 --> 00:39:55,800
+and the performance of Clip is very strong because Clip is zero-shot without using any data from
+
+420
+00:39:55,800 --> 00:40:04,040
+downstream tasks, while linear probe ResNet 50 used the downstream data to find human waste classifier.
+
+421
+00:40:08,360 --> 00:40:14,200
+Finally, we can conclude that although Clip's zero-shot performance is generally better than
+
+422
+00:40:14,200 --> 00:40:21,800
+supervised baseline ResNet 50, it is actually kind of weaker than SOTA methods of many downstream
+
+423
+00:40:21,800 --> 00:40:28,680
+tasks, especially those fine-grained classification and abstract tasks. So the transfer learning of
+
+424
+00:40:28,680 --> 00:40:36,840
+Clip has been explored very much recent years. And secondly, although the Clip zero-shot classifier
+
+425
+00:40:36,840 --> 00:40:43,960
+can work on a wide range of tasks, the essence of Clip is to compare and reason within the limited
+
+426
+00:40:43,960 --> 00:40:50,120
+classes and cannot generate new concepts as completely flexible as image captions,
+
+427
+00:40:50,680 --> 00:40:58,440
+because Clip, like Oscar, is not a generative model either. Despite these problems,
+
+428
+00:40:59,160 --> 00:41:03,400
+we'll say Clip is the basis for a series of excellent work in recent years,
+
+429
+00:41:04,040 --> 00:41:10,520
+because it provides a very good standing point for zero-shot tasks and unify text image representation.
+
+430
+00:41:11,320 --> 00:41:17,400
+Very soon, we're going to see a series of new Clip-based models that can be applied to a large
+
+431
+00:41:17,480 --> 00:41:18,680
+number of VL tasks.
+
+432
+00:41:24,200 --> 00:41:29,480
+In this part, we're going to introduce the famous paper Align Scaling of Visual and Visual
+
+433
+00:41:29,480 --> 00:41:37,000
+Language Representation Learning with Noisy Text Supervision. And the paper is focusing on the scale
+
+434
+00:41:37,000 --> 00:41:42,120
+of the corpus making up for noise and leading to SOTA representations.
+
+435
+00:41:47,400 --> 00:41:50,920
+Over here, we're going to talk about the background and motivation about Align.
+
+436
+00:41:51,560 --> 00:41:57,480
+For visual language, the popular datasets like Clip all involve a non-trivial data collection
+
+437
+00:41:57,480 --> 00:42:03,800
+and a cleaning process. And this costly curation process limits the size of datasets and hence
+
+438
+00:42:03,800 --> 00:42:11,000
+hinders the scaling of the trained models. And in this paper, they leverage noisy datasets of
+
+439
+00:42:11,080 --> 00:42:20,440
+over one billion image taxpayers obtained without expensive filtering or post-processing steps.
+
+440
+00:42:20,440 --> 00:42:26,520
+So a single dual encoder architecture learns to align visual and language representations
+
+441
+00:42:26,520 --> 00:42:32,200
+of the image and taxpayers using a contrastive loss, just same as Clip. And they show that the
+
+442
+00:42:32,200 --> 00:42:37,960
+scale of the corpus can make up for its noise and leads to SOTA representations even with such a
+
+443
+00:42:37,960 --> 00:42:45,400
+simple learning scheme. The aligned visual and language representations enables zero-shot image
+
+444
+00:42:45,400 --> 00:42:52,360
+classification. And the representations also enable cross-modality search with complex text and text
+
+445
+00:42:52,360 --> 00:43:02,360
+plus image queries. Here we're going to talk about the noisy image text datasets.
+
+446
+00:43:02,360 --> 00:43:09,720
+Actually, the focus of their work is to scale up visual and language representation learning.
+
+447
+00:43:10,280 --> 00:43:16,760
+So for this purpose, they resort to a large larger dataset than existing ones.
+
+448
+00:43:17,400 --> 00:43:23,560
+In particular, we follow the methodology of constructing concept perceptions dataset to
+
+449
+00:43:23,560 --> 00:43:29,640
+get a version of raw English image text data. And here, for the purpose of scaling,
+
+450
+00:43:30,600 --> 00:43:36,840
+they just trade quality for scale by giving up most of the cleaning steps in the original work.
+
+451
+00:43:37,720 --> 00:43:44,680
+Instead, they only apply the minimal frequency-based filtering. And obviously, this one is
+
+452
+00:43:44,680 --> 00:43:54,920
+totally noise sample, the second sample. And other samples do have some noisy information
+
+453
+00:43:54,920 --> 00:44:00,440
+in the text, just like this caption above this image or this caption above this image.
+
+454
+00:44:02,680 --> 00:44:08,040
+Over here, I have to emphasize again that their work is very similar to Clip, which
+
+455
+00:44:08,920 --> 00:44:13,800
+proposes visual representation learning via natural language supervision in a similar
+
+456
+00:44:13,800 --> 00:44:19,400
+contrastive learning setting. Besides, using different vision and language encoder
+
+457
+00:44:20,040 --> 00:44:26,600
+architectures, the key difference is on training data. For example, a line follows a natural
+
+458
+00:44:26,600 --> 00:44:33,480
+distribution of the image text pairs from the raw data, while Clip collects the dataset by
+
+459
+00:44:33,480 --> 00:44:40,200
+constructing the high-frequency visual concepts from English Wikipedia. And this work demonstrates
+
+460
+00:44:40,200 --> 00:44:46,280
+that strong visual and vision language representations can be learned with a dataset that doesn't
+
+461
+00:44:46,360 --> 00:44:53,400
+require expert knowledge to cure it. So this is the difference between a line and Clip.
+
+462
+00:44:56,200 --> 00:44:58,440
+Over here, we're going to talk about the method of a line.
+
+463
+00:45:00,600 --> 00:45:06,600
+Visual and language representations actually are joined to learn from noisy image art text data.
+
+464
+00:45:07,160 --> 00:45:11,080
+And the representations can be used for vision-only or vision-language task
+
+465
+00:45:11,960 --> 00:45:17,400
+transfer. Without any fine-tuning, a line powers the zero-shot visual classification
+
+466
+00:45:17,400 --> 00:45:22,840
+and cross-modal search, including the image to text search, the text to image search,
+
+467
+00:45:22,840 --> 00:45:30,920
+and even search with joint image plus text curies. Right now, over here, we can see the text encoder
+
+468
+00:45:30,920 --> 00:45:37,560
+and the image encoder. And we just feed the noisy image text data to the encoders,
+
+469
+00:45:37,560 --> 00:45:43,480
+and we use the contrasted learning laws to optimize the network. So this is the portraying
+
+470
+00:45:43,480 --> 00:45:53,160
+part. It's kind of easy. Specifically, they portray a line using a dual encoder architecture,
+
+471
+00:45:53,160 --> 00:45:59,080
+just I mentioned before, and the model consists of a pair of image and text encoders with a
+
+472
+00:45:59,080 --> 00:46:05,640
+cosine similarity combination function at the top. And they use a vision net as the image encoder
+
+473
+00:46:05,640 --> 00:46:14,440
+and BERT with CLS token embedding as the text embedding encoder. A fully connected layer with
+
+474
+00:46:14,440 --> 00:46:20,680
+linear activation is added on top of BERT encoder to match the dimension from the image power.
+
+475
+00:46:21,800 --> 00:46:27,240
+And both image and text encoders are trained from scratch. The image and text encoders are
+
+476
+00:46:27,240 --> 00:46:34,520
+optimized via normalized softmax laws. So in training the treat, matched image text pairs as
+
+477
+00:46:34,520 --> 00:46:41,800
+positive. And all other random image text pairs that can be formed in a training batch as negative.
+
+478
+00:46:45,880 --> 00:46:49,000
+Over here, we're going to talk about the loss function about a line.
+
+479
+00:46:51,080 --> 00:46:56,600
+Now let's look at their optimization objective. They just try to minimize the sum of two losses,
+
+480
+00:46:56,600 --> 00:47:02,360
+one for image to text classification, and the other for text to image classification.
+
+481
+00:47:02,360 --> 00:47:10,360
+And over here, the xi and yj are the normalized embedding of image in the i-th pair and that
+
+482
+00:47:10,360 --> 00:47:17,320
+of text in the j-th pair, respectively. And capital N is the batch size, and sigma term is the hyper
+
+483
+00:47:17,320 --> 00:47:26,280
+parameter about temperature to scale the logits. And this is very similar as what we do in CLIP.
+
+484
+00:47:26,440 --> 00:47:35,800
+Because of the pertaining method of contrastive learning like CLIP, they naturally evaluate
+
+485
+00:47:35,800 --> 00:47:42,680
+a line models on the image to text and text to image retrieval text with and without fine-tuning
+
+486
+00:47:43,480 --> 00:47:48,840
+this point. And they also apply transfer of a line to visual classification tasks.
+
+487
+00:47:49,400 --> 00:47:53,800
+And the focus of the experiment is the performance of zero shot.
+
+488
+00:47:56,600 --> 00:48:03,560
+Now we can look at their experiment results. The table 1 shows that compared to previous works,
+
+489
+00:48:03,560 --> 00:48:09,320
+a line achieves SOTA results in all metrics of benchmarks. And in the zero shot setting,
+
+490
+00:48:09,320 --> 00:48:15,640
+a line gets more than 7% improvement in image retrieval tasks compared to the previous SOTA
+
+491
+00:48:15,640 --> 00:48:21,480
+CLIP. With fine-tuning, a line outperforms all existing methods by a large margin.
+
+492
+00:48:22,440 --> 00:48:27,000
+And if we directly feed the text of class names into the text encoder,
+
+493
+00:48:27,000 --> 00:48:33,320
+a line is able to classify images into candidate classes via image text retrieval.
+
+494
+00:48:34,920 --> 00:48:40,920
+And table 2 compares the line with CLIP on ImageNet. Just similar to CLIP, a line shows the
+
+495
+00:48:40,920 --> 00:48:46,760
+great robotness on classification tasks with different image distributions. So in order to make
+
+496
+00:48:46,840 --> 00:48:54,280
+a fair camper reason, they use the same from assembly method as CLIP. Just like what we talked
+
+497
+00:48:54,840 --> 00:49:00,680
+in CLIP. Each class name is expanded with a set of ROM templates defined by CLIP,
+
+498
+00:49:00,680 --> 00:49:03,080
+such as a photo level label.
+
+499
+00:49:07,400 --> 00:49:13,080
+There's also some ablation study. Actually, a large scaling training set is essential to allow
+
+500
+00:49:13,160 --> 00:49:19,080
+scaling up of the models and to achieve better performance. A larger model is required to fully
+
+501
+00:49:19,080 --> 00:49:26,680
+utilize the larger data set. And model quality improves nicely with larger backbones. Besides,
+
+502
+00:49:26,680 --> 00:49:34,040
+as expected, scaling of image encoder capability or scaling of the image encoder capacity
+
+503
+00:49:34,680 --> 00:49:42,040
+is more important for vision tasks. In image text retrieval tasks, the image and text encoder
+
+504
+00:49:42,600 --> 00:49:46,440
+capacities are equally important as shown in this table.
+
+505
+00:49:51,560 --> 00:49:57,000
+This part, we're going to talk about the analysis of the learned embeddings in a line model. I
+
+506
+00:49:57,000 --> 00:50:05,160
+personally think the most important experiment about this paper is this part. This part is about
+
+507
+00:50:05,160 --> 00:50:11,080
+the analysis of learned embeddings by building a simple image retrieval system to study the
+
+508
+00:50:11,080 --> 00:50:17,640
+behaviors of embeddings trained by a line. And the figure shows that a line can retrieve
+
+509
+00:50:17,640 --> 00:50:24,920
+precise images, even detailed descriptions of a scene, or fine-grained or instance-level concepts.
+
+510
+00:50:25,720 --> 00:50:32,920
+And these examples demonstrate that the align model really can align the images and text with
+
+511
+00:50:32,920 --> 00:50:38,600
+similar semantics, and that a line can generalize to noble complex concepts.
+
+512
+00:50:38,600 --> 00:50:46,360
+And this is a more important experiment, I think. Previously,
+
+513
+00:50:46,360 --> 00:50:52,040
+word-to-vax shows that the linear relationships between word vectors emerge as a result of
+
+514
+00:50:52,040 --> 00:50:58,200
+training them to predict adjacent words, incentives, and paragraphs. And they show that
+
+515
+00:50:58,200 --> 00:51:04,840
+linear relationship between image and text embeddings also emerge in a line. And we perform
+
+516
+00:51:04,840 --> 00:51:11,880
+image retrieval using a combined image plus text query. Specifically, given a query image and text
+
+517
+00:51:11,880 --> 00:51:16,840
+string, we add their aligned embeddings together and use it to retrieve the relevant images.
+
+518
+00:51:17,480 --> 00:51:21,560
+And the figure shows the results from a variety of image plus text queries.
+
+519
+00:51:22,680 --> 00:51:30,360
+Those examples not only demonstrate the great
+
+520
+00:51:31,320 --> 00:51:36,920
+compositionality of aligned embeddings across vision and language domains, but also show the
+
+521
+00:51:36,920 --> 00:51:42,840
+feasibility of a new paradigm of search with multimodal query that would otherwise be very
+
+522
+00:51:42,840 --> 00:51:49,400
+hard using only text query or image query. For example, we could turn a pair of black shoes
+
+523
+00:51:49,400 --> 00:51:56,200
+into the identically-looking shoes with a color of red. Finally, as showing the last three rows of
+
+524
+00:51:56,200 --> 00:52:03,000
+the figure, removing objects attributes from a scene is also possible by performing subtraction
+
+525
+00:52:03,560 --> 00:52:11,960
+in the embedding space. So far, we may have discovered how well we can unify text and
+
+526
+00:52:11,960 --> 00:52:18,200
+image, we can unify text and image representations through the contrastive learning, which may be
+
+527
+00:52:18,760 --> 00:52:24,760
+why stable diffusion uses clip as the text and image encoder for conditional generation.
+
+528
+00:52:24,760 --> 00:52:34,120
+And however, similar as clip and oscar, although align zero shot achieves very good performance,
+
+529
+00:52:34,120 --> 00:52:40,520
+it still cannot generate anything new or generate new concepts as completely flexible
+
+530
+00:52:40,520 --> 00:52:48,360
+acts image captions because they're not generated models. And in the following,
+
+531
+00:52:49,080 --> 00:52:52,680
+we're going to have a look at what we can do with models with the decoders.
+
+532
+00:52:55,640 --> 00:53:07,960
+All right. So quickly recap what we covered. So oscar and middle there are like single encoder
+
+533
+00:53:07,960 --> 00:53:14,600
+based models, clip and align there are like dual encoder based models. Now we're going to
+
+534
+00:53:15,560 --> 00:53:23,400
+introduce some generative language image training with the decoder block from the transformer.
+
+535
+00:53:25,160 --> 00:53:31,880
+So the first paper I'm going to cover is blip, bootstrapping language image per training for
+
+536
+00:53:31,880 --> 00:53:37,560
+unified vision language understanding and generation. The main contribution is to improve
+
+537
+00:53:38,360 --> 00:53:42,040
+the text quality by bootstrapping the contrastive training and also unify
+
+538
+00:53:43,000 --> 00:53:52,120
+the vision language per training. So again, the background blip wants to improve the clip
+
+539
+00:53:52,120 --> 00:53:57,800
+and the line from two perspectives. One from the model perspective, like I said,
+
+540
+00:53:58,440 --> 00:54:05,480
+clip online, they adopt encoder based models. The problem with that is they are not easily
+
+541
+00:54:05,480 --> 00:54:12,200
+transferred directly to text generation tasks, for example, image captioning. And then the encoder
+
+542
+00:54:12,200 --> 00:54:17,240
+decoder based models have not been successfully adopted for image text retrieval tasks.
+
+543
+00:54:17,880 --> 00:54:24,520
+The second perspective is from the data perspective. The number of high quality human
+
+544
+00:54:24,520 --> 00:54:32,360
+adornated image and text pairs, for example, MS Coco, is not enough for a large multi-model
+
+545
+00:54:32,360 --> 00:54:40,440
+model training. Clip and align are portrayed on a very large but noisy web text. This can only
+
+546
+00:54:41,400 --> 00:54:49,480
+yield suboptimal results. And here is just a joke about an image, which is, you know, just two
+
+547
+00:54:49,480 --> 00:54:56,280
+leaves on a tree. The caption is congratulations, you are now the branch manager. You know, it's not
+
+548
+00:54:56,280 --> 00:55:09,400
+a good training data to train over multi-model large units. So then the blip wants to improve
+
+549
+00:55:09,480 --> 00:55:16,920
+the caption quality. To solve the text quality issue, a natural approach for us is to build a
+
+550
+00:55:16,920 --> 00:55:23,800
+discriminator that can distinguish between a good and bad image text pairs. And a generator to
+
+551
+00:55:23,800 --> 00:55:33,720
+synthesize better quality captions to replace the noisy captions. And then same as clip and align,
+
+552
+00:55:33,720 --> 00:55:39,320
+we want to learn a uni-model encoder to align vision and language representations.
+
+553
+00:55:40,440 --> 00:55:48,280
+So here is another example to demonstrate the idea. We have an image, which has a very noisy text,
+
+554
+00:55:48,280 --> 00:55:55,880
+blue sky bakery in the sunset park. We want to use a filter to tell this is not a correct caption.
+
+555
+00:55:56,760 --> 00:56:00,360
+And we want to use a captioner to generate a better caption,
+
+556
+00:56:00,920 --> 00:56:07,560
+chocolate cake with cream frosting and chocolate sprinkles on top. And then we hope that the future
+
+557
+00:56:07,560 --> 00:56:17,560
+can tell this is a better caption. So very simple idea. So similar as before, we want to learn
+
+558
+00:56:18,280 --> 00:56:26,840
+the uni-model encoder we'll start from here. So the multi-model alignment task wants to encourage
+
+559
+00:56:26,840 --> 00:56:32,120
+the matched image text pairs to have similar representations in contrast to the negative
+
+560
+00:56:32,120 --> 00:56:42,280
+pairs. So same as clip. And they use the same ITC loss function as in clip. This is the company,
+
+561
+00:56:42,280 --> 00:56:51,640
+the sum of two infoNCE losses. NCE stands for noise contrast divestimation for image detects
+
+562
+00:56:52,360 --> 00:56:58,440
+and text image. And the similarity function they use in the infoNCE is the cosine similarity.
+
+563
+00:57:00,360 --> 00:57:11,800
+And then the model structure is just the image encoder and text encoder. This is the same as
+
+564
+00:57:13,000 --> 00:57:20,920
+was covered before. And then for the discriminator or the filter, we want to train a binary
+
+565
+00:57:20,920 --> 00:57:26,600
+classification task to predict whether an image text pair is matched or not, given the multi-model
+
+566
+00:57:26,600 --> 00:57:34,200
+features. So here we have the same image encoder. We have the image of any features.
+
+567
+00:57:34,920 --> 00:57:42,760
+And then we have an image from the text encoder. We append the encode special token at the beginning
+
+568
+00:57:42,760 --> 00:57:49,800
+of the caption. We pass it through the cell by directional substitution. And then we feed the
+
+569
+00:57:49,800 --> 00:57:57,560
+signal from the image into the cross attention. And then at the end we have a binary classification
+
+570
+00:57:57,560 --> 00:58:06,920
+loss. And they call it ITM loss. It stands for image text matching loss. And the authors adopt a
+
+571
+00:58:06,920 --> 00:58:13,960
+what's called hard negative sampling strategy. This is a very simple idea. We want to use negative
+
+572
+00:58:13,960 --> 00:58:20,440
+pairs with a higher contrast similarity from the ITC loss which we learned before.
+
+573
+00:58:22,280 --> 00:58:30,280
+So we want to use more similar like image caption pairs to train our ITM loss because
+
+574
+00:58:30,280 --> 00:58:35,960
+this is more challenging. If we use very different image and caption, it's not very
+
+575
+00:58:35,960 --> 00:58:46,760
+challenging for our model to learn any informative learnings. So yeah, that's the ITM loss for the
+
+576
+00:58:46,760 --> 00:58:58,440
+filter. And then for generator or the captioner, it's a generic task. This is new. The task is to
+
+577
+00:58:58,440 --> 00:59:05,160
+produce textual descriptions in an ultra regressive manner given an image. And in the model
+
+578
+00:59:05,160 --> 00:59:14,600
+architecture, this is what they call an image from the text decoder. So they swap the bi-directional
+
+579
+00:59:14,600 --> 00:59:21,400
+self-admission with a call to mask self-admission. The rest is the same. And then the output is a
+
+580
+00:59:21,400 --> 00:59:32,280
+language model loss like in GPD. And then to put three loss together, we now have our blip
+
+581
+00:59:32,280 --> 00:59:40,920
+architecture. So for the vision encoder, they use a VIT. The text encoder, they use a BERT. And then
+
+582
+00:59:40,920 --> 00:59:48,360
+they just modify the BERT transformer block to add the cross-admission. And then you get the image
+
+583
+00:59:48,360 --> 00:59:53,800
+from the text encoder. And then you change the call to, you change the bi-directional self-admission
+
+584
+00:59:54,760 --> 00:59:56,440
+You got the decoder.
+
+585
+01:00:02,120 --> 01:00:11,720
+Yeah, ITC is the image tax contrastive loss. That's the same as CLP. And then ITM is the image tax
+
+586
+01:00:11,720 --> 01:00:17,240
+matching loss. This is the bi-directional classification. Basically, given the image and the
+
+587
+01:00:17,240 --> 01:00:25,160
+caption, you want to know if they are a pair or not. And the data they use to train this is
+
+588
+01:00:25,160 --> 01:00:32,200
+actually not perpetuity to get a pair of image and text. They use the ITC loss to make a new
+
+589
+01:00:32,200 --> 01:00:40,520
+formative sampling, which means given the text, you want to get a noisy caption, which is not the
+
+590
+01:00:40,520 --> 01:00:48,440
+pair, but it's very similar, symmetrical. So then this will be meaningful. Otherwise, you won't learn
+
+591
+01:00:52,440 --> 01:00:58,440
+Yeah. And then the lovely moment loss is the generic loss.
+
+592
+01:01:03,160 --> 01:01:09,800
+And then now we have the blip that has a filter and a captioner. We can bootstrap our dataset.
+
+593
+01:01:10,840 --> 01:01:17,960
+So we start with portraying an encoder and decoder with the noisy web scale dataset.
+
+594
+01:01:19,240 --> 01:01:25,480
+So you have this can be very, very large. You have the image from the web and text from the web.
+
+595
+01:01:25,480 --> 01:01:34,280
+You portray our filter captioner and the UV model encoder. And then after that, you use a clean
+
+596
+01:01:35,000 --> 01:01:41,640
+dataset. For example, Ms. Coco, this is annotated by human. You use a smaller but good quality
+
+597
+01:01:41,640 --> 01:01:49,480
+dataset to fine-tune our filter and captioner. And then you use a fine-tune model to generate
+
+598
+01:01:49,480 --> 01:01:59,320
+systemic caption for the web dataset. So now we only feed the image to the captioner and we get
+
+599
+01:02:00,280 --> 01:02:07,480
+synthesized text. And to evaluate the synthesized text and the web-based text,
+
+600
+01:02:09,080 --> 01:02:15,960
+we pass both of them through the future. And we have good quality web and text pairs.
+
+601
+01:02:17,560 --> 01:02:24,120
+And then now they use a high quality image text pairs, roughly 129 million,
+
+602
+01:02:24,680 --> 01:02:32,600
+which is larger and cleaner. They use this to portray a new model for a filter captioner
+
+603
+01:02:32,600 --> 01:02:40,040
+and the new model encoder. And the authors find that if we don't portray a new model,
+
+604
+01:02:40,040 --> 01:02:47,480
+if we simply continue training the three models, it doesn't help. This observation
+
+605
+01:02:47,480 --> 01:02:53,080
+agrees with a common practice in knowledge distillation, where the student model cannot
+
+606
+01:02:53,080 --> 01:03:08,760
+be initialized from the teacher model. Yes. I think the idea definitely borrows from GAN.
+
+607
+01:03:09,480 --> 01:03:19,880
+But I don't think they are trained together. So they use this to portray the filter and captioner.
+
+608
+01:03:20,920 --> 01:03:29,320
+Well, I mean, if you look at the architecture, they are trained together, but they are not against
+
+609
+01:03:29,400 --> 01:03:34,600
+each other. So they do not modify each other. No.
+
+610
+01:03:38,120 --> 01:03:44,520
+But I think the idea is very similar to GAN. Sorry. Go back to the previous slide.
+
+611
+01:03:45,640 --> 01:03:53,800
+The contrasted loss RTC. Should we explain again what is all over here? Do we have anything to
+
+612
+01:03:54,520 --> 01:04:03,960
+Yeah. So that's very, it's basically the same as CLIP. You have the batch of image
+
+613
+01:04:03,960 --> 01:04:11,480
+embeddings, like for every image in your batch. And you have the text embeddings for every caption
+
+614
+01:04:11,480 --> 01:04:17,880
+in your batch. And basically you want to align the diagonal to be the highest score,
+
+615
+01:04:17,880 --> 01:04:23,000
+because the diagonal represents the correct pairs. And the off diagonals are
+
+616
+01:04:25,000 --> 01:04:31,560
+not the same pair. They're like polluted pairs. You want to use that as a weak signal to a supervisor
+
+617
+01:04:31,560 --> 01:04:40,280
+model to learn the same pairs. The similar semantics should be the same pair. The different
+
+618
+01:04:40,280 --> 01:04:52,680
+semantics should be different pairs. Yeah. So if we go back to CLIP,
+
+619
+01:04:55,880 --> 01:05:05,720
+like here. So each I is an image embedding in a batch. Each T is a text embedding in a batch.
+
+620
+01:05:06,440 --> 01:05:10,360
+We want to highlight the diagonals, so that if you use softmax,
+
+621
+01:05:11,320 --> 01:05:17,960
+vertically or horizontally, the diagonal is the largest value, because they are from the same
+
+622
+01:05:17,960 --> 01:05:25,560
+package. Yes. I had a question just as far as the discriminator goes, right? So since we're using
+
+623
+01:05:25,560 --> 01:05:29,640
+this binary modifier and how about what's good, what's bad, you have to introduce some relabeling
+
+624
+01:05:29,640 --> 01:05:33,960
+on data, whereas CLIP and aligned didn't have that, right? In these situations, what we have to go
+
+625
+01:05:33,960 --> 01:05:40,040
+ahead and say, is this a good caption or is this a bad caption, right? Yeah. How many data samples
+
+626
+01:05:40,040 --> 01:05:43,720
+do you need to then train that discriminator? Because it would not make sense to go through
+
+627
+01:05:43,720 --> 01:05:49,960
+and label every single image that you describe. Yeah. So they use a noisy data set to train
+
+628
+01:05:49,960 --> 01:05:58,040
+the binary header. And then they use MS-Coco to fine tune them. So in their work, I don't think they
+
+629
+01:05:59,000 --> 01:06:05,000
+manually label any data set. They just use MS-Coco, which is human animated data set.
+
+630
+01:06:06,520 --> 01:06:12,360
+Pre-train with the noisy data set. Yeah, it's very large. They just use fine-tuning to up-sample
+
+631
+01:06:12,360 --> 01:06:18,680
+the clean data so that it fits more to that than the noisy stuff. Yeah. And then they use the captioner
+
+632
+01:06:18,680 --> 01:06:26,440
+to generate synthetic text for a large-scale images. Okay. So there's no manual labeling,
+
+633
+01:06:26,440 --> 01:06:32,040
+what's good with that? You just show it. Oh, and then you show it. Just go to after. Yeah. Yeah.
+
+634
+01:06:32,040 --> 01:06:40,200
+They introduce a signal via MS-Coco data set. Right. And the discriminator, the Cocoa one's
+
+635
+01:06:40,200 --> 01:06:47,080
+good quality. Yeah. I guess it's signed into the score. And then the, how does it with a bad quality
+
+636
+01:06:47,080 --> 01:07:04,360
+looks like to discriminate against? I think they only use the, they only like use the good ones
+
+637
+01:07:04,360 --> 01:07:11,320
+to fine-tune them. I don't think they mentioned they use a bad quality ones to fine-tune to
+
+638
+01:07:11,320 --> 01:07:17,960
+feature a captioner. Is that they're using the hard negatives from the contrastive loss
+
+639
+01:07:19,160 --> 01:07:26,600
+as negative examples for the free training? Yeah. That's in the pre-training part. But that's not,
+
+640
+01:07:27,160 --> 01:07:36,520
+well, yes. It's also in the fine-tune part because like in MS-Coco, each pair is like a good quality
+
+641
+01:07:36,520 --> 01:07:41,880
+pair. But if you swap the text with a different image text, it's a negative sample.
+
+642
+01:07:41,880 --> 01:08:02,600
+Okay. And then here, just a quick visualization about the performance of captioner and filter.
+
+643
+01:08:03,320 --> 01:08:11,080
+So these are like web-scaled, like the images from the web. The first two, the text are wrong.
+
+644
+01:08:11,640 --> 01:08:17,800
+And then the captioner can generate pretty decent text, which are like better than
+
+645
+01:08:19,000 --> 01:08:26,680
+the text from web. And then for the third one, the web text is actually better. It knows it's a
+
+646
+01:08:26,680 --> 01:08:33,960
+Cusco from like 80, but the synthetic text, it's just large-breeding with a lot of news,
+
+647
+01:08:33,960 --> 01:08:41,000
+which is not very informative. That's from a captioner perspective. But the filter can
+
+648
+01:08:42,360 --> 01:08:50,280
+identify that the text from web is better. So these three figures show the effect of
+
+649
+01:08:51,080 --> 01:08:59,320
+captioner and filter. And then to adopt GLEP for downstream tasks, here's just a quick
+
+650
+01:08:59,320 --> 01:09:07,000
+visualization. For example, for VQA, we feed the image through image encoder. We have the image
+
+651
+01:09:07,000 --> 01:09:17,080
+embedding. And then we feed this to the text encoder with an encode token. And then we feed the output
+
+652
+01:09:17,080 --> 01:09:27,320
+to our decoder, which then can generate an open-ended VQA. And then for NLVR, this
+
+653
+01:09:27,960 --> 01:09:35,400
+embed for NLVR is a pair of images. Both of them pass through the image encoder. And then we have
+
+654
+01:09:35,400 --> 01:09:43,080
+a text. And then the text will go through, will join the image encoder through the cross-encoder.
+
+655
+01:09:43,800 --> 01:09:50,600
+And then at the end, you need to do a binary classification problem. I won't go through
+
+656
+01:09:50,600 --> 01:09:59,160
+them in detail. And then the quantitative results. So here in this table is a comparison between
+
+657
+01:09:59,160 --> 01:10:05,080
+using a captioner only and using a filter only highlighted in these three rows. So this one
+
+658
+01:10:05,080 --> 01:10:12,600
+is a filter only. This one is the captioner only. And our observation is captioner generates
+
+659
+01:10:13,240 --> 01:10:20,120
+more diverse captions, which contains more new information that the model could benefit from.
+
+660
+01:10:20,120 --> 01:10:27,560
+So if you use captioner only, you actually have a slightly better performance than just using the
+
+661
+01:10:27,560 --> 01:10:37,080
+filter only. And then for these two rows, they are using both captioner and filter. One is with
+
+662
+01:10:37,160 --> 01:10:46,360
+a base size. The other one is a barge size. We can see that scaling up the caption and filter
+
+663
+01:10:46,360 --> 01:10:53,000
+from base to large. And then you remain the same size for the VIT for the vision encoder.
+
+664
+01:10:54,200 --> 01:11:02,360
+It only improves the generative task performance. So that's the caption applied to and captioned
+
+665
+01:11:02,360 --> 01:11:09,720
+during the shot. The image size retrievals are actually, you don't get a very good boost.
+
+666
+01:11:11,720 --> 01:11:18,680
+Improvement of retrieval tasks is achieved further by scaling up the vision backbone. So you
+
+667
+01:11:18,680 --> 01:11:26,600
+need to scale up VIT on base to large. Now you combine the large caption filter, you can improve
+
+668
+01:11:26,600 --> 01:11:41,960
+your story. And then they compare BLIP with Align or LBAP. The smallest BLIP, this one,
+
+669
+01:11:43,080 --> 01:11:52,360
+can all perform Align, despite using less than 1% of the data. Because BLIP use 129,
+
+670
+01:11:53,240 --> 01:12:03,480
+Align use 14 million, and this is 1.8 billion. And the smallest BLIP also all performs LBAP,
+
+671
+01:12:04,200 --> 01:12:12,760
+which uses the same 14 million images as BLIP. But LBAP adopts an encoder-based only design,
+
+672
+01:12:13,720 --> 01:12:24,760
+and it doesn't have a bootstrapping dataset. And then the next paper, sorry, any question about BLIP?
+
+673
+01:12:28,440 --> 01:12:35,320
+So far so good, okay. Next paper is about COCA, Contrastive Captioners are Image Text Foundation
+
+674
+01:12:35,320 --> 01:12:40,440
+models. COCA combines the contrastive training and generative training together.
+
+675
+01:12:42,280 --> 01:12:52,200
+So recall BLIP for each image text pair. The downside of BLIP is the pre-training requires
+
+676
+01:12:52,200 --> 01:12:58,200
+one forward pass through the region transformer, and then you need like three forward passes
+
+677
+01:12:58,200 --> 01:13:07,560
+through the text transformers, which is very not efficient. So COCA wants to
+
+678
+01:13:08,840 --> 01:13:12,120
+have a minimalist design of BLIP to improve the training efficiency.
+
+679
+01:13:15,480 --> 01:13:24,600
+So what they did is they replaced the text encoder with a new model text encoder,
+
+680
+01:13:25,560 --> 01:13:30,680
+and they changed the bi-directional self-attention to a mass self-attention.
+
+681
+01:13:31,560 --> 01:13:41,880
+And for the text input, they added the classification token at the end. So they want to use the
+
+682
+01:13:41,880 --> 01:13:50,120
+generated classification token as the embedding of the text and use that to calculate the ITC
+
+683
+01:13:50,120 --> 01:14:03,000
+loss same as before. Because the motivation is like there are so many text encoders.
+
+684
+01:14:04,440 --> 01:14:13,960
+Two encoders, one encoder. It's not efficient. So then their idea is what if we only use the
+
+685
+01:14:13,960 --> 01:14:19,400
+encoder? What if we don't use encoder at all? But the problem is if you only use encoder,
+
+686
+01:14:19,400 --> 01:14:28,200
+how do you get the embedding of your text? So they append a classification token at the end.
+
+687
+01:14:28,840 --> 01:14:37,880
+It's a trainable token, and they hope that the output of the classification token can be a good
+
+688
+01:14:37,880 --> 01:14:48,760
+representation embedding of the whole text. You mean the decoder? Not to see this.
+
+689
+01:14:50,040 --> 01:14:57,880
+So like the whole text decoder is a trainable encoder, including the classification token.
+
+690
+01:14:58,680 --> 01:15:08,840
+So yeah, this is the COCA architecture. They don't have this in their paper,
+
+691
+01:15:08,840 --> 01:15:18,280
+but I just draw this based on my understanding. So yeah, they use only decoder. The left one
+
+692
+01:15:18,280 --> 01:15:29,720
+is a unimodal text decoder. They use this to, like I mentioned before, they append the classification
+
+693
+01:15:29,720 --> 01:15:39,400
+token at the end. So the output sequence, the last token of the output sequence,
+
+694
+01:15:39,400 --> 01:15:46,520
+corresponds to the CIS token. And they use this to calculate ITC loss with the imaging
+
+695
+01:15:46,520 --> 01:15:54,440
+encoder. Let's just forget about this part with the imaging encoder. And then the rest of the
+
+696
+01:15:54,440 --> 01:16:02,520
+output from the first half of the decoder sends to the second half of the decoder. And then here
+
+697
+01:16:02,520 --> 01:16:08,920
+they have a cross-attention. The signal comes from your image, and then you have your LM loss.
+
+698
+01:16:09,080 --> 01:16:20,600
+So yes, they have one very big decoder. They cut them in half. The first part is a unimodal,
+
+699
+01:16:20,600 --> 01:16:29,400
+and the second part is the multimodal. So with this design, for every pair of image attacks,
+
+700
+01:16:30,200 --> 01:16:36,680
+image pass through the imaging encoder once, and the attacks pass through the decoder once.
+
+701
+01:16:38,680 --> 01:16:41,800
+Basically, I think it's basically decoder, decoder.
+
+702
+01:16:43,320 --> 01:16:48,520
+Yeah, they assign it to the decoder.
+
+703
+01:16:54,520 --> 01:16:56,120
+It's a decoder. It's a decoder.
+
+704
+01:16:57,080 --> 01:17:01,080
+It's a decoder. Because it's causal, causal attention.
+
+705
+01:17:01,080 --> 01:17:03,480
+Oh, it's a cause. It's a cause of attention.
+
+706
+01:17:03,480 --> 01:17:08,600
+Yeah, yeah, yeah. I didn't like this figure. When I read this paper, there's no such figure.
+
+707
+01:17:08,600 --> 01:17:13,400
+It took me a really long time to understand what's going on. I haven't figured it out.
+
+708
+01:17:13,400 --> 01:17:15,400
+Their figure is very high-level.
+
+709
+01:17:15,400 --> 01:17:21,160
+Yeah, we're at a very high level. But they kind of split one decoder into half,
+
+710
+01:17:22,120 --> 01:17:28,600
+one, like the first half way, encoding the text. But it's a decoder that encodes the text.
+
+711
+01:17:30,600 --> 01:17:37,080
+Then the other part of the decoder takes the input from the image encoder,
+
+712
+01:17:37,080 --> 01:17:43,080
+so that we don't do the weights of time again. It's already calculated in the ITC,
+
+713
+01:17:43,080 --> 01:17:47,080
+and then you just put in everything and do another loss.
+
+714
+01:17:47,160 --> 01:17:50,680
+So this is a very smart design. It's very efficient.
+
+715
+01:17:55,480 --> 01:17:58,120
+That's about the text decoder parts.
+
+716
+01:17:59,160 --> 01:18:05,960
+And now I'll talk about what they call attentional pullers. I find this is interesting.
+
+717
+01:18:07,160 --> 01:18:10,600
+So they call it task-specific attentional puller.
+
+718
+01:18:11,320 --> 01:18:19,000
+So this guy is a single multi-hat attention layer with inquiry learnable queries
+
+719
+01:18:20,600 --> 01:18:27,160
+with image encoder output as both the key and value. So the learnable queries is Q,
+
+720
+01:18:27,880 --> 01:18:30,360
+and the output of the image encoder is K and D.
+
+721
+01:18:30,600 --> 01:18:45,400
+So why they need this? Because to calculate the ITC loss, you need a 1 by D vector to compare with
+
+722
+01:18:45,400 --> 01:18:52,280
+this 1 by D vector. So they set the inquiry to be 1. So then after this attentional pulling,
+
+723
+01:18:52,840 --> 01:18:58,440
+this output is 1 by D. And then you can use this output to calculate the ITC.
+
+724
+01:18:59,000 --> 01:19:09,320
+But for this decoder, the cross-attention needs a longer sequence. So in their paper,
+
+725
+01:19:09,320 --> 01:19:15,400
+they set the inquiry to be 256 for the LN loss. So basically, this is an adapter
+
+726
+01:19:16,440 --> 01:19:22,680
+to have different length of sequences for the same image embedded.
+
+727
+01:19:23,080 --> 01:19:29,480
+And the reason why they want this sequence to be longer, because
+
+728
+01:19:30,840 --> 01:19:38,040
+the longer it is, the more regional level features you have. It's more like fine graph
+
+729
+01:19:38,920 --> 01:19:45,000
+versus what a 1 by D, it's a global representation of their image features.
+
+730
+01:19:45,000 --> 01:19:53,720
+And then the benefits of attentional puller is it's a natural
+
+731
+01:19:54,280 --> 01:20:01,080
+adapter for downstream tasks. For example, for video classification tasks, a single query token
+
+732
+01:20:01,080 --> 01:20:07,800
+is learned to weight outputs of all tokens of like the different frames.
+
+733
+01:20:07,800 --> 01:20:22,280
+So here we have six frames, each frame you can get out like many different patches.
+
+734
+01:20:22,280 --> 01:20:28,600
+And you concatenate them together, you use your attentional puller to pull them into
+
+735
+01:20:29,480 --> 01:20:37,560
+a single 1 by D vector. And then they also find that like using attentional puller
+
+736
+01:20:37,560 --> 01:20:46,360
+enhance the frozen feature evaluation, because linear probing struggles to accurately measure
+
+737
+01:20:46,360 --> 01:20:54,600
+the learned representations. However, using a learning a new puller to aggregate features
+
+738
+01:20:54,600 --> 01:21:00,520
+enables the model to obtain a stronger performance as a frozen encoder.
+
+739
+01:21:01,480 --> 01:21:08,840
+It can also be benefit, it can also benefit to multitask problems that share the same frozen
+
+740
+01:21:08,840 --> 01:21:13,720
+image encoder, but different tasks specific has.
+
+741
+01:21:16,920 --> 01:21:23,560
+So the pre-training of COCA, the loss function is a combination of ITC and LM. And they have
+
+742
+01:21:24,200 --> 01:21:30,520
+this reading error parameters here. Empirically to find a larger loss weight is better.
+
+743
+01:21:31,720 --> 01:21:43,320
+So they set the LM over LM ITC to be 2 to 1. Their explanation is the ITC loss can be interpreted
+
+744
+01:21:43,320 --> 01:21:50,840
+as a special case of the generative approach applied on image when the vocabulary is just a set
+
+745
+01:21:50,920 --> 01:22:03,160
+of all your captions. The two parts of the decoder number of layers are the same,
+
+746
+01:22:03,160 --> 01:22:11,320
+and they have a very huge data set, it's like 4.8 billion. And then the evaluation of COCA,
+
+747
+01:22:11,320 --> 01:22:21,160
+it outperforms the low encoder model and decoder decoder model and specialized
+
+748
+01:22:21,160 --> 01:22:30,280
+SOHA models on 12 different benchmarks. I think this is because the data set is really,
+
+749
+01:22:30,280 --> 01:22:36,680
+really large. In this part, we're going to talk about the training scaling up.
+
+750
+01:22:37,640 --> 01:22:45,400
+And in this part, there's only one paper, SIGLIP Sigma loss for language image pre-training.
+
+751
+01:22:45,400 --> 01:22:49,960
+This paper is focusing on scaling up the training with Sigma loss.
+
+752
+01:22:52,440 --> 01:22:58,760
+Now let's look at the background and motivation of SIGLIP. We know that a lot of work uses the
+
+753
+01:22:58,760 --> 01:23:04,600
+contrasted pre-training because contrasted pre-training itself is a weak supervision task,
+
+754
+01:23:04,680 --> 01:23:10,440
+and it can align the representation space for images and texts, just like what we do in CLIPPET
+
+755
+01:23:10,440 --> 01:23:19,000
+align. And contrasted pre-training always use the batch level softmax-based contrastive loss,
+
+756
+01:23:19,960 --> 01:23:26,040
+which does the pairwise similarity scores across all images and then for all texts.
+
+757
+01:23:27,480 --> 01:23:34,520
+To some extent, the softmax-based contrastive loss is numerically unstable, and the stabilization
+
+758
+01:23:34,760 --> 01:23:37,960
+process always requires additional paths over the full batch.
+
+759
+01:23:40,200 --> 01:23:47,720
+So in this paper, they propose a single pairwise Sigma loss for language image pre-training, SIGLIP.
+
+760
+01:23:48,440 --> 01:23:54,040
+Unlike the contrastive learning with a softmax normalization, the Sigma loss operates solely
+
+761
+01:23:54,600 --> 01:24:01,080
+on image text pairs and doesn't require a global view of the pairwise similarities for normalization.
+
+762
+01:24:02,040 --> 01:24:08,040
+The Sigma loss simultaneously allows further scaling of the batch size while also performing
+
+763
+01:24:08,040 --> 01:24:18,200
+better at smaller batch sizes. Now we first review the wide-used softmax-based contrastive loss,
+
+764
+01:24:19,080 --> 01:24:24,120
+given a mini-batch of image text pairs and the contrastive learning objective encourages
+
+765
+01:24:25,480 --> 01:24:30,440
+embeddings of matching pairs to align with each other while pushing embeddings of unmatched
+
+766
+01:24:30,440 --> 01:24:38,760
+pairs apart. So for practical use, it's always assumed that for each images and the text associated
+
+767
+01:24:38,760 --> 01:24:43,880
+with a different image is not related to the image in vice versa. And we're going to show
+
+768
+01:24:43,880 --> 01:24:51,560
+that this assumption is kind of noisy and imperfect. Specifically, when using the softmax loss to
+
+769
+01:24:51,560 --> 01:24:58,520
+formalize this objective over here, an image model F and a text model G are trained to minimize
+
+770
+01:24:58,600 --> 01:25:05,640
+the following objective as in this equation, where X and Y are the normalized embeddings for text and
+
+771
+01:25:05,640 --> 01:25:13,960
+image respectively. And we note that due to the asymmetry of the softmax loss, the normalization
+
+772
+01:25:13,960 --> 01:25:21,800
+is independently performed two times across images and across text. That is the denominator of the
+
+773
+01:25:21,800 --> 01:25:28,920
+softmax function. And we also have a scalar T, which is a weight hyperparameter in this model.
+
+774
+01:25:33,160 --> 01:25:38,840
+The normalization of global batch data used in contrastive training results in excessive
+
+775
+01:25:38,840 --> 01:25:45,160
+communication overhead and manual usage. And contrastive training utilizes typically data
+
+776
+01:25:45,800 --> 01:25:51,640
+parallelism and computing the loss when data is split across different devices always requires
+
+777
+01:25:51,640 --> 01:25:57,800
+gathering all embeddings with expensive all caddlers. And more importantly, the materialization
+
+778
+01:25:57,800 --> 01:26:06,600
+of memory intensive batch size level matrix of pairwise similarities. So instead of the softmax
+
+779
+01:26:06,600 --> 01:26:12,200
+base contrastive loss, they propose the simpler alternative that doesn't require computing the
+
+780
+01:26:12,200 --> 01:26:21,320
+global normalization factors. Over here, we're going to investigate a segment loss
+
+781
+01:26:21,320 --> 01:26:28,840
+in details. For example, the sigmoid loss is particularly amenable to a memory-efficient
+
+782
+01:26:28,840 --> 01:26:35,000
+fast and numerically stable implementation that alleviates both these issues. And the sigmoid
+
+783
+01:26:35,000 --> 01:26:41,000
+base loss processes every image text pair independently, effectively turning the learning
+
+784
+01:26:41,000 --> 01:26:46,520
+problem into the standard binary classification on the data sets of all pair combinations
+
+785
+01:26:47,240 --> 01:26:51,960
+with the positive labels for the matching pairs and negative labels for all other pairs.
+
+786
+01:26:52,680 --> 01:27:01,560
+And it's defined as over here, where Z actually is the label for a given image and text input,
+
+787
+01:27:01,560 --> 01:27:07,320
+she calls to one if they're paired and equal to negative one otherwise.
+
+788
+01:27:11,480 --> 01:27:15,400
+Here I draw the figures to show how the loss function changes.
+
+789
+01:27:15,400 --> 01:27:21,640
+Take an example of a single pair. If it's the positive pair, the loss value will get smaller
+
+790
+01:27:21,640 --> 01:27:28,040
+as the cosine similarity of the pair gets to one. And if it's the negative pair, the loss value
+
+791
+01:27:28,040 --> 01:27:34,760
+will get smaller as the cosine similarity of the pair gets to zero. So the model will be optimized
+
+792
+01:27:34,760 --> 01:27:40,360
+to encourage embeddings of matching pairs to align with each other while pushing embeddings of
+
+793
+01:27:40,360 --> 01:27:47,880
+unmatched pairs apart. Now we're going to talk about the efficient loss implementation
+
+794
+01:27:47,880 --> 01:27:54,760
+mentioned in this paper, which can be demonstrated by this example with only three devices and a
+
+795
+01:27:54,760 --> 01:28:03,640
+global batch size of 12. Actually, the no or gathers and at any point in time, only the bright
+
+796
+01:28:03,720 --> 01:28:11,000
+yellow square with a size of four by four is materialized in memory. Now we can see the stage
+
+797
+01:28:11,000 --> 01:28:17,000
+one, the stage a, initially each device holds four image and four text representations.
+
+798
+01:28:17,880 --> 01:28:22,920
+And each device needs to see the representations from other devices to calculate the full loss
+
+799
+01:28:22,920 --> 01:28:30,760
+finally. And we have to know that within the device one, for example, for I1, we need to
+
+800
+01:28:30,760 --> 01:28:39,480
+calculate the loss between I1 and T1 and T12 finally. And we can go to stage B. On stage B,
+
+801
+01:28:40,120 --> 01:28:47,320
+they each compute the component of the loss for their representations, which includes the positive,
+
+802
+01:28:47,320 --> 01:28:55,480
+which means that each device calculates the loss locally. For example, in this figure,
+
+803
+01:28:56,200 --> 01:29:06,680
+now we can compute the loss between I1, I4 and T1 to T4. And now we can go to stage C.
+
+804
+01:29:08,280 --> 01:29:16,360
+On stage C, actually, texts can be swept across the devices. So device one now has I1 to 4
+
+805
+01:29:17,640 --> 01:29:23,640
+and T5 to 8, etc. And the new loss is computed and accumulated with the previous.
+
+806
+01:29:23,960 --> 01:29:31,960
+For example, now we look at this figure on stage C, because device one now has the T5 to T8,
+
+807
+01:29:31,960 --> 01:29:41,640
+we can compute the loss between I1 to 4 and T5 to 8. Now we're only left with the loss function
+
+808
+01:29:41,640 --> 01:29:51,800
+between I1 to 4 and T9 to 12. So on stage D, this repeats till every image and text pair
+
+809
+01:29:52,520 --> 01:30:02,040
+have interacted. For example, device one has the loss of I1 to 4 and T1 to 12. And we can do a
+
+810
+01:30:02,040 --> 01:30:08,840
+final cross-device sum brings everything together. For example, on stage D, finally, we can compute
+
+811
+01:30:08,840 --> 01:30:18,600
+the loss between I1 to 4 and T9 to 12. And everything is cleared now. And now we can finally
+
+812
+01:30:19,240 --> 01:30:27,560
+do a final cross-device sum to turn all of this sum into a single scalar for the loss function.
+
+813
+01:30:32,200 --> 01:30:39,480
+Now let's look at the experiments. In this paper, they train a model siglit based on lit
+
+814
+01:30:39,480 --> 01:30:45,880
+model with sigmy loss. And the sigmy loss all performs this softmax loss significantly with
+
+815
+01:30:45,880 --> 01:30:53,800
+small batch sizes and performs similarly at larger batch sizes. Particularly, they successfully
+
+816
+01:30:53,800 --> 01:30:59,480
+trained a siglit model with up to one million batch size, which shows that the sigmy loss
+
+817
+01:30:59,480 --> 01:31:06,920
+advantages on memory saving. And actually with only four TVU V4 chips, they train a siglit
+
+818
+01:31:06,920 --> 01:31:15,080
+model that achieves good image net zero shot accuracy in two days. And they also train a model
+
+819
+01:31:15,080 --> 01:31:23,160
+siglit based on clip model with sigmy loss. And both sigmy loss and softmax loss saturate at a
+
+820
+01:31:23,160 --> 01:31:29,160
+reasonable batch size, while the peak of the sigmy loss comes earlier and slightly outperforms
+
+821
+01:31:29,160 --> 01:31:36,680
+the peak of the softmax loss. A very large batch size hurts both losses, which we can see from this
+
+822
+01:31:36,680 --> 01:31:46,920
+figure. And now we're going to talk about the experiment of label noise robinus. Actually,
+
+823
+01:31:46,920 --> 01:31:53,960
+prior works demonstrated improved robinus against label noise when using the sigmy loss for classification
+
+824
+01:31:53,960 --> 01:32:01,240
+models. And this property would be particularly useful here in the face of the famously noisy
+
+825
+01:32:01,240 --> 01:32:08,520
+nature of popular large scale image text datasets. Here we can see the sigmy training
+
+826
+01:32:08,520 --> 01:32:17,160
+increases the robinus to data noise and titles show that the type of corruption applied and x-axis
+
+827
+01:32:17,160 --> 01:32:24,360
+show the probability with which they're applied. With increasing corruption severity, the models
+
+828
+01:32:24,360 --> 01:32:30,600
+trained with sigmy loss for large scale dataset achieve very good performance over the corresponding
+
+829
+01:32:30,600 --> 01:32:40,840
+softmax baseline. Finally, we can do some conclusion for the siglip in this paper.
+
+830
+01:32:41,480 --> 01:32:48,280
+They conducted a study on two language image portraying instances that use the sigmy loss
+
+831
+01:32:48,280 --> 01:32:53,960
+siglit and siglip and that their results demonstrate that the sigmy loss performs better than the
+
+832
+01:32:53,960 --> 01:33:00,440
+softmax baseline, particularly for small training batch sizes. And this loss function is also
+
+833
+01:33:00,440 --> 01:33:08,440
+more memory efficient which allows larger trained batch sizes without requiring additional resources
+
+834
+01:33:08,440 --> 01:33:17,160
+like computer resources or timer resources. Finally, this is the last paper we show today
+
+835
+01:33:17,160 --> 01:33:25,000
+and it's also a good ending to the paper presentation part today. In this paper presentation part,
+
+836
+01:33:25,000 --> 01:33:31,400
+we first introduce how to improve the performance of VL tasks by improving the performance of
+
+837
+01:33:31,400 --> 01:33:37,320
+object detection. And then we talked about designing larger models and applying larger
+
+838
+01:33:37,320 --> 01:33:45,640
+amounts of data to improve the performance of VL tasks at scale. Later, we introduce more
+
+839
+01:33:45,640 --> 01:33:52,280
+complicated models with decoder architecture to adapt to more VL tasks from a generation perspective.
+
+840
+01:33:53,240 --> 01:33:57,960
+And finally, we introduce how to replace softmax with sigmy function to make
+
+841
+01:33:57,960 --> 01:34:03,480
+fast training and huge batch size possible, just preparing for future work that may face
+
+842
+01:34:04,120 --> 01:34:11,240
+larger data volumes and more model parameters. So now we can go to the complete summary of today's
+
+843
+01:34:11,240 --> 01:34:22,040
+presentation. So to summarize what we have covered today, we covered four different losses.
+
+844
+01:34:22,760 --> 01:34:30,200
+The first one is the contrastive loss which has different variations. The most common one is the
+
+845
+01:34:30,200 --> 01:34:39,400
+image text contrastive loss, ITC in short. It's a sum of the image to text and text to image info
+
+846
+01:34:39,400 --> 01:34:48,360
+and CE loss to contrast paired text against others in the sampled batch. Models that use ITC loss
+
+847
+01:34:48,360 --> 01:34:58,120
+includes a clip and blip. And then we've also seen sigmoid loss which is used in sig lip
+
+848
+01:34:59,080 --> 01:35:05,320
+as a binary classification of all pair combinations. And then we have also seen
+
+849
+01:35:06,440 --> 01:35:14,040
+the binary classification to predict whether text image and tag triplet contains the original tag
+
+850
+01:35:14,040 --> 01:35:23,560
+or polluted tag. This is used by, for example, oscar. But I think this is more, well, I mean,
+
+851
+01:35:23,560 --> 01:35:31,720
+oscar calls it the contrast of loss, but I think this is more similar to the image text matching loss.
+
+852
+01:35:33,640 --> 01:35:40,920
+So image text matching loss is a binary classification to predict whether an image text pair
+
+853
+01:35:40,920 --> 01:35:49,240
+is matched or a matched. This is used in blip. And then we've also seen the language modeling loss.
+
+854
+01:35:50,120 --> 01:35:58,920
+This is the same loss as used in chat GPT. So this is a generative task to produce textual
+
+855
+01:35:58,920 --> 01:36:06,120
+descriptions in an auto regressive manner given an image. Again, blip uses this loss.
+
+856
+01:36:07,080 --> 01:36:11,400
+And then we have also covered mask language modeling loss.
+
+857
+01:36:12,840 --> 01:36:19,160
+This loss predicts the text tokens based on surrounding text tokens and the image features.
+
+858
+01:36:20,120 --> 01:36:22,840
+For example, oscar and minville both uses this loss.
+
+859
+01:36:25,400 --> 01:36:34,120
+And then we'll look at the models from the architecture perspective. The first family
+
+860
+01:36:34,120 --> 01:36:41,800
+we have is uni encoder based multi models. The first one is oscar.
+
+861
+01:36:42,680 --> 01:36:50,440
+Oscar fees the sequence of tags, tags and image regions embeddings to BERT. And then
+
+862
+01:36:50,440 --> 01:37:00,760
+its semantic alignments between tags and images using object tags. It uses the ITC loss and the ML
+
+863
+01:37:01,720 --> 01:37:11,160
+loss. We've also covered minville. It improves oscar with a more powerful object detection model.
+
+864
+01:37:11,160 --> 01:37:19,480
+It also introduced a three-way contrastive loss and then uses the same MLM loss as oscar.
+
+865
+01:37:20,840 --> 01:37:27,000
+So the table at the bottom shows the the evaluation of two
+
+866
+01:37:27,880 --> 01:37:38,600
+uni encoder based models on different tasks. The benchmarks in blue are the understanding
+
+867
+01:37:38,600 --> 01:37:45,720
+task and then the benchmarks in orange is the generative tasks. And we can see minville out
+
+868
+01:37:45,720 --> 01:37:55,800
+performs oscar on most of the tasks. Not surprisingly because one uses a more powerful object detection
+
+869
+01:37:55,800 --> 01:37:59,960
+model and two it just uses more image text pairs.
+
+870
+01:38:04,200 --> 01:38:11,880
+And then next we also covered dual encoder based models. They include clip, align and siglip.
+
+871
+01:38:13,560 --> 01:38:21,400
+So clip introduced a learnable text encoder to encode freeform text. It uses ITC loss
+
+872
+01:38:22,280 --> 01:38:29,480
+and then align based on clip is sacrifice quality to gain quantity. So it scaled up the
+
+873
+01:38:30,360 --> 01:38:38,360
+corpus to 1.8 billion. It extends the dataset to multilingual setting to train align
+
+874
+01:38:39,800 --> 01:38:49,640
+multilingual. And then siglip changed the softmax based ITC loss to a sigmoid based loss.
+
+875
+01:38:50,600 --> 01:38:58,600
+The advantage of this loss is it's more memory efficient, it's faster and it improves the
+
+876
+01:38:58,600 --> 01:39:05,560
+numerically stable implementation. So the table below shows the evaluation of these three models.
+
+877
+01:39:06,840 --> 01:39:18,440
+As we can see siglip out performs the other two and it also uses a lot a lot bigger dataset.
+
+878
+01:39:18,440 --> 01:39:27,880
+It's like 40 billion which is insane. And then we also covered encoder decoder based family.
+
+879
+01:39:29,160 --> 01:39:37,240
+This includes blip and coca. So blip added the natural language generation capabilities to
+
+880
+01:39:37,240 --> 01:39:50,360
+the previous models. It uses ITCLM and ITM loss. So the main motivation behind blip is quality
+
+881
+01:39:50,360 --> 01:40:00,920
+also matters. We need to improve the text quality by bootstrapping the text. And for coca it takes
+
+882
+01:40:00,920 --> 01:40:07,240
+a minimalist design of blip. It reduces the number of forward passes through transform blocks.
+
+883
+01:40:07,960 --> 01:40:16,920
+And coca reduces the loss down to just ITC and LM loss. And then coca is trained with a lot bigger
+
+884
+01:40:16,920 --> 01:40:25,160
+corpus than blip. So the table below compares these two models. As we can see coca used a lot
+
+885
+01:40:25,160 --> 01:40:36,280
+bigger corpus than blip. But I mean on six of the tasks it all performs blip on four of them.
+
+886
+01:40:39,640 --> 01:40:48,120
+So yeah that's it. Thank you everyone for listening.
+

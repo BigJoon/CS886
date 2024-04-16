@@ -1,0 +1,828 @@
+1
+00:00:00,000 --> 00:00:05,280
+So, till now we have seen how Arleger framework works.
+
+2
+00:00:05,280 --> 00:00:09,040
+Now let's learn about some of its drawbacks.
+
+3
+00:00:09,040 --> 00:00:16,120
+Firstly, training an additional reward model itself brings more complexity to the process.
+
+4
+00:00:16,120 --> 00:00:22,600
+This modeling step leads to careful tuning of additional hyperparameters.
+
+5
+00:00:22,600 --> 00:00:31,120
+Furthermore, even though Arleger frameworks help us aligning the preferences, it can be
+
+6
+00:00:31,120 --> 00:00:36,560
+still sometimes less efficient and stable method.
+
+7
+00:00:36,560 --> 00:00:41,920
+Overall, this is how Arleger framework works.
+
+8
+00:00:41,920 --> 00:00:50,280
+We have a given preference data, we use it to fit the reward model and later this reward
+
+9
+00:00:50,280 --> 00:00:57,120
+model is used for aligning our language model policy.
+
+10
+00:00:57,120 --> 00:01:02,840
+But can we perform the alignment without reward model?
+
+11
+00:01:02,840 --> 00:01:12,480
+Well, to answer this, DPO or DPO papers authors came up with a new technique that directly
+
+12
+00:01:12,480 --> 00:01:20,720
+uses the preference data for aligning it with the preference data.
+
+13
+00:01:20,720 --> 00:01:27,760
+So, simply put, DPO is a simple, Arleger-free algorithm for training language models from
+
+14
+00:01:27,760 --> 00:01:28,760
+preferences.
+
+15
+00:01:28,760 --> 00:01:38,440
+So, to start with the DPO process, let's first go through how it actually came in place.
+
+16
+00:01:38,440 --> 00:01:45,000
+This is the optimization problem that we used for Arleger.
+
+17
+00:01:45,000 --> 00:01:50,800
+Higher the reward for any response is considered better for the model because that is what
+
+18
+00:01:50,800 --> 00:01:52,680
+we intend to.
+
+19
+00:01:52,680 --> 00:01:57,640
+Also, this is the policy that we are trying to optimize.
+
+20
+00:01:57,640 --> 00:02:08,120
+This is the reference policy and this is where we are trying to limit the deviation of the
+
+21
+00:02:08,560 --> 00:02:12,480
+policy in training from reference policy.
+
+22
+00:02:12,480 --> 00:02:18,680
+So, basically we do not want our policy to deviate too much far away from the reference
+
+23
+00:02:18,680 --> 00:02:26,520
+policy otherwise it will tend to give us some illogical responses.
+
+24
+00:02:26,520 --> 00:02:33,880
+Here we have been using Kale divergence for limiting this similarity.
+
+25
+00:02:34,840 --> 00:02:47,680
+Now, the authors came up with this optimal solution as shown here that is we have rewritten
+
+26
+00:02:47,680 --> 00:02:57,560
+the optimal solution in terms of reference policy, reward function and a partition function.
+
+27
+00:02:57,560 --> 00:03:04,280
+Using some mathematical, normal mathematical algebra, we can also rewrite the reward function
+
+28
+00:03:04,280 --> 00:03:14,280
+in terms of optimal policy, reference policy and partition function, sorry.
+
+29
+00:03:14,280 --> 00:03:21,200
+Based on this, we know now that if we have reward function in place, we can also write
+
+30
+00:03:21,200 --> 00:03:29,840
+human preference probability using bodily model in terms of reference policy and optimal
+
+31
+00:03:29,840 --> 00:03:32,920
+policy which we have here.
+
+32
+00:03:32,920 --> 00:03:37,920
+It is just here is the optimal policy, this is the reference policy.
+
+33
+00:03:37,920 --> 00:03:46,720
+Thus, now as we have the human preference probability in terms of optimal policy and
+
+34
+00:03:46,720 --> 00:03:53,640
+reference policy, we can also rewrite our loss function in terms of it.
+
+35
+00:03:53,640 --> 00:04:01,120
+Well, as we see here, this is pretty similar to what we already have with RLHF.
+
+36
+00:04:01,120 --> 00:04:07,800
+We can see there is some positive operation with the winner response and some negative
+
+37
+00:04:07,800 --> 00:04:10,160
+operation for the loser response.
+
+38
+00:04:10,160 --> 00:04:15,360
+Something similar that we had earlier, here we are operating something with winner response
+
+39
+00:04:15,360 --> 00:04:18,440
+and negating for the loser response.
+
+40
+00:04:18,440 --> 00:04:24,760
+So, well, here we can see, here we are trying, first we are trying to maximize the probability
+
+41
+00:04:24,760 --> 00:04:31,840
+of the winner response and trying to minimize the probability for the loser response.
+
+42
+00:04:31,840 --> 00:04:42,800
+And also, as per the paper, authors has termed this particular fraction, this particular
+
+43
+00:04:42,800 --> 00:04:46,200
+value as implicit reward.
+
+44
+00:04:46,200 --> 00:04:57,320
+So this is also, we can say that it's also giving us the idea how actually the optimization
+
+45
+00:04:57,320 --> 00:04:59,000
+is working.
+
+46
+00:04:59,000 --> 00:05:06,760
+It is trying to limit the deviation from the reference policy and it's also trying to maximize
+
+47
+00:05:06,760 --> 00:05:11,120
+the winner response, maximize the probability of the winner response and minimizing for
+
+48
+00:05:11,120 --> 00:05:14,040
+the loser response.
+
+49
+00:05:14,040 --> 00:05:25,800
+Now, well, for in terms of the results, so authors have performed evaluations on multiple
+
+50
+00:05:25,800 --> 00:05:32,800
+tests, multiple data sets and they've come up, they've compared with the original PPO
+
+51
+00:05:32,800 --> 00:05:36,200
+versus DPO, their new method.
+
+52
+00:05:36,200 --> 00:05:39,720
+So this is task one, that is control sentiment generation.
+
+53
+00:05:39,720 --> 00:05:47,880
+So as you all know, goal of this task is given a movie review, we want to generate a positive
+
+54
+00:05:47,880 --> 00:05:51,880
+sentiment response.
+
+55
+00:05:51,880 --> 00:06:02,760
+We can see here, for DPO, this is yellow one is DPO, it has, it is strictly dominating
+
+56
+00:06:02,760 --> 00:06:10,840
+when we compare it with PPO, the reward to KL divergence ratio.
+
+57
+00:06:10,840 --> 00:06:18,480
+So as we see, even if the KL divergence between the optimal policy and the reference policy
+
+58
+00:06:18,480 --> 00:06:27,640
+is low, that means they are close enough and yet DPO gives us good high reward, which is
+
+59
+00:06:27,640 --> 00:06:35,400
+good because in terms of, in case of PPO, we were not getting that good reward when policies
+
+60
+00:06:35,400 --> 00:06:39,720
+are very similar to each other.
+
+61
+00:06:39,720 --> 00:06:48,520
+And also, PPOGT, that is using the ground truth model, ground truth for the ground
+
+62
+00:06:48,520 --> 00:06:54,080
+truth reward model for the sentiment analysis, when they are using that particular ground
+
+63
+00:06:54,080 --> 00:07:03,320
+truth, even then, they are not able to achieve good rewards with PPO.
+
+64
+00:07:03,320 --> 00:07:14,160
+So this shows how powerful DPO is in terms of evaluation and in terms of stability.
+
+65
+00:07:14,160 --> 00:07:17,440
+Next is summarization.
+
+66
+00:07:17,440 --> 00:07:27,120
+So for summarization, the task is given, given a Reddit post, we want to extract main points
+
+67
+00:07:27,120 --> 00:07:32,560
+of the sample, main points of the passage.
+
+68
+00:07:32,560 --> 00:07:40,960
+Well, this experiment is performed on varying, varying, varying sampling temperatures.
+
+69
+00:07:40,960 --> 00:07:49,840
+As we can see, DPO, the yellow one is pretty much stable across all the sampling temperatures.
+
+70
+00:07:49,840 --> 00:07:59,320
+Whereas for PPO, it is highly unstable, the efficiency is decreasing.
+
+71
+00:07:59,320 --> 00:08:06,640
+So as we know, increasing the sampling temperature, it will lead to higher probabilistic results
+
+72
+00:08:06,640 --> 00:08:11,720
+and tend to give more unstable model.
+
+73
+00:08:11,720 --> 00:08:19,320
+But even with that, DPO is still performing pretty well when compared with PPO and as
+
+74
+00:08:19,320 --> 00:08:26,240
+well as if we compare it with best of 128, it is giving us comparative, comparable results.
+
+75
+00:08:26,240 --> 00:08:34,200
+So best of 128 as per the paper is when you are trying to extract 128 responses and just
+
+76
+00:08:34,640 --> 00:08:42,080
+take best of it, like best responses.
+
+77
+00:08:42,080 --> 00:08:50,960
+Taking, considering best of 128, so it could be pretty demanding, pretty computationally
+
+78
+00:08:50,960 --> 00:08:56,520
+demanding method because we are trying to generate 120 responses and then figuring out
+
+79
+00:08:56,520 --> 00:08:58,880
+what's the correct answer.
+
+80
+00:08:58,880 --> 00:09:04,560
+Even with this scenario, task three, it's single turn dialogue where we are giving
+
+81
+00:09:04,560 --> 00:09:12,280
+human query and we want to get a proper response from the LLM.
+
+82
+00:09:12,280 --> 00:09:21,280
+Even with this case, DPO is performing pretty good and comparable enough with best of 128,
+
+83
+00:09:21,280 --> 00:09:24,160
+such highly computationally demanding method.
+
+84
+00:09:24,160 --> 00:09:31,200
+This shows that DPO is working quite well on different tasks.
+
+85
+00:09:31,200 --> 00:09:39,200
+Authors of the people analyzed the performance of the model over the course of the training
+
+86
+00:09:39,200 --> 00:09:40,200
+steps.
+
+87
+00:09:40,200 --> 00:09:47,600
+As we can see here, the model remains fairly stable even for different sampling temperatures
+
+88
+00:09:47,600 --> 00:09:49,600
+for the strain steps.
+
+89
+00:09:49,600 --> 00:10:03,640
+As we see here, overall, it is pretty much stable for different sampling temperatures.
+
+90
+00:10:03,640 --> 00:10:09,240
+Even converges readily quickly for both sampling temperatures.
+
+91
+00:10:09,240 --> 00:10:18,080
+This shows how DPO is much more stable and efficient method for aligning the language
+
+92
+00:10:18,080 --> 00:10:22,360
+model.
+
+93
+00:10:22,360 --> 00:10:27,320
+So that's all for DPO paper.
+
+94
+00:10:27,320 --> 00:10:35,240
+Moving on, next paper that we are going to talk about is the file.
+
+95
+00:10:35,240 --> 00:10:46,320
+The key highlights of this paper are that the model has used different AI models for
+
+96
+00:10:46,680 --> 00:10:53,440
+generating the preference data and also a unique distillation method is used for curating
+
+97
+00:10:53,440 --> 00:10:59,680
+good dataset for fine-tuning.
+
+98
+00:10:59,680 --> 00:11:05,200
+So this is how Zafire training looks like.
+
+99
+00:11:05,200 --> 00:11:09,480
+We have already seen how Instructivity training looks like.
+
+100
+00:11:09,480 --> 00:11:12,280
+This is in a similar format.
+
+101
+00:11:12,280 --> 00:11:17,440
+We have divided the training steps in three parts.
+
+102
+00:11:17,440 --> 00:11:23,520
+First we have the fine-tuning step, which is the still fine-tuning.
+
+103
+00:11:23,520 --> 00:11:33,640
+So the goal here is to curate a good high-quality response that will be able to capture the
+
+104
+00:11:33,640 --> 00:11:36,360
+capabilities of the teacher model.
+
+105
+00:11:36,360 --> 00:11:40,720
+So teacher model that was used for Zafire training is GPT-4.
+
+106
+00:11:40,720 --> 00:11:48,640
+As we see here, we have some initial seed prompts and our aim is to curate this dataset
+
+107
+00:11:48,640 --> 00:11:50,600
+using teacher model.
+
+108
+00:11:50,600 --> 00:11:53,720
+Now we do that.
+
+109
+00:11:53,720 --> 00:12:01,200
+Let's say we take one of the seed prompt, we pass it to a teacher model, then generate
+
+110
+00:12:01,200 --> 00:12:03,000
+the response.
+
+111
+00:12:03,000 --> 00:12:10,040
+As we have the response, we pass both the prompt and the response to the teacher model
+
+112
+00:12:10,040 --> 00:12:16,040
+and tell it instructed to refine the instruction.
+
+113
+00:12:16,040 --> 00:12:23,720
+So we continue this process for a couple of steps and then we can generate a good high-quality
+
+114
+00:12:23,720 --> 00:12:27,400
+response dataset.
+
+115
+00:12:27,400 --> 00:12:32,840
+This dataset will be used further for fine-tuning our model.
+
+116
+00:12:32,840 --> 00:12:36,120
+That is what we call the first fine-tuning step.
+
+117
+00:12:36,120 --> 00:12:45,080
+We generated dataset, we curated dataset actually and then use it for fine-tuning the language
+
+118
+00:12:45,080 --> 00:12:47,880
+model.
+
+119
+00:12:47,880 --> 00:12:49,840
+So that's what we have.
+
+120
+00:12:49,840 --> 00:12:56,600
+Ultrajet is the dataset that was generated and then we use it for fine-tuning the model.
+
+121
+00:12:56,600 --> 00:13:00,440
+That's what we call distillation supervised fine-tuning.
+
+122
+00:13:01,400 --> 00:13:10,120
+Now, moving on to the second step that is response generation and air ranking.
+
+123
+00:13:10,120 --> 00:13:18,440
+So this step 2 includes using of a teacher model again and same teacher model was used
+
+124
+00:13:18,440 --> 00:13:26,000
+with this step 2 and generating generation of preference data using other models.
+
+125
+00:13:26,000 --> 00:13:27,880
+So how we do that?
+
+126
+00:13:27,880 --> 00:13:36,600
+We use a prompt, we pass it to four different language models and then we ask them to generate
+
+127
+00:13:36,600 --> 00:13:37,600
+a response.
+
+128
+00:13:37,600 --> 00:13:46,080
+Each of them generate a response and teacher model is used for scoring the response.
+
+129
+00:13:46,080 --> 00:13:47,080
+We have this thing.
+
+130
+00:13:47,080 --> 00:13:56,720
+S1 is the first score where model is trying to evaluate based on the prompt and the response
+
+131
+00:13:56,720 --> 00:13:58,960
+and score it accordingly.
+
+132
+00:13:58,960 --> 00:14:06,880
+Once we have the scores ready, we will curate a dataset that is that consists of the prompt
+
+133
+00:14:06,880 --> 00:14:15,680
+that was used, the winner response with the highest score and a loser response.
+
+134
+00:14:15,680 --> 00:14:24,120
+Now the catch here is for the loser response we have not selected the model, the response
+
+135
+00:14:24,120 --> 00:14:31,400
+with the least score, rather we randomly select one of the response from the remaining
+
+136
+00:14:31,400 --> 00:14:34,160
+three candidates.
+
+137
+00:14:34,160 --> 00:14:46,840
+So this was the chosen approach because they wanted to include diversity in the dataset.
+
+138
+00:14:46,840 --> 00:14:51,560
+So that is what we have with this second step.
+
+139
+00:14:51,560 --> 00:15:02,560
+We sample prompts, we pass it to different models and use GPT4 for binarization.
+
+140
+00:15:02,560 --> 00:15:11,640
+This dataset that was generated is also named as ultrafeedback.
+
+141
+00:15:11,640 --> 00:15:17,080
+Now moving to third step that is DPU.
+
+142
+00:15:17,080 --> 00:15:23,840
+So DPU we have already seen how DPU works and Zephyr is model that is utilizing DPU
+
+143
+00:15:23,840 --> 00:15:31,800
+method for aligning the language model with the feedback data.
+
+144
+00:15:31,800 --> 00:15:36,600
+So the training procedure is pretty simple.
+
+145
+00:15:36,600 --> 00:15:43,160
+We perform, we calculate the probability of winner response and loser response with respect
+
+146
+00:15:43,160 --> 00:15:49,120
+to the fine tune model that we got with first step.
+
+147
+00:15:49,120 --> 00:15:55,580
+Then we also try to get, we get a probability from DPU model that we are trying to update
+
+148
+00:15:55,580 --> 00:16:07,400
+and then back propagate using this equation, we have already seen how we got this one, maximization
+
+149
+00:16:07,400 --> 00:16:12,240
+of the winner response and minimizing for the loser response.
+
+150
+00:16:12,240 --> 00:16:19,480
+This is same as what we have already learned with DPU.
+
+151
+00:16:19,480 --> 00:16:26,600
+To look at some of the training details, the fine tuning experiments were performed on
+
+152
+00:16:26,600 --> 00:16:28,200
+Western 7B.
+
+153
+00:16:28,200 --> 00:16:34,880
+So this is the state of the art model for 7 billion size category models.
+
+154
+00:16:34,880 --> 00:16:39,680
+So that's why authors chose this model.
+
+155
+00:16:39,680 --> 00:16:48,080
+They've also used a transformer reinforcement learning library for fine tuning and for optimizing
+
+156
+00:16:48,080 --> 00:16:55,640
+memory and improving the training speed, they've used deep speed 03 and flesh attention mechanisms.
+
+157
+00:16:55,640 --> 00:17:02,400
+Now moving forward to the evaluation part, multiple data sets were used for evaluation
+
+158
+00:17:02,400 --> 00:17:03,400
+purpose.
+
+159
+00:17:03,400 --> 00:17:06,800
+Here is the gist of the data set.
+
+160
+00:17:06,800 --> 00:17:17,240
+One, first it was empty bench that has multi-tune response benchmark, it includes 160 questions
+
+161
+00:17:17,240 --> 00:17:21,680
+across eight different areas of knowledge.
+
+162
+00:17:21,680 --> 00:17:28,320
+Mainly it has one initial question, model is supposed to respond to that and it has
+
+163
+00:17:28,320 --> 00:17:35,320
+a predefined second response, second question is a follow up question and then that is how
+
+164
+00:17:36,320 --> 00:17:44,920
+model will generate second response and then GPT-4 will be used for evaluating the combination
+
+165
+00:17:44,920 --> 00:17:46,720
+of the responses.
+
+166
+00:17:46,720 --> 00:17:50,960
+There's one more that is Alpaca event that is a singleton benchmark.
+
+167
+00:17:50,960 --> 00:17:57,400
+It includes 805 questions across different topics, mostly that's focused on helpfulness
+
+168
+00:17:57,400 --> 00:18:01,760
+and here also GPT-4 is used for evaluations.
+
+169
+00:18:01,760 --> 00:18:07,440
+But here we perform pairwise-winded comparison.
+
+170
+00:18:07,440 --> 00:18:19,040
+So as we see here for both the metrics, Zephyr outperforms the 7 billion size model category
+
+171
+00:18:19,040 --> 00:18:28,040
+and it provides highest scores, yeah, you can see here.
+
+172
+00:18:28,320 --> 00:18:38,960
+Also, if we compare it with some of the higher size data sets, even it is out matching them
+
+173
+00:18:38,960 --> 00:18:46,120
+and if we compare it with GPT-4, it is still giving us pretty comparable results that shows
+
+174
+00:18:46,120 --> 00:18:57,840
+how much well trained this model is, even if it's such a small size model.
+
+175
+00:18:57,840 --> 00:19:08,640
+One thing to note here is that Alpaca event results could be somewhat misleading because
+
+176
+00:19:08,640 --> 00:19:17,440
+the data set doesn't involve a huge variety of the questions that are needed to be evaluated.
+
+177
+00:19:17,440 --> 00:19:23,080
+So this is what we do for evaluation with the empty benchmark bench.
+
+178
+00:19:23,080 --> 00:19:30,880
+It has questions across different domains and we can also divide it across them and as
+
+179
+00:19:30,880 --> 00:19:38,880
+we see here, Zephyr performs very good and comparative enough for multiple categories
+
+180
+00:19:38,880 --> 00:19:44,960
+like role play, writing, humanities, STEM, even with extraction.
+
+181
+00:19:44,960 --> 00:19:51,720
+But it performs very bad when it's about coding or math.
+
+182
+00:19:51,720 --> 00:19:56,040
+It's even worse than most of the models.
+
+183
+00:19:56,040 --> 00:20:02,360
+So we should have this thing in mind, what area or what thing that we are trying to use
+
+184
+00:20:02,360 --> 00:20:08,440
+the model for and then we can use appropriate model.
+
+185
+00:20:08,440 --> 00:20:17,400
+So one thing to note that is we should keep in mind which area we are working on and which
+
+186
+00:20:17,400 --> 00:20:22,520
+model excels in that area.
+
+187
+00:20:22,520 --> 00:20:30,320
+Next for evaluations, different open LLM leaderboards were also used.
+
+188
+00:20:30,320 --> 00:20:41,840
+Usually these are academic type data sets, how like multi-class classification questions.
+
+189
+00:20:41,840 --> 00:20:48,080
+Even with this data sets, we can see that Zephyr is outperforming the seven million
+
+190
+00:20:48,080 --> 00:20:55,000
+size category and as well as it is giving good competition to even higher size models.
+
+191
+00:20:55,000 --> 00:21:08,960
+You can see that it is almost giving similar results to good high sized models.
+
+192
+00:21:08,960 --> 00:21:16,680
+Now one more evaluation study was provided by the authors of Zephyr to understand how
+
+193
+00:21:16,680 --> 00:21:26,320
+much the optimization was helpful, how much distillation was helpful for the Zephyr training.
+
+194
+00:21:26,320 --> 00:21:33,360
+So they have performed these four steps, four step training process.
+
+195
+00:21:33,360 --> 00:21:44,800
+First directly use the Mr. Model and fine tune it using DPO for one epoch using the
+
+196
+00:21:44,840 --> 00:21:55,160
+ultrafeedback data set and as we see the distillation step was not performed and it has highly
+
+197
+00:21:55,160 --> 00:21:59,880
+affected the model performance.
+
+198
+00:21:59,880 --> 00:22:05,920
+Next the fine tuning step was performed using ultrajet for one epoch and we can see a good
+
+199
+00:22:05,920 --> 00:22:12,840
+increase in the results which shows us how much effective the data set is and how much
+
+200
+00:22:12,880 --> 00:22:21,360
+it helps the model for correctly predicting the answers.
+
+201
+00:22:21,360 --> 00:22:34,400
+Next we did perform one epoch of fine tuning using ultrajet and second epoch of ultrafeedback
+
+202
+00:22:34,400 --> 00:22:39,560
+and we see a little drop in the performance.
+
+203
+00:22:39,560 --> 00:22:53,560
+So that's not good for the model and finally we performed one step of fine tuning using
+
+204
+00:22:53,560 --> 00:23:04,800
+ultrajet and one step of DPO using ultrafeedback and that gives us maximum results which shows
+
+205
+00:23:04,800 --> 00:23:13,640
+that indeed DPO and distillation both are helping our model for improving its understanding
+
+206
+00:23:13,640 --> 00:23:18,440
+and aligning the preference data.
+
+207
+00:23:18,440 --> 00:23:23,320
+Yes, that's all for Zephyr, thank you.
+

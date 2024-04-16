@@ -1,0 +1,3856 @@
+1
+00:00:00,000 --> 00:00:07,000
+Hello everyone, I am Arbunan Chandra and along with my friend Achan Soni, we are going to
+
+2
+00:00:07,000 --> 00:00:09,160
+present a lecture on diffusion models.
+
+3
+00:00:09,160 --> 00:00:14,560
+Your first year M Math students in the competitive science department at the University of Waterloo
+
+4
+00:00:14,560 --> 00:00:19,960
+and this is our presentation for CS86 Recent Advances on Foundational Models course under
+
+5
+00:00:19,960 --> 00:00:26,200
+the guidance of Professor Wenhu Chek.
+
+6
+00:00:26,200 --> 00:00:30,280
+So this is the basic outline of our presentation, first we will go over the basics of generative
+
+7
+00:00:30,280 --> 00:00:35,680
+models and we will spend quite some time understanding the score function and score based models.
+
+8
+00:00:35,680 --> 00:00:40,120
+Then we will try to understand the connection between SDS and score based models.
+
+9
+00:00:40,120 --> 00:00:46,480
+Then we will cover the popular sampling techniques as DGPM, DDIM and the DPM solver.
+
+10
+00:00:46,480 --> 00:00:50,760
+And lastly we will cover consistency models which is a very recent work from Open Eye
+
+11
+00:00:50,760 --> 00:00:58,600
+and tries to improve vanilla diffusion models.
+
+12
+00:00:58,600 --> 00:01:03,280
+There are many, many classes of generative models and deep generative models, autoregressive
+
+13
+00:01:03,280 --> 00:01:08,200
+models used to be pretty big back in the last decade with models like pixels here and then
+
+14
+00:01:08,200 --> 00:01:14,640
+to iteratively generate pixels of an image but have since been taken over by model classes
+
+15
+00:01:14,640 --> 00:01:16,840
+like VA's and GANs.
+
+16
+00:01:16,840 --> 00:01:23,120
+Generative models have lately become popular in the last two years and have slowly and
+
+17
+00:01:23,120 --> 00:01:28,480
+gradually become the most dominant class of deep generative models currently performing
+
+18
+00:01:28,480 --> 00:01:35,520
+at a level even better than GANs and VA's in terms of FID scores.
+
+19
+00:01:35,520 --> 00:01:37,960
+What is generative modeling?
+
+20
+00:01:37,960 --> 00:01:43,400
+In machine learning applications we have the training, validation and test set.
+
+21
+00:01:43,400 --> 00:01:48,440
+These data points are drawn from some underlying data distribution that is not known to us.
+
+22
+00:01:48,440 --> 00:01:52,440
+The goal of deep generative modeling and generative modeling is to train neural networks that
+
+23
+00:01:52,440 --> 00:01:57,120
+can learn this underlying data distribution from a finite number of samples that were drawn
+
+24
+00:01:57,120 --> 00:01:58,880
+from it.
+
+25
+00:01:58,880 --> 00:02:03,720
+We generate new data by sampling from the learned distribution and in practice models
+
+26
+00:02:03,720 --> 00:02:08,400
+are trained to maximize the expected log leg load or to minimize the divergence between
+
+27
+00:02:08,400 --> 00:02:10,600
+the learned and the empirical data distribution.
+
+28
+00:02:10,960 --> 00:02:15,680
+There are many mathematical tricks to minimize this divergence and we are going to explore
+
+29
+00:02:15,680 --> 00:02:20,240
+these in the next slides.
+
+30
+00:02:20,240 --> 00:02:24,880
+So broadly we have this original data distribution that is not known to us and is only visible
+
+31
+00:02:24,880 --> 00:02:31,480
+to us via some IID sample training data and we want to learn a generative model that can
+
+32
+00:02:31,480 --> 00:02:37,000
+approximate this original data distribution and form this learned data distribution that
+
+33
+00:02:37,000 --> 00:02:42,360
+is represented on the right.
+
+34
+00:02:42,360 --> 00:02:45,400
+So what is the training objective of these kind of models?
+
+35
+00:02:45,400 --> 00:02:50,160
+The objective is basically to minimize the divergence between the empirical data distribution
+
+36
+00:02:50,160 --> 00:02:53,400
+and the distribution learned by our model.
+
+37
+00:02:53,400 --> 00:02:58,240
+If a model learns a good distribution it should be pretty close to the original distribution.
+
+38
+00:02:58,240 --> 00:03:05,000
+Now assuming our distribution is that of images of GANs, what can we do from the learned distribution?
+
+39
+00:03:05,000 --> 00:03:10,600
+Obviously we can use to sample that is to generate new data points from this distribution
+
+40
+00:03:10,600 --> 00:03:13,920
+but we can also inversely use it to evaluate probabilities.
+
+41
+00:03:13,920 --> 00:03:20,160
+That is we can use existing data points like this image of a cat and pass it to the distribution
+
+42
+00:03:20,160 --> 00:03:22,720
+to see how good its probability mass is.
+
+43
+00:03:22,720 --> 00:03:28,200
+Now since this is a pretty common image of a cat, if our model is a good model it would
+
+44
+00:03:28,200 --> 00:03:29,680
+assign high probability to it.
+
+45
+00:03:29,880 --> 00:03:35,320
+Now the cat at the bottom, this seems like a very odd cat and hence if the model is a
+
+46
+00:03:35,320 --> 00:03:38,200
+good model it would assign low probability to it.
+
+47
+00:03:38,200 --> 00:03:45,120
+So to summarize we have a model family and we have parameters of it so we want to choose
+
+48
+00:03:45,120 --> 00:03:50,840
+the best theta that is P theta star ideally that be closest to the empirical data distribution
+
+49
+00:03:50,840 --> 00:03:57,240
+P data and once we learn this we can do sampling, we can do probability evolution and other
+
+50
+00:03:57,240 --> 00:03:58,240
+things.
+
+51
+00:03:59,120 --> 00:04:03,400
+But the key challenge in learning a model distribution is the complexity of the original
+
+52
+00:04:03,400 --> 00:04:04,400
+data distribution.
+
+53
+00:04:04,400 --> 00:04:11,800
+There is only a limited number of data points and it scales in complexity with the dimension
+
+54
+00:04:11,800 --> 00:04:14,040
+of the data input data.
+
+55
+00:04:14,040 --> 00:04:18,160
+Now since we are dealing with images, audio, video, they are extremely high dimensional
+
+56
+00:04:18,160 --> 00:04:26,000
+things and this blows up the computational complexity of learning the underlying model
+
+57
+00:04:26,000 --> 00:04:28,000
+distribution a lot.
+
+58
+00:04:29,000 --> 00:04:33,120
+We can obviously start with simple models like Gaussian distribution but them being
+
+59
+00:04:33,120 --> 00:04:37,600
+very simple are two weeks to capture the complex underlying distribution.
+
+60
+00:04:37,600 --> 00:04:45,040
+If you see this example, so this is an example of a bimodal distribution but this Gaussian
+
+61
+00:04:45,040 --> 00:04:50,000
+learns only one of the modes that are in between these two modes.
+
+62
+00:04:50,000 --> 00:04:57,920
+So clearly it is not the correct distribution that is learned and as the underlying data
+
+63
+00:04:57,920 --> 00:05:01,800
+distribution keeps getting more and more complex, we naturally need to move towards
+
+64
+00:05:01,800 --> 00:05:07,680
+deeper and bigger computational graphs that is we move towards more expressive neural
+
+65
+00:05:07,680 --> 00:05:12,200
+networks as universal function approximators to model the probability distribution from
+
+66
+00:05:12,200 --> 00:05:13,200
+the data.
+
+67
+00:05:13,200 --> 00:05:19,560
+Hence by combining generative modeling with deep neural networks we get two deep generative
+
+68
+00:05:19,560 --> 00:05:20,560
+models.
+
+69
+00:05:20,560 --> 00:05:26,400
+The deep generative models approximated via function approximators like neural networks
+
+70
+00:05:26,400 --> 00:05:31,440
+have a problem of their own that is the output given is not a valid probability distribution
+
+71
+00:05:31,440 --> 00:05:36,200
+it has to be normalized in order to get an actual probability distribution that lies
+
+72
+00:05:36,200 --> 00:05:43,000
+between 0 and 1 and also adds up to 1 and that lies the main headache.
+
+73
+00:05:43,000 --> 00:05:50,160
+So if we see this for some input x, we get them out from the neural network as f of x
+
+74
+00:05:50,160 --> 00:05:54,600
+to ensure it is positively exponentiated but this is not normalized.
+
+75
+00:05:54,600 --> 00:05:59,320
+So to normalize it we divided by some normalizing constant z theta.
+
+76
+00:05:59,320 --> 00:06:02,320
+This is called the normalizing constant or the partition function.
+
+77
+00:06:02,320 --> 00:06:08,360
+Now unfortunately we do not know z theta because we need to integrate over all input
+
+78
+00:06:08,360 --> 00:06:13,800
+examples of e to the power f theta of x to get z of theta.
+
+79
+00:06:13,800 --> 00:06:22,000
+Now f theta of x can be very complicated function and this integration is often not
+
+80
+00:06:22,000 --> 00:06:25,800
+tractable it is an intractable integration.
+
+81
+00:06:25,800 --> 00:06:30,800
+In simple cases like that of a Gaussian z theta or z new turns out to be 1 by 2 pi d
+
+82
+00:06:30,800 --> 00:06:33,520
+by 2 d is the dimension of the input data.
+
+83
+00:06:33,520 --> 00:06:39,400
+So in simple union dimension in cautions it turns out to be 1 by root 2 pi which is the
+
+84
+00:06:39,400 --> 00:06:48,160
+simple thing that comes in the Gaussian distribution formula but in other function classes this
+
+85
+00:06:48,160 --> 00:06:53,240
+thing turns out to be intractable.
+
+86
+00:06:53,240 --> 00:06:57,160
+Now the question is how do we handle this intractable z theta and can we eliminate it
+
+87
+00:06:57,160 --> 00:07:00,800
+from the optimization process?
+
+88
+00:07:00,800 --> 00:07:08,560
+Now existing generative models can broadly be categorized into three classes.
+
+89
+00:07:08,560 --> 00:07:12,440
+So we have contrastive learning based methods like energy based models.
+
+90
+00:07:12,440 --> 00:07:17,240
+These are pretty flexible in terms of modeling the underlying distribution and then they
+
+91
+00:07:17,240 --> 00:07:26,160
+have the z theta term implicitly in the formulation and since that is there exact probability
+
+92
+00:07:26,160 --> 00:07:30,200
+evolution because very difficult in these models.
+
+93
+00:07:30,200 --> 00:07:36,160
+Then we are like load based models like VA's normalizing flow models and autoregressive
+
+94
+00:07:36,160 --> 00:07:39,720
+models.
+
+95
+00:07:39,720 --> 00:07:44,920
+These work by making a restrictive modeling class that ensures that z theta is tractable
+
+96
+00:07:44,920 --> 00:07:52,320
+or learnable in some form and then we have but in these models the problem is since we
+
+97
+00:07:52,320 --> 00:07:59,560
+are restricting the model class it's ability to learn in general high quality samples is
+
+98
+00:07:59,560 --> 00:08:06,520
+decreased naturally and then we have likelihood free implicit generative models where the probability
+
+99
+00:08:06,520 --> 00:08:11,400
+distribution is implicitly represented by a model of its sampling process.
+
+100
+00:08:11,400 --> 00:08:17,520
+So the most prominent example of this is GANs where new samples from the data distribution
+
+101
+00:08:17,520 --> 00:08:24,240
+are synthesized by transforming a random Gaussian vector using a learned generative.
+
+102
+00:08:24,240 --> 00:08:29,520
+Now if you see this figure on the right we can see that diffusion model lies in the sweet
+
+103
+00:08:29,520 --> 00:08:35,000
+spot of generating high quality samples also having significant mode coverage and diversity
+
+104
+00:08:35,000 --> 00:08:39,680
+and then there are current works which show that diffusion models can also be made pretty
+
+105
+00:08:39,680 --> 00:08:43,800
+fast as sampling which we will cover later in the presentation.
+
+106
+00:08:43,800 --> 00:08:47,520
+So diffusion models in general come under this broad class of score based generative
+
+107
+00:08:47,520 --> 00:08:52,040
+models and diffusion models are a specific relation of this form of models and that
+
+108
+00:08:52,040 --> 00:08:54,360
+is what we are going to cover next.
+
+109
+00:08:54,360 --> 00:08:59,480
+So we have GANs which has a joint architecture of a discriminator and a separate generator
+
+110
+00:08:59,480 --> 00:09:05,080
+that we trained together and the discriminator learns to distinguish the generative image
+
+111
+00:09:05,080 --> 00:09:11,560
+from original image and the generator gradually becomes better at generating real life like
+
+112
+00:09:11,560 --> 00:09:13,760
+images from Gaussian GANs.
+
+113
+00:09:13,760 --> 00:09:20,360
+These first convert X to a code book or underlying important latents and from that latent we
+
+114
+00:09:20,360 --> 00:09:26,760
+can sample and generate reconstruct the image and as this process gets good we can sample
+
+115
+00:09:26,760 --> 00:09:31,760
+from Z and generate good new images.
+
+116
+00:09:31,760 --> 00:09:37,240
+And now we have diffusion models where the objective is to gradually add Gaussian noise
+
+117
+00:09:37,240 --> 00:09:48,120
+over time steps unlike VAs and in the reverse process we regenerate the image.
+
+118
+00:09:48,120 --> 00:09:50,040
+So this is the VE loss function.
+
+119
+00:09:50,040 --> 00:09:56,760
+We have a maximization of the log length loop and a minimization of the variation family
+
+120
+00:09:56,760 --> 00:09:59,320
+and the P theta that we are trying to learn.
+
+121
+00:09:59,320 --> 00:10:04,400
+So if we break this term we will also have a entropy term of the variation plus Q of
+
+122
+00:10:04,400 --> 00:10:10,160
+y and the entropy term ensures that maximum coverage of the underlying details which is
+
+123
+00:10:10,160 --> 00:10:13,520
+done by the approximate variation family that we are choosing.
+
+124
+00:10:13,520 --> 00:10:18,680
+In case of GANs we have this minimax formulation and we assume that when the optimization is
+
+125
+00:10:18,680 --> 00:10:23,360
+complete we will have an ash of blueprint between the discriminator and the generator
+
+126
+00:10:23,360 --> 00:10:29,040
+that is the images generated by the generator will be so good that the discriminators will
+
+127
+00:10:29,120 --> 00:10:35,200
+have a hard time deciding whether it is a real image or a fake generated image that is
+
+128
+00:10:35,200 --> 00:10:38,760
+its loss will converge to half.
+
+129
+00:10:38,760 --> 00:10:44,600
+So now we finally move towards core function and score based generative models.
+
+130
+00:10:44,600 --> 00:10:49,080
+As you saw earlier likelihood best models and implicit generative models both have significant
+
+131
+00:10:49,080 --> 00:10:54,720
+limitations of their own likelihood best models require strong form of restriction on the
+
+132
+00:10:54,720 --> 00:11:00,920
+modeling class to ensure attractable normalizing constant for likelihood computation and also
+
+133
+00:11:00,920 --> 00:11:06,360
+realize the objective like the variation class to optimize the maximum likelihood training.
+
+134
+00:11:06,360 --> 00:11:12,160
+In case of GANs and implicit generative models the training objective fundamentally is adversarial
+
+135
+00:11:12,160 --> 00:11:16,960
+and it is not too loosely unstable and leads to mode collapse.
+
+136
+00:11:16,960 --> 00:11:20,800
+That's the way to represent probability distributions that may circumvent several of these limitations
+
+137
+00:11:20,800 --> 00:11:25,520
+which is borrowed primarily from thermodynamics and statistical mechanics in physics and applied
+
+138
+00:11:25,520 --> 00:11:28,240
+to generative models.
+
+139
+00:11:28,240 --> 00:11:33,200
+The key idea is to model the gradient of the log probability of the data distribution
+
+140
+00:11:33,200 --> 00:11:39,160
+a quantity that is called the Steen score function and this is what we are going to
+
+141
+00:11:39,160 --> 00:11:40,160
+focus on.
+
+142
+00:11:40,160 --> 00:11:44,720
+So such score based models are not required to have attractable normalizing constant as
+
+143
+00:11:44,720 --> 00:11:50,520
+we will see during the formulation and basically GANs is out and can be directly learned by
+
+144
+00:11:50,520 --> 00:11:53,600
+score matching.
+
+145
+00:11:53,600 --> 00:11:59,480
+So how do we represent probability distributions without using parameters of the model?
+
+146
+00:11:59,480 --> 00:12:07,080
+So we use this quantity that is called score function that is basically the gradient of
+
+147
+00:12:07,080 --> 00:12:11,080
+with respect to x of log of p of x.
+
+148
+00:12:11,080 --> 00:12:19,440
+So if the arrows that you see are basically the gradients and the score function being
+
+149
+00:12:19,440 --> 00:12:26,800
+shown and underlying colored areas is the actual PDF with this basically depicts a two
+
+150
+00:12:26,800 --> 00:12:32,560
+mode distribution with high concentration of probability mass in this mode and in this
+
+151
+00:12:32,560 --> 00:12:33,960
+mode.
+
+152
+00:12:33,960 --> 00:12:38,240
+So assuming the PDF is differentiable the score function calculation is pretty easy and can
+
+153
+00:12:38,240 --> 00:12:42,480
+be done in a straightforward manner.
+
+154
+00:12:42,480 --> 00:12:46,600
+So the primary advantage of using score functions is we can get rid of this normalizing constant
+
+155
+00:12:46,600 --> 00:12:56,040
+and this which physically implies this criteria of ensuring that sum of probability density
+
+156
+00:12:56,040 --> 00:13:02,920
+function equals to 1, the area under the curve is 1 whereas if you see if you take the gradient
+
+157
+00:13:02,920 --> 00:13:08,760
+of with respect to x of p of x it comes out to be this kind of thing, this is basically
+
+158
+00:13:08,760 --> 00:13:15,980
+a score function here at this concept of ensuring area under the curve as 1 does not exist.
+
+159
+00:13:15,980 --> 00:13:20,660
+So why do we care about score function instead of the original probability density function?
+
+160
+00:13:20,660 --> 00:13:23,860
+Let's understand that the example of a deep energy waste model.
+
+161
+00:13:23,860 --> 00:13:28,420
+Let f theta be the output from a deep energy waste model and we convert it into a proper
+
+162
+00:13:28,420 --> 00:13:32,540
+probability by exponentially taking it and dividing by the normalizing constant to ensure
+
+163
+00:13:32,540 --> 00:13:35,700
+it's positive and some sums up to 1.
+
+164
+00:13:35,700 --> 00:13:43,740
+Now if we do contrasted divergence based training we have this and here since we are taking
+
+165
+00:13:43,740 --> 00:13:49,740
+the maximum with respect to theta and z theta is involved and it's unknown, maximizing this
+
+166
+00:13:49,740 --> 00:13:58,940
+way becomes difficult and then we take gradient with respect to theta it becomes very difficult
+
+167
+00:13:58,940 --> 00:14:04,900
+because p theta is fundamentally not known to us, we are just taking samples from it.
+
+168
+00:14:04,900 --> 00:14:09,380
+So how can we bypass the intractable partition function?
+
+169
+00:14:09,380 --> 00:14:13,980
+We can instead of taking gradient with respect to theta what if we move back to taking gradient
+
+170
+00:14:13,980 --> 00:14:16,660
+with respect to x in terms of the score function.
+
+171
+00:14:16,660 --> 00:14:21,180
+So this formulation is exactly same as the score function that we discussed previously
+
+172
+00:14:21,180 --> 00:14:26,420
+if we take a gradient with respect to x this turns out to be 0 because this is just dependent
+
+173
+00:14:26,420 --> 00:14:33,580
+on theta and if we calculate it a bit for ebms the score matching formulation turns
+
+174
+00:14:33,580 --> 00:14:34,580
+out to be this.
+
+175
+00:14:34,580 --> 00:14:39,900
+Here we can clearly see that s theta is independent of the normalizing constant.
+
+176
+00:14:39,900 --> 00:14:43,180
+So now let's try to formulate a framework for score estimation.
+
+177
+00:14:43,180 --> 00:14:50,100
+So we have this unknown p data from which we sample id training data points and then
+
+178
+00:14:50,100 --> 00:14:55,420
+we somehow have to learn s theta which is basically gradient of x log p data of x.
+
+179
+00:14:55,420 --> 00:15:06,580
+So we propose a score model that tries to learn the original score function and the
+
+180
+00:15:06,580 --> 00:15:10,020
+objective is basically to make these two things as close to as possible.
+
+181
+00:15:10,020 --> 00:15:14,820
+So both of them are vector fields so next we will see how we can calculate and minimize
+
+182
+00:15:14,820 --> 00:15:18,580
+that distance.
+
+183
+00:15:18,580 --> 00:15:22,700
+So this is basically simply we average over the equivalent distance over space and minimize
+
+184
+00:15:22,700 --> 00:15:29,100
+that.
+
+185
+00:15:29,100 --> 00:15:32,620
+So mathematically the objective can be written as average equivalent distance over the whole
+
+186
+00:15:32,620 --> 00:15:40,260
+space and we minimize it and this is called the Fisher Diabinance but unfortunately we
+
+187
+00:15:40,260 --> 00:15:45,140
+do not know this thing because had p data been known to us we wouldn't have to take
+
+188
+00:15:45,140 --> 00:15:47,580
+so much headache anyway.
+
+189
+00:15:47,580 --> 00:15:49,940
+So how do we element p data?
+
+190
+00:15:49,940 --> 00:15:55,740
+So one neat trick that was used in the paper that proposed this was to use integration
+
+191
+00:15:55,740 --> 00:16:02,540
+by parts or versus theorem and by manipulating it using integration by parts we only have
+
+192
+00:16:02,540 --> 00:16:09,540
+p data in the expectation and p data from here vanishes and that gives us finally this
+
+193
+00:16:09,540 --> 00:16:16,180
+equation which is called the score matching equation and as you can see p data is not
+
+194
+00:16:16,180 --> 00:16:24,420
+involved inside this so we can basically replace expectation by drawing samples.
+
+195
+00:16:24,420 --> 00:16:29,300
+Now given the score matching formation that we derived in the last slide can this be
+
+196
+00:16:29,300 --> 00:16:31,380
+optimized in our efficient manner?
+
+197
+00:16:31,380 --> 00:16:37,220
+The first term is simply square L2 in dimension so this can be done via one back prep but
+
+198
+00:16:37,220 --> 00:16:43,460
+this calculation of trace of the learned score function is like very computation expensive
+
+199
+00:16:43,460 --> 00:16:47,780
+and it scales with or number of dimensions of data.
+
+200
+00:16:47,780 --> 00:16:54,060
+So two methods to do this efficiently were proposed one of them is denerging score matching
+
+201
+00:16:54,060 --> 00:16:57,300
+rather is slice score matching.
+
+202
+00:16:57,300 --> 00:17:04,580
+So denerging score matching basically uses this noise kernel and does a convolution operation
+
+203
+00:17:04,580 --> 00:17:11,660
+to part of the original px and form a noisy version of it.
+
+204
+00:17:11,660 --> 00:17:14,540
+Now what's the benefit of forming this noisy version of it?
+
+205
+00:17:14,540 --> 00:17:21,180
+It is much easier to learn in like it is much easier competition to learn this in the score
+
+206
+00:17:21,180 --> 00:17:22,340
+matching formulation.
+
+207
+00:18:11,660 --> 00:18:36,980
+So we have p data and we do a convolution using our noisy kernel and we get q phi of
+
+208
+00:18:36,980 --> 00:18:38,700
+x dash.
+
+209
+00:18:38,700 --> 00:18:52,380
+So I'll skip the maths over here but you can see it is pretty understandable.
+
+210
+00:18:52,380 --> 00:18:56,100
+So finally we have the denerging score matching formulation.
+
+211
+00:18:56,100 --> 00:19:01,420
+This was the original one where the trace of the score function is replaced by this
+
+212
+00:19:01,420 --> 00:19:17,660
+noise version of p and we sample x from p data empirically and we sample x bar from
+
+213
+00:19:17,660 --> 00:19:19,260
+this Gaussian.
+
+214
+00:19:19,260 --> 00:19:24,620
+So all of this can be basically expectation of all of this can be replaced as simple empirical
+
+215
+00:19:24,620 --> 00:19:28,900
+averages and this is easy to compute.
+
+216
+00:19:28,900 --> 00:19:36,100
+And this thing turns out to be like analytical this has analytical solution and you'll see
+
+217
+00:19:36,100 --> 00:19:42,860
+this in commonly in the famous DDPM and DDIM papers as well.
+
+218
+00:19:42,860 --> 00:19:49,620
+So it's efficient to compute for a very high dimensional data and is useful for optimally
+
+219
+00:19:49,620 --> 00:19:50,620
+noisy.
+
+220
+00:19:50,620 --> 00:19:55,900
+But one coin is since we are using a perturbed data distribution of p of theta the original
+
+221
+00:19:55,900 --> 00:20:04,180
+score estimation cannot be done nicely because grading with respect of log of q phi of x
+
+222
+00:20:04,180 --> 00:20:12,500
+is not exactly same as that of the gradient of x which is of log of p data x.
+
+223
+00:20:12,500 --> 00:20:18,300
+So now the way to make this thing computationally more efficiently is to do a slice score matching
+
+224
+00:20:18,300 --> 00:20:26,300
+that is basically taking projections of the original score function, the learn score function
+
+225
+00:20:26,300 --> 00:20:38,300
+onto one d vectors and then calculate all the things along those directions.
+
+226
+00:20:38,300 --> 00:20:42,300
+So after applying slice score matching we come up with this new objective called slice
+
+227
+00:20:42,300 --> 00:20:47,300
+fissure divergence where the trace term is replaced by this pt and if you apply integration
+
+228
+00:20:47,300 --> 00:20:53,300
+by pass on this we get basically an expectation over different v's drawn from pv which is
+
+229
+00:20:53,300 --> 00:20:57,300
+the distribution of this one dimensional vector that we are taking prediction upon and we
+
+230
+00:20:57,300 --> 00:21:09,300
+draw x from p data as before and we come up with this completionally efficient objective.
+
+231
+00:21:09,300 --> 00:21:17,300
+So this is summary of the slice score matching function we discussed above, this is the new
+
+232
+00:21:17,300 --> 00:21:24,300
+completionally efficient objective the trace is removed by these projection terms and we
+
+233
+00:21:24,300 --> 00:21:32,020
+sample n projections and n data points and we basically replace them by empirical averages.
+
+234
+00:21:32,020 --> 00:21:38,020
+So this whole procedure is independent of the dimension d and thus is computationally
+
+235
+00:21:38,020 --> 00:21:42,520
+tractable.
+
+236
+00:21:42,520 --> 00:21:49,020
+Now we have learned how to sample data points and do score matching to learn the score function.
+
+237
+00:21:49,020 --> 00:21:56,020
+Now the next step is how do we sample from this to generate new data points from this
+
+238
+00:21:56,020 --> 00:21:57,020
+to learn score function.
+
+239
+00:21:57,020 --> 00:22:00,020
+So this completes the generative modeling process.
+
+240
+00:22:00,020 --> 00:22:06,020
+Now that we have learned the score function as theta of x, how do we sample from it to
+
+241
+00:22:06,020 --> 00:22:07,020
+generate new data samples.
+
+242
+00:22:07,020 --> 00:22:14,020
+So we use an usual type of polynomial mcmc mcmc system for multi-file rule question.
+
+243
+00:22:14,020 --> 00:22:24,020
+So assume that we have an initial distribution of points in space and we guide them using
+
+244
+00:22:24,020 --> 00:22:31,020
+the score function to go to the data points to go to the areas of the distribution which
+
+245
+00:22:31,020 --> 00:22:35,020
+have high probability values.
+
+246
+00:22:35,020 --> 00:22:39,020
+So this is how it happens.
+
+247
+00:22:39,020 --> 00:22:43,020
+In the vanilla form these things will collapse to the two modes.
+
+248
+00:22:43,020 --> 00:22:50,020
+So we add some form of noise to it so that the sampling process is a bit more uniform
+
+249
+00:22:50,020 --> 00:22:54,020
+this mode collapse doesn't happen.
+
+250
+00:22:54,020 --> 00:23:01,020
+So we ideally have found a recipe to learn the score function and sample from it using
+
+251
+00:23:01,020 --> 00:23:04,020
+Langevin Dynamics.
+
+252
+00:23:04,020 --> 00:23:15,020
+So basically sample from p of x using only the score and we replace this by the learn
+
+253
+00:23:15,020 --> 00:23:16,020
+score function.
+
+254
+00:23:16,020 --> 00:23:30,020
+We initialize some normal noise distribution by p of x and random noise from n of 0, i
+
+255
+00:23:30,020 --> 00:23:32,020
+and we use this equation as above.
+
+256
+00:23:32,020 --> 00:23:38,020
+Again here we replace the original score function by our learn score function.
+
+257
+00:23:38,020 --> 00:23:44,020
+And if epsilon tends to 0 and t tends to infinity we are guaranteed to basically have x u that
+
+258
+00:23:44,020 --> 00:23:49,020
+converges to p of x.
+
+259
+00:23:49,020 --> 00:23:57,020
+But in practice this formulation does not generate good samples.
+
+260
+00:23:57,020 --> 00:24:02,020
+So using the vanilla score matching formulation with Langevin Dynamics does not work.
+
+261
+00:24:02,020 --> 00:24:09,020
+This is a picture that I have taken from the paper which refers to this.
+
+262
+00:24:10,020 --> 00:24:15,020
+Unfortunately vanilla score matching with Langevin Dynamics does not work.
+
+263
+00:24:15,020 --> 00:24:17,020
+So what are the reasons it does not work?
+
+264
+00:24:17,020 --> 00:24:23,020
+It is primarily because of manual hypothesis that is our data points primarily lie only
+
+265
+00:24:23,020 --> 00:24:26,020
+on a small part of the manual.
+
+266
+00:24:26,020 --> 00:24:36,020
+Data score is undefined because of this reason in most part of the space and this calculating
+
+267
+00:24:36,020 --> 00:24:37,020
+turns out to be 0.
+
+268
+00:24:37,020 --> 00:24:44,020
+So we get no gradients from different parts of the space and then non-mixing off modes.
+
+269
+00:24:44,020 --> 00:24:50,020
+So if we see here since there are no data points the calculus score function, the calculus
+
+270
+00:24:50,020 --> 00:24:52,020
+score in these areas are pretty bad.
+
+271
+00:24:52,020 --> 00:24:55,020
+So it is pretty accurate in this and this region.
+
+272
+00:24:55,020 --> 00:24:57,020
+It is inaccurate here.
+
+273
+00:24:57,020 --> 00:25:00,020
+So how do we solve this?
+
+274
+00:25:00,020 --> 00:25:02,020
+So how do we improve this?
+
+275
+00:25:02,020 --> 00:25:10,020
+So basically we put up the data distribution by adding noise and basically that increases
+
+276
+00:25:10,020 --> 00:25:12,020
+the accuracy of the calculus score function.
+
+277
+00:25:12,020 --> 00:25:17,020
+Since we have some segments from here and these regions as well, the score function is
+
+278
+00:25:17,020 --> 00:25:22,020
+way more accurate in points to the directions of the points.
+
+279
+00:25:22,020 --> 00:25:29,020
+But the part of density is no longer nicely approximated to true data density.
+
+280
+00:25:29,020 --> 00:25:35,020
+So that is a con as well.
+
+281
+00:25:35,020 --> 00:25:41,020
+So there is this inherent tradeoff between data quality and the size of how we tackle
+
+282
+00:25:41,020 --> 00:25:44,020
+the low data density regions.
+
+283
+00:25:44,020 --> 00:25:52,020
+On the one end of the spectrum we add small noise amounts so that the part of data distribution
+
+284
+00:25:52,020 --> 00:25:57,020
+still remains close to the original data but the low data density regions can be large.
+
+285
+00:25:57,020 --> 00:26:03,020
+On the other side of the spectrum we add large amounts of noise to keep the low data density
+
+286
+00:26:03,020 --> 00:26:06,020
+regions small but this destroys the original data.
+
+287
+00:26:06,020 --> 00:26:11,020
+So to mediate the two sides of the spectrum, I mean the authors proposed to put up the
+
+288
+00:26:11,020 --> 00:26:16,020
+data with different levels of noise simultaneously and aggregate the information from all noise
+
+289
+00:26:16,020 --> 00:26:19,020
+levels.
+
+290
+00:26:19,020 --> 00:26:26,020
+So here we can see this tradeoff between amount of noise being added and the quality of score
+
+291
+00:26:26,020 --> 00:26:31,020
+function being learned.
+
+292
+00:26:31,020 --> 00:26:43,020
+So without noise per division the estimated score is low in the low data density regions
+
+293
+00:26:43,020 --> 00:26:49,020
+and thus the score function learned is vastly inaccurate and not much information goes to
+
+294
+00:26:49,020 --> 00:26:55,020
+the dynamic process to like in which directions should move to go towards the modes.
+
+295
+00:26:55,020 --> 00:27:00,020
+But alternatively one can use single noise scale to put up the data distribution to cover
+
+296
+00:27:00,020 --> 00:27:03,020
+large portions of the low data density region.
+
+297
+00:27:03,020 --> 00:27:06,020
+The noise that has to be added is also large.
+
+298
+00:27:06,020 --> 00:27:10,020
+This gives additional information when large dynamics is far away from the high data density
+
+299
+00:27:10,020 --> 00:27:17,020
+regions but it totally destroys the actually learned score function which is far away from
+
+300
+00:27:17,020 --> 00:27:21,020
+the score of the original data points.
+
+301
+00:27:21,020 --> 00:27:25,020
+So this problem can be solved by adding multiple noise scales.
+
+302
+00:27:25,020 --> 00:27:32,020
+So the score of noise put up distribution with multiple scales can provide directional
+
+303
+00:27:32,020 --> 00:27:38,020
+information of multiple granularity and also give useful guidance in various distances
+
+304
+00:27:38,020 --> 00:27:41,020
+from the high data density region.
+
+305
+00:27:41,020 --> 00:27:49,020
+So how do we sample from the noise condition score network using scores of different noise
+
+306
+00:27:49,020 --> 00:27:50,020
+levels?
+
+307
+00:27:50,020 --> 00:27:53,020
+So the method is called annealed langevin dynamics.
+
+308
+00:27:53,020 --> 00:27:58,020
+We do langevin dynamics for different levels of perturbed data distribution sequential.
+
+309
+00:27:58,020 --> 00:28:03,020
+First use langevin dynamics to sample from the most perturbed data distribution then
+
+310
+00:28:03,020 --> 00:28:08,020
+the resulting sample will be used as initial samples for sampling on the next noise level.
+
+311
+00:28:08,020 --> 00:28:13,020
+We continue in this fashion and finally we use langevin dynamics to sample from the least
+
+312
+00:28:13,020 --> 00:28:33,020
+perturbed data distribution to generate or to regenerate the original data sample.
+
+313
+00:28:33,020 --> 00:28:37,020
+So this is basically the algorithm that we described before.
+
+314
+00:28:37,020 --> 00:28:49,020
+Here we are generating different scale noises and we add it in our equation to draw x t power.
+
+315
+00:28:49,020 --> 00:28:55,020
+So here we show langevin dynamics and annealed langevin dynamics.
+
+316
+00:28:55,020 --> 00:29:01,020
+So annealed langevin dynamics effectively mitigates the inaccurate estimation of relative ways
+
+317
+00:29:01,020 --> 00:29:03,020
+between different modes.
+
+318
+00:29:03,020 --> 00:29:11,020
+So in this example of two mixture of questions you can clearly see that here langevin dynamics
+
+319
+00:29:11,020 --> 00:29:16,020
+needs to capture the relative weights of the modes which is effectively captured by the
+
+320
+00:29:16,020 --> 00:29:20,020
+annealed langevin dynamics and is very close to the exact samples.
+
+321
+00:29:20,020 --> 00:29:24,020
+So here the mass of this mode is pretty less.
+
+322
+00:29:24,020 --> 00:29:32,020
+Here by langevin dynamics it's pretty high.
+
+323
+00:29:32,020 --> 00:29:37,020
+The most specifically for each perturbed data distribution we can easily sample from them
+
+324
+00:29:37,020 --> 00:29:41,020
+and use score estimation to estimate corresponding scores.
+
+325
+00:29:41,020 --> 00:29:45,020
+However, the most naive way of doing this requires a large number of separate score models
+
+326
+00:29:45,020 --> 00:29:48,020
+to be learned independently which is very costly.
+
+327
+00:29:48,020 --> 00:29:54,020
+We propose instead to use a single conditional score network to estimate the scores jointly
+
+328
+00:29:54,020 --> 00:29:56,020
+for all perturbation levels.
+
+329
+00:29:56,020 --> 00:29:59,020
+The score model will take sigma as an input.
+
+330
+00:29:59,020 --> 00:30:05,020
+This model is called noise conditional score network.
+
+331
+00:30:05,020 --> 00:30:08,020
+So how do we train noise conditional score networks?
+
+332
+00:30:08,020 --> 00:30:12,020
+Training is exactly similar to score networks before using score matching.
+
+333
+00:30:12,020 --> 00:30:17,020
+We prefer using denoising score matching as it is naturally suited for estimating score
+
+334
+00:30:17,020 --> 00:30:19,020
+or perturbed data distributions.
+
+335
+00:30:19,020 --> 00:30:22,020
+And we use a weighted combination of denoising score matching losses.
+
+336
+00:30:22,020 --> 00:30:25,020
+So this is what gives the weight.
+
+337
+00:30:25,020 --> 00:30:30,020
+And lab layer of sigma i is often taken to be, this is a positive weighting function
+
+338
+00:30:30,020 --> 00:30:34,020
+and it is often taken to be sigma i squared.
+
+339
+00:30:34,020 --> 00:30:41,020
+This is where the scaling of the noise happens.
+
+340
+00:30:41,020 --> 00:30:47,020
+This loss function is extremely general and it was used in a different form in the first paper
+
+341
+00:30:47,020 --> 00:30:53,020
+that introduced different models for deep generative modeling in 2015
+
+342
+00:30:53,020 --> 00:31:02,020
+and was again used in the seminal 2020 paper of DDPM in a different form.
+
+343
+00:31:02,020 --> 00:31:08,020
+So as I mentioned in the previous slide, this positive weighting function can be taken to be
+
+344
+00:31:08,020 --> 00:31:16,020
+any positive function of sigma i and is preferred that we take sigma i squared.
+
+345
+00:31:16,020 --> 00:31:21,020
+So to summarize, this is how basically anneal engineering dynamics works.
+
+346
+00:31:21,020 --> 00:31:26,020
+We have score functions with progressively higher levels of noise
+
+347
+00:31:26,020 --> 00:31:32,020
+and we learn from those corresponding noise levels the probability distribution
+
+348
+00:31:32,020 --> 00:31:37,020
+using a noise conditional score model.
+
+349
+00:31:37,020 --> 00:31:44,020
+And sampling from above using anneal engineering dynamics, we see that the generated samples now
+
+350
+00:31:44,020 --> 00:31:50,020
+are of extremely good quality.
+
+351
+00:31:50,020 --> 00:31:57,020
+And also in terms of metrics, inception score and FID score of these models
+
+352
+00:31:57,020 --> 00:32:02,020
+are also pretty good and at par with the best GAN models out there.
+
+353
+00:32:02,020 --> 00:32:07,020
+Here are some more samples on various image datasets of various resolutions
+
+354
+00:32:07,020 --> 00:32:10,020
+all trained and sampled according to the techniques mentioned above.
+
+355
+00:32:10,020 --> 00:32:14,020
+So as we can see that the qualities and of the generated images are extremely good
+
+356
+00:32:14,020 --> 00:32:18,020
+and the diversity is also pretty good.
+
+357
+00:32:18,020 --> 00:32:22,020
+Now we move on to score-based generative models with stochastic differential equations
+
+358
+00:32:22,020 --> 00:32:28,020
+and we see the conditional diffusion models with SGS and ODEs.
+
+359
+00:32:28,020 --> 00:32:34,020
+Previously we have already discussed how adding multiple noise scales is critical to the success of score-based generative models.
+
+360
+00:32:34,020 --> 00:32:38,020
+More than noise scales, the better the generated samples are.
+
+361
+00:32:38,020 --> 00:32:42,020
+So by generalizing the number of noise scales to infinity, the authors obtained
+
+362
+00:32:42,020 --> 00:32:47,020
+not only high quality samples but also exact likelihood computation
+
+363
+00:32:47,020 --> 00:32:51,020
+and controllable generation for inverse problem solving.
+
+364
+00:32:51,020 --> 00:32:54,020
+So how do we perturb data with NST?
+
+365
+00:32:54,020 --> 00:32:58,020
+Perturbing a data into a random salt and paper Gaussian noise is easy.
+
+366
+00:32:58,020 --> 00:33:01,020
+The difficult part is doing the reverse process.
+
+367
+00:33:01,020 --> 00:33:04,020
+So when the number of noise scales approach infinity,
+
+368
+00:33:04,020 --> 00:33:08,020
+the data distribution is essentially perturbed with continuously growing levels of noise.
+
+369
+00:33:08,020 --> 00:33:13,020
+In this case, the noise perturbation procedure is a continuous time stochastic process
+
+370
+00:33:13,020 --> 00:33:19,020
+as demonstrated below in the video.
+
+371
+00:33:19,020 --> 00:33:26,020
+So we can see here that initially we were just adding noise of different scales at finite time steps.
+
+372
+00:33:26,020 --> 00:33:36,020
+Now we can approximate this as drawing samples from some continuous time noise distribution.
+
+373
+00:33:36,020 --> 00:33:42,020
+So this is the original data distribution and this is the sampling prior
+
+374
+00:33:42,020 --> 00:33:47,020
+which in our case is mostly a uniform Gaussian distribution.
+
+375
+00:33:47,020 --> 00:33:53,020
+So initially we are drawing different noise levels at finite time steps.
+
+376
+00:33:53,020 --> 00:34:00,020
+Now if we keep increasing the steps in between, we get a continuous distribution of perturbed noises.
+
+377
+00:34:00,020 --> 00:34:11,020
+And we denote that as Pt of x where t is any real number between 0 and the finite time capital T.
+
+378
+00:34:11,020 --> 00:34:15,020
+So this is the original data distribution denoted as P0 of x
+
+379
+00:34:15,020 --> 00:34:19,020
+and this is the noise distribution that we are finally converging to.
+
+380
+00:34:19,020 --> 00:34:28,020
+In most cases this is a standard Gaussian which is Pt capital T of x.
+
+381
+00:34:28,020 --> 00:34:34,020
+So how do we noise a clean data sample drawn from P0 of x?
+
+382
+00:34:34,020 --> 00:34:37,020
+We do it using a stochastic process.
+
+383
+00:34:37,020 --> 00:34:43,020
+After adding noise, it converges to somewhat near a Gaussian distribution
+
+384
+00:34:43,020 --> 00:34:48,020
+and it is done using the forward stochastic differential equation
+
+385
+00:34:48,020 --> 00:34:55,020
+where other than the deterministic term, we also have a drift term with an infinitesimal noise added.
+
+386
+00:34:55,020 --> 00:35:03,020
+Now without loss of generalization, let's take a toy SD ignoring the deterministic drift.
+
+387
+00:35:03,020 --> 00:35:10,020
+So here lambda is a continuous generation of lambda i's and the noise levels that we had before
+
+388
+00:35:10,020 --> 00:35:16,020
+and this is the infinitesimal noise as before.
+
+389
+00:35:16,020 --> 00:35:20,020
+Now how do we generate samples from the prior that we had defined?
+
+390
+00:35:20,020 --> 00:35:24,020
+We do it using the reverse stochastic process.
+
+391
+00:35:25,020 --> 00:35:33,020
+So this was the forward stochastic differential equation that we had defined.
+
+392
+00:35:33,020 --> 00:35:41,020
+Now Anderson, it all in 1982 gave an analytical solution of any stochastic differential equations, reverse SD.
+
+393
+00:35:41,020 --> 00:35:49,020
+Here we can see other than the noise levels, we also have this score function that we had encountered before.
+
+394
+00:35:49,020 --> 00:35:53,020
+Other than that, we also have this infinitesimal noise.
+
+395
+00:35:53,020 --> 00:35:56,020
+Now in the reverse time direction.
+
+396
+00:35:56,020 --> 00:36:04,020
+So this is the summarization of the forward and the backward stochastic differential equations
+
+397
+00:36:04,020 --> 00:36:12,020
+and the score function can again, using score matching, be replaced by our score model
+
+398
+00:36:12,020 --> 00:36:19,020
+and this turns out to be the training objective for the denoising process
+
+399
+00:36:19,020 --> 00:36:27,020
+where this positive weighing function is usually any constant that measures the amount of noise being added at each time step.
+
+400
+00:36:27,020 --> 00:36:36,020
+It is usually kept to be sigma t squared but it can be any positive quantity related to sigma t.
+
+401
+00:36:36,020 --> 00:36:43,020
+We can thus generate samples by solving the reverse SD to similar the reverse time stochastic process.
+
+402
+00:36:43,020 --> 00:36:47,020
+We can use any SD solver like the Euler-Moiroma method.
+
+403
+00:36:47,020 --> 00:36:51,020
+It is based on the same idea of Euler's method for solving ODs.
+
+404
+00:36:51,020 --> 00:36:57,020
+Basically we can replace the infinitesimal time step dt with a small time difference delta t
+
+405
+00:36:57,020 --> 00:37:03,020
+and we replace the infinitesimal white noise via Gaussian noise with variance dependent on delta t.
+
+406
+00:37:04,020 --> 00:37:13,020
+Here delta t is negative time step as this is the reverse denoising process and it goes from capital T to 0.
+
+407
+00:37:13,020 --> 00:37:19,020
+We can train a time dependence score based model to approximate the score function as a function of time.
+
+408
+00:37:19,020 --> 00:37:23,020
+This time dependence score based model is a neural network condition on time t
+
+409
+00:37:23,020 --> 00:37:30,020
+and it can be trained by first randomly sampling t then minimizing the corresponding score matching loss which we are already defined earlier.
+
+410
+00:37:31,020 --> 00:37:34,020
+These are the approximations we make.
+
+411
+00:37:34,020 --> 00:37:43,020
+We change t of x to delta of x and dw to gt of z and z is Gaussian noise.
+
+412
+00:37:43,020 --> 00:37:51,020
+Since we are simulating the stochastic process using a discrete Euler-Moiroma type of method
+
+413
+00:37:51,020 --> 00:37:56,020
+there might be errors while estimating the values.
+
+414
+00:37:57,020 --> 00:38:01,020
+We can correct this using the predictor-corrector sampling methods.
+
+415
+00:38:01,020 --> 00:38:09,020
+The predictor is the numerical SG solver and the corrector is the score based MCMC estimators.
+
+416
+00:38:09,020 --> 00:38:23,020
+So how does this method work?
+
+417
+00:38:23,020 --> 00:38:29,020
+When solving the reverse time SG we first use the predictor to get a rough estimate of the intermediate sample at the next time step.
+
+418
+00:38:29,020 --> 00:38:32,020
+Then we use the corrector to fine tune the sample.
+
+419
+00:38:32,020 --> 00:38:37,020
+This procedure is repeated multiple times until we finally get a sample from the original unperturbed data distribution.
+
+420
+00:38:37,020 --> 00:38:48,020
+The corrector-corrector methods assembles annulled Langevin dynamics with numerical methods of solving STs.
+
+421
+00:38:48,020 --> 00:38:54,020
+However, the introduction of predictor helps Langevin dynamics to make a smooth transition between different noise scales.
+
+422
+00:38:54,020 --> 00:38:59,020
+So with the corrector-corrector network and some architectural improvements
+
+423
+00:39:00,020 --> 00:39:07,020
+noise condition score networks were able to get state-of-the-art results meeting GANs as well.
+
+424
+00:39:07,020 --> 00:39:12,020
+Their model achieved an FID score of 2.2 and an inception score of 9.89.
+
+425
+00:39:12,020 --> 00:39:16,020
+The previous best results were achieved by SILGAN2 with data augmentation.
+
+426
+00:39:16,020 --> 00:39:19,020
+These methods were done without any data augmentation.
+
+427
+00:39:19,020 --> 00:39:26,020
+Also, their FID score on unconditional generation is even better than the state-of-the-art on conditional generation.
+
+428
+00:39:26,020 --> 00:39:31,020
+And this was indeed a great breakthrough in this phase.
+
+429
+00:39:31,020 --> 00:39:41,020
+With these improvements, noise condition score networks could generate high-resolution 1024 x 1024 images at par with GANs.
+
+430
+00:39:44,020 --> 00:39:47,020
+We can see examples on other datasets as well.
+
+431
+00:39:48,020 --> 00:39:55,020
+Now how do we calculate exact workloads from these kind of models?
+
+432
+00:39:55,020 --> 00:39:58,020
+For that, we need to convert the SD to an ODE.
+
+433
+00:40:06,020 --> 00:40:08,020
+So this was the SD that we had considered before.
+
+434
+00:40:08,020 --> 00:40:10,020
+The corresponding ODE is this.
+
+435
+00:40:10,020 --> 00:40:14,020
+And here, this is just dependent on the score function that we had defined previously
+
+436
+00:40:14,020 --> 00:40:17,020
+and the noise level, which we already know.
+
+437
+00:40:31,020 --> 00:40:37,020
+So we can consider this formulation as a continuous time-infinity normanetizing flow
+
+438
+00:40:37,020 --> 00:40:40,020
+that was defined in the neural ODE paper in 2018.
+
+439
+00:40:40,020 --> 00:40:45,020
+So these unique ODE solutions create invertible mappings.
+
+440
+00:40:45,020 --> 00:40:48,020
+To invert, we solved the ODE backwards from T20.
+
+441
+00:40:51,020 --> 00:40:53,020
+So this was our prior distribution.
+
+442
+00:40:53,020 --> 00:41:05,020
+And we can see that the ODE also maps noise drawn from the prior distribution to high-quality data samples, p theta of x.
+
+443
+00:41:06,020 --> 00:41:12,020
+Now how do we get this p theta of x and the log likelihood of these generated samples?
+
+444
+00:41:12,020 --> 00:41:17,020
+So we get it using a change of variables formula proposed in the neural ODE paper in 2018.
+
+445
+00:41:17,020 --> 00:41:26,020
+And again, this depends only on the score function, which is computable in polynomial time and is an unbiased estimator.
+
+446
+00:41:26,020 --> 00:41:33,020
+And this integration is a one-dimensional integration, so it's easy to solve using ODE solvers.
+
+447
+00:41:34,020 --> 00:41:35,020
+Now what is the advantage of it?
+
+448
+00:41:35,020 --> 00:41:46,020
+Besides getting exact likelihood values, the solving and drawing samples using ODE is way more efficient.
+
+449
+00:41:46,020 --> 00:41:55,020
+As we can see, SD solvers took thousand number of score function evaluations, whereas adaptive ODE solvers take nearly 100.
+
+450
+00:41:55,020 --> 00:41:58,020
+So that's a 10-fold computation reduction.
+
+451
+00:41:59,020 --> 00:42:12,020
+And these methods were only used in later and more popular papers to create accelerated sampling methods, as in DDIM.
+
+452
+00:42:12,020 --> 00:42:29,020
+So black box ODE solvers and flow based models also achieved state-of-the-art negative log likelihood values, the lower, the better, and FID scores over previous methods, as we can see here.
+
+453
+00:42:32,020 --> 00:42:37,020
+Probability flow models also have another advantage, that is their uniquely identifiable encoding.
+
+454
+00:42:37,020 --> 00:42:49,020
+In case of general flow models and VAEs, since this term was dependent on the parameters theta of the model, using different models led to different latents in the latent space.
+
+455
+00:42:49,020 --> 00:42:57,020
+But score based models via probability flow ODE is dependent only on the score function, which is dependent on the training dataset.
+
+456
+00:42:57,020 --> 00:43:04,020
+So it is independent of the model's parameters, and thus even using different models leads to the same latent in the latent space.
+
+457
+00:43:05,020 --> 00:43:20,020
+In experiments shown in the paper, we can see that even using two different latents, they almost converge to similar points in the latent space, and always flows to each other throughout the different time steps.
+
+458
+00:43:22,020 --> 00:43:26,020
+We can also do control level generation using score functions and score test models.
+
+459
+00:43:27,020 --> 00:43:35,020
+So this was our original data distribution P of x. Now we condition it on some values y, it can be the label, it can value things as well.
+
+460
+00:43:36,020 --> 00:43:43,020
+So in our case, now we have another forward model, which is P of y given x, and y is the control signal.
+
+461
+00:43:43,020 --> 00:43:48,020
+So y in this case is basically the classifier label.
+
+462
+00:43:49,020 --> 00:43:59,020
+So if we break down this using Bayes' rule, we have P of x given y as P of x, which is our prior data distribution, into P of y given x divided by P of y.
+
+463
+00:43:59,020 --> 00:44:12,020
+So we don't know P of y, but if we apply the score function rule on this, we take the log of this and then the gradient with respect to x, this value turns out to be 0, because log of P of y is not dependent on x.
+
+464
+00:44:13,020 --> 00:44:25,020
+Then we are left with the unconditional score S theta of x that we were using so long, and this value, which is gradient of x of log of P of y given x.
+
+465
+00:44:25,020 --> 00:44:30,020
+Now this is basically our forward model, which can be a classifier or something else defined manually.
+
+466
+00:44:30,020 --> 00:44:37,020
+So we can keep this thing as it is, and we can plug in different forward models for the same score model.
+
+467
+00:44:38,020 --> 00:44:49,020
+Now if y is a class level, P of y given x is a time-dependent classifier, we can do this kind of classifier-guided image generation.
+
+468
+00:44:51,020 --> 00:44:58,020
+We can also do other tasks like in-painting, where this is the ground truth, this is the masked image, and this is the in-painted image.
+
+469
+00:44:59,020 --> 00:45:11,020
+We can also do colorizing of images, so these are the ground truth values and these are the gray-scaled images, y, and we get colorized images x given y.
+
+470
+00:45:13,020 --> 00:45:21,020
+So finally we introduced score-based generative models, and we also saw how SDs and ODs can be used to draw samples from them.
+
+471
+00:45:22,020 --> 00:45:30,020
+So score functions, which are gradients of the distribution with respect to x, can be estimated easily, it is not dependent on the parameters of the model.
+
+472
+00:45:31,020 --> 00:45:38,020
+This gives it architectural flexibility and is not restricted to the normalizing constant or invertibility of the model.
+
+473
+00:45:39,020 --> 00:45:44,020
+The training is stable, there is no need for minimax optimization or adversarial training as was in GANs.
+
+474
+00:45:44,020 --> 00:45:51,020
+Secondly, score-based generative models typically achieve very high sample quality, comparable or currently even surpassing GANs.
+
+475
+00:45:52,020 --> 00:45:56,020
+It is currently the state-of-the-art method for CFAT and other common data sets.
+
+476
+00:45:57,020 --> 00:46:02,020
+It is scalable to images with resolutions as large as 1024 x 1024.
+
+477
+00:46:03,020 --> 00:46:12,020
+Finally, we can also calculate exact likelihood of score functions, which are used in many downstream applications like animated detection and others.
+
+478
+00:46:13,020 --> 00:46:21,020
+Likelihoods obtained on CFAT 10 is very comparative, being state-of-the-art evaluated on uniformly-dequantized data.
+
+479
+00:46:22,020 --> 00:46:28,020
+Equivalence to neural OD also allows many impressive things like interpolation and temperature scaling.
+
+480
+00:46:29,020 --> 00:46:39,020
+In addition, the encoding learned by these score-based models are uniquely identifiable, unlike the cases in VA's and normal flow models.
+
+481
+00:46:40,020 --> 00:46:43,020
+So far, we talked about score-based generative models.
+
+482
+00:46:44,020 --> 00:46:50,020
+Let's now talk about a broader category of generative models, which are known as denoising diffusion prologistic models.
+
+483
+00:46:51,020 --> 00:46:56,020
+These are algorithms that can learn to generate new data samples that resemble a given training dataset.
+
+484
+00:46:57,020 --> 00:47:05,020
+The diffusion term in DDPM refers to a process that gradually adds noise to a data sample until the original content is completely obscured.
+
+485
+00:47:06,020 --> 00:47:11,020
+This process is akin to slowly scrambling an image until it becomes pure noise.
+
+486
+00:47:12,020 --> 00:47:17,020
+This part of the process is called the forward diffusion process, and it is relatively simple and fixed.
+
+487
+00:47:19,020 --> 00:47:22,020
+On the other hand, the core of a DDPM is the reverse process.
+
+488
+00:47:23,020 --> 00:47:25,020
+It learns to denoise or reverse a diffusion.
+
+489
+00:47:26,020 --> 00:47:33,020
+Starting from random noise, the model gradually constructs a sample step-by-step, eventually leading to a coherent data point like an image.
+
+490
+00:47:34,020 --> 00:47:38,020
+This process is learned from the data, and it is where the model's complexity lies.
+
+491
+00:47:39,020 --> 00:47:41,020
+Let's now talk about the forward diffusion process.
+
+492
+00:47:42,020 --> 00:47:50,020
+Given a data sample X0, we gradually keep adding noise to it until there is nothing left of the data sample, and there is this pure noise.
+
+493
+00:47:51,020 --> 00:47:54,020
+It is assumed that the forward process is a Markov chain model.
+
+494
+00:47:55,020 --> 00:48:02,020
+It means that for a particular timestamp Xt, the probability Q of Xt depends only on the model.
+
+495
+00:48:03,020 --> 00:48:06,020
+It depends on previous timestamps and not on timestamps before it.
+
+496
+00:48:08,020 --> 00:48:18,020
+So, according to the Markov chain model, we can write the joint distribution Q of X from 1 to T given X0 to be the products of Q of Xt given Xt minus 1.
+
+497
+00:48:19,020 --> 00:48:23,020
+And we can define Q of Xt given Xt minus 1 to be a Gaussian distribution.
+
+498
+00:48:26,020 --> 00:48:32,020
+Here, beta T's are the variant schedulers, and they control the step size.
+
+499
+00:48:33,020 --> 00:48:36,020
+They control how much noise we add for the particular time step.
+
+500
+00:48:37,020 --> 00:48:47,020
+To simplify it further, let's define alpha T to be equal to 1 minus beta T and alpha bar T to be the product of all the alphas tilde times mt.
+
+501
+00:48:48,020 --> 00:49:00,020
+This gives us Q of Xt given X0 to be a Gaussian distribution with mean equal to square root of alpha bar T X0
+
+502
+00:49:00,020 --> 00:49:03,020
+and variance equal to 1 minus alpha T bar I.
+
+503
+00:49:04,020 --> 00:49:13,020
+But there's one problem. If we want to sample for Xt, the distribution must be sampled T times from time t equal to 0.
+
+504
+00:49:14,020 --> 00:49:15,020
+This is not desired.
+
+505
+00:49:20,020 --> 00:49:21,020
+So, how do we fix that?
+
+506
+00:49:22,020 --> 00:49:28,020
+We noted the probability distribution Q of Xt given X0 is a Gaussian distribution as we discussed in the last slide.
+
+507
+00:49:29,020 --> 00:49:31,020
+This is also known as a diffusion kernel.
+
+508
+00:49:34,020 --> 00:49:41,020
+If we use the parametration trick on this, we can directly sample Xt from this distribution at any arbitrary times mt.
+
+509
+00:49:42,020 --> 00:49:43,020
+This is the reparametration trick.
+
+510
+00:49:44,020 --> 00:49:52,020
+Here, Xt is equal to the mean of the distribution plus the variance times small noise which is sampled from n0i.
+
+511
+00:49:53,020 --> 00:50:03,020
+There's one thing to note over here. If we replace small t with capital T, we can directly sample final time step using this diffusion kernel.
+
+512
+00:50:04,020 --> 00:50:10,020
+And we want the final time step to be as close to n0i as possible since this is pure noise.
+
+513
+00:50:11,020 --> 00:50:15,020
+So, we choose beta T such that alpha bar T goes to 0.
+
+514
+00:50:17,020 --> 00:50:21,020
+Lower the alpha T values, the more the noise is added.
+
+515
+00:50:23,020 --> 00:50:25,020
+Let's now talk about the variance scheduler beta T's.
+
+516
+00:50:26,020 --> 00:50:31,020
+The values of beta T are generally chosen such that they linearly increase with time.
+
+517
+00:50:33,020 --> 00:50:40,020
+Beta 0 is usually assumed to be 10 to the power minus 4 and it increases linearly until beta T becomes 0.02.
+
+518
+00:50:42,020 --> 00:50:48,020
+One can look at beta T's as the percentage of noise added at time t relative to time t minus 1.
+
+519
+00:50:49,020 --> 00:50:58,020
+But there's one thing to note over here. The amount of noise added at a particular time step t is not just the rate between 10 to the power minus 4 and 0.02.
+
+520
+00:50:59,020 --> 00:51:04,020
+Rather, it is a product of all the alpha T's from time 0 to time t.
+
+521
+00:51:06,020 --> 00:51:08,020
+It can be easily seen in the diffusion kernel.
+
+522
+00:51:10,020 --> 00:51:15,020
+So, the amount of noise added at a particular time step increases exponentially.
+
+523
+00:51:15,020 --> 00:51:20,020
+We have chosen our values of beta T such that the amount of noise added increases exponentially.
+
+524
+00:51:22,020 --> 00:51:28,020
+And at the later time stamps, higher time stamps, the original data decreases exponentially.
+
+525
+00:51:33,020 --> 00:51:35,020
+So, this is the diffusion perspective.
+
+526
+00:51:36,020 --> 00:51:44,020
+Given a data distribution, we want to perturb the data enough for it to become a normal distribution.
+
+527
+00:51:45,020 --> 00:51:52,020
+We have a data distribution p0 of x. We keep on perturbing it until we get a normal distribution.
+
+528
+00:51:53,020 --> 00:52:01,020
+We usually refer to this normal distribution as pi of x. This is also referred to as a prior distribution as it will be useful in the reverse process.
+
+529
+00:52:05,020 --> 00:52:09,020
+So, now we know how to compute the probability q of xt given x0.
+
+530
+00:52:10,020 --> 00:52:15,020
+But how do we compute only q of xt without the knowledge of x0?
+
+531
+00:52:16,020 --> 00:52:24,020
+q of xt can be written as the integral of the joint distribution q of x0 given xt and this is integrated over dx0.
+
+532
+00:52:26,020 --> 00:52:31,020
+This can further be broken down into q of x0 multiplied by q of xt given x0.
+
+533
+00:52:32,020 --> 00:52:41,020
+We know how to compute q of xt given x0 and we know the distribution of q of x0, our initial distribution.
+
+534
+00:52:42,020 --> 00:52:53,020
+So, to sample xt using q of xt, we first need to sample x0 to obtain q of x0 and then we sample xt using the diffusion kernel.
+
+535
+00:52:54,020 --> 00:52:56,020
+This is also referred to as ancestral sample.
+
+536
+00:52:57,020 --> 00:53:00,020
+Okay, let's talk about the reverse process of the DDPMs now.
+
+537
+00:53:01,020 --> 00:53:04,020
+In the forward process, we saw how to compute q of xt given xt minus 1.
+
+538
+00:53:05,020 --> 00:53:10,020
+For the reverse process, we need to compute p of xt minus 1 given xt.
+
+539
+00:53:11,020 --> 00:53:17,020
+We know what data sample at display xt is and we want to compute what xt minus 1 would be.
+
+540
+00:53:18,020 --> 00:53:22,020
+But there are way too many possibilities to reach from xt to any other point.
+
+541
+00:53:23,020 --> 00:53:26,020
+So, it's difficult to compute p of xt minus 1 given xt.
+
+542
+00:53:28,020 --> 00:53:29,020
+How do we do that?
+
+543
+00:53:31,020 --> 00:53:37,020
+We create a neural network that estimates the function p theta of xt minus 1 given xt.
+
+544
+00:53:38,020 --> 00:53:44,020
+We make a model that learns this parameter function and thetas are the model parameters over here.
+
+545
+00:53:45,020 --> 00:53:47,020
+So, let's take a look at how the denoising stuff looks.
+
+546
+00:53:48,020 --> 00:53:56,020
+We are at q of xt capital xt and we want to denoise this noise and we want to raise till x0.
+
+547
+00:53:57,020 --> 00:54:03,020
+Now, diffusion parameters are designed such that the value of q of xt is the normal distribution.
+
+548
+00:54:04,020 --> 00:54:08,020
+We choose our variance schedulers such that the q value of q of xt is n0i.
+
+549
+00:54:09,020 --> 00:54:15,020
+So, we start by first sampling xt capital X capital T from the normal distribution.
+
+550
+00:54:16,020 --> 00:54:20,020
+And then we iteratively sample q of xt minus 1 given xt.
+
+551
+00:54:21,020 --> 00:54:23,020
+That should be our steps.
+
+552
+00:54:24,020 --> 00:54:25,020
+But there is a catch over here.
+
+553
+00:54:26,020 --> 00:54:33,020
+We cannot compute q of xt minus 1 given xt for any of the steps because it is very difficult to compute and it is intractable.
+
+554
+00:54:35,020 --> 00:54:42,020
+But of what if instead of sampling xt from q of xt minus 1 given xt, we condition this probability on x0 as well.
+
+555
+00:54:43,020 --> 00:54:47,020
+So, now we have to compute q of xt minus 1 given xt comma x0.
+
+556
+00:54:49,020 --> 00:54:54,020
+And if we use Bayes' rule on this probability, we will get q of xt given xt minus 1 comma x0.
+
+557
+00:54:55,020 --> 00:54:58,020
+Multiply by q of xt minus 1 given x0 divided by q of xt given x0.
+
+558
+00:54:59,020 --> 00:55:05,020
+If you note carefully, all three terms in this are diffusion kernels and they are easy to compute.
+
+559
+00:55:06,020 --> 00:55:09,020
+Note that the diffusion kernels are Gaussian distributions.
+
+560
+00:55:09,020 --> 00:55:15,020
+So, multiplication and division of three diffusion kernels will also yield a Gaussian distribution.
+
+561
+00:55:17,020 --> 00:55:20,020
+Let's say the mean of this probability distribution is nu tilde.
+
+562
+00:55:21,020 --> 00:55:25,020
+It depends on xt comma x0 and the variance is beta T tilde.
+
+563
+00:55:26,020 --> 00:55:30,020
+The value of nu tilde is given by this formula.
+
+564
+00:55:31,020 --> 00:55:32,020
+It's quite easy to compute.
+
+565
+00:55:33,020 --> 00:55:36,020
+You just have to multiply and divide some Gaussian distributions.
+
+566
+00:55:37,020 --> 00:55:45,020
+If we use a reparametrician trick and plug in the value of x0 using this equation, we get nu tilde equal to this.
+
+567
+00:55:46,020 --> 00:55:49,020
+Note that this does not depend on x0 anymore, it just depends on xt.
+
+568
+00:55:50,020 --> 00:55:55,020
+So, we don't need to write nu tilde xt comma x0 anymore, we can just write it as nu T tilde.
+
+569
+00:55:56,020 --> 00:55:59,020
+And over here, epsilon T is sampled from a normal distribution.
+
+570
+00:56:00,020 --> 00:56:10,020
+As for the values of beta T tilde, they are just 1 minus alpha bar T minus 1 divided by 1 minus alpha bar T multiplied by beta times beta T.
+
+571
+00:56:15,020 --> 00:56:19,020
+We saw how to calculate the value of q of xt minus 1 given xt comma x0.
+
+572
+00:56:20,020 --> 00:56:22,020
+But can we use this to compute the backward process?
+
+573
+00:56:23,020 --> 00:56:27,020
+The answer is actually no, because we don't know what x0 will be during the inference phase.
+
+574
+00:56:28,020 --> 00:56:34,020
+While sampling, we just start from a normal distribution and try to denoise the noise as much as possible until x0.
+
+575
+00:56:35,020 --> 00:56:37,020
+But we don't know what the x0 is from the very beginning.
+
+576
+00:56:38,020 --> 00:56:43,020
+To solve this, we train a model p theta, which learns to approximate this probability distribution.
+
+577
+00:56:44,020 --> 00:56:54,020
+The joint distribution p theta of x0 to xt will be p of xt multiplied by p theta of xt minus 1 given xt.
+
+578
+00:56:55,020 --> 00:56:56,020
+Why this?
+
+579
+00:56:57,020 --> 00:57:04,020
+Because since we assumed that a formal model will be a Markov chain, the reverse process should be a Markov chain as well.
+
+580
+00:57:05,020 --> 00:57:07,020
+This is just a formula of Markov model.
+
+581
+00:57:09,020 --> 00:57:14,020
+Note that p of xt over here is just a normal distribution, which is n0i.
+
+582
+00:57:15,020 --> 00:57:16,020
+So we know this value.
+
+583
+00:57:17,020 --> 00:57:22,020
+p theta of xt minus 1 given xt is assumed to be a normal distribution
+
+584
+00:57:22,020 --> 00:57:28,020
+with new theta xt comma t as the mean and sigma theta xt comma t as the variance.
+
+585
+00:57:29,020 --> 00:57:31,020
+But why do we assume this to be a Gaussian distribution?
+
+586
+00:57:32,020 --> 00:57:39,020
+Well, because since we assumed that the forward process is just a Gaussian distribution, we add noise according to a normal distribution.
+
+587
+00:57:40,020 --> 00:57:44,020
+We want the model to learn the same process in the reverse process as well.
+
+588
+00:57:47,020 --> 00:57:51,020
+So we just need our model to learn p theta of xt minus 1 given xt.
+
+589
+00:57:52,020 --> 00:57:53,020
+Which is a Gaussian distribution.
+
+590
+00:57:54,020 --> 00:57:58,020
+In other words, we need our model to learn the mean and the variance of the distribution.
+
+591
+00:57:59,020 --> 00:58:03,020
+We would like to train our model such that the new theta is able to predict new tilde t.
+
+592
+00:58:05,020 --> 00:58:07,020
+And we know new tilde t from a few slides back.
+
+593
+00:58:08,020 --> 00:58:09,020
+This is the equation for new tilde t.
+
+594
+00:58:10,020 --> 00:58:19,020
+As for the variance sigma theta xt comma t, we just say it's sigma square ti.
+
+595
+00:58:20,020 --> 00:58:22,020
+And sigma square t over here is not learned.
+
+596
+00:58:23,020 --> 00:58:25,020
+It is either set to beta t or beta tilde t.
+
+597
+00:58:27,020 --> 00:58:35,020
+Because learning diagonal variance sigma theta xt, it leads to unstable training as per the authors and the sample quality remains poor.
+
+598
+00:58:36,020 --> 00:58:38,020
+Let's take a look at the last term of the model now.
+
+599
+00:58:39,020 --> 00:58:42,020
+The last we use for the model is the variation lower bound.
+
+600
+00:58:45,020 --> 00:58:50,020
+The probabilities of q xt given x naught, q xt minus 1 given xt comma x naught.
+
+601
+00:58:51,020 --> 00:58:57,020
+These are all the probabilities of forward process and p of xt, p of p theta of xt minus 1 given xt.
+
+602
+00:58:58,020 --> 00:59:03,020
+They are the probabilities that the model learns through the reverse process.
+
+603
+00:59:04,020 --> 00:59:06,020
+We want these probabilities to be as close to each other as possible.
+
+604
+00:59:07,020 --> 00:59:09,020
+And to do that, we use KL divergence.
+
+605
+00:59:13,020 --> 00:59:15,020
+We break down the lowest term into three terms.
+
+606
+00:59:16,020 --> 00:59:19,020
+L capital T, L small t and L naught.
+
+607
+00:59:20,020 --> 00:59:25,020
+And the variation lower bound is just the summation of all these three terms.
+
+608
+00:59:25,020 --> 00:59:42,020
+Okay, so every KL term in LVLB, except L naught, it compares two Gaussian distributions and they can be computed in closed form.
+
+609
+00:59:43,020 --> 00:59:48,020
+L capital T term over here is a constant and can be ignored during training.
+
+610
+00:59:49,020 --> 00:59:56,020
+And as for L naught, we can just train it separately using a normal distribution model like this.
+
+611
+00:59:57,020 --> 00:59:59,020
+Just give a time stamp equal to 1.
+
+612
+01:00:00,020 --> 01:00:02,020
+This is non-learnable. This is learnable.
+
+613
+01:00:07,020 --> 01:00:14,020
+The authors note that since they keep the variance constant, they only have to predict the mean of the distribution.
+
+614
+01:00:14,020 --> 01:00:17,020
+Better yet, we can just predict the noise epsilon.
+
+615
+01:00:18,020 --> 01:00:22,020
+That was sample from the normal distribution and added to the image through the re-parameterization track.
+
+616
+01:00:23,020 --> 01:00:26,020
+The authors found that predicting the noise was more stable.
+
+617
+01:00:27,020 --> 01:00:34,020
+Since we just have to predict the noise added, we can use the MSI loss between the predicted noise and the actual noise added to the image.
+
+618
+01:00:35,020 --> 01:00:41,020
+If you see over here, this is the simplified term for the second term in the LVLB.
+
+619
+01:00:42,020 --> 01:00:45,020
+This is exactly similar to the MSI loss.
+
+620
+01:00:49,020 --> 01:00:57,020
+So simplifying the LVLB, we get L capital T, L small, L naught and L small t simple.
+
+621
+01:00:58,020 --> 01:01:00,020
+These terms are constant. They don't depend on theta.
+
+622
+01:01:01,020 --> 01:01:05,020
+Only L t simple depends on theta and this is just a mean squared error.
+
+623
+01:01:06,020 --> 01:01:17,020
+So now, what's the intuition behind the model and why did we choose the loss term that tries to minimize the variational lower bound?
+
+624
+01:01:18,020 --> 01:01:23,020
+The loss term is created in such a way that the model is more biased towards learning higher values of t.
+
+625
+01:01:24,020 --> 01:01:30,020
+If you remember, we choose our beta t such that they linearly increase across time.
+
+626
+01:01:31,020 --> 01:01:37,020
+And by the time they reach capital T, the value of beta t will be 0.02.
+
+627
+01:01:38,020 --> 01:01:48,020
+So the amount of noise added towards the latest step of the forward diffusion is exponentially higher than the amount of noise added in the beginning steps.
+
+628
+01:01:49,020 --> 01:01:59,020
+Because we choose our variance schedulers in such a way, our model should be more biased towards learning higher values of t.
+
+629
+01:02:01,020 --> 01:02:11,020
+So during the reverse process, our model should predict more amount of noise for the beginning time steps of the reverse process.
+
+630
+01:02:12,020 --> 01:02:18,020
+And it should be able to learn more fine grained details of the images towards the end of the reverse process.
+
+631
+01:02:19,020 --> 01:02:24,020
+It's more important to get the main shape of the object right than to make the object have some form of texture.
+
+632
+01:02:25,020 --> 01:02:27,020
+How does the model look like?
+
+633
+01:02:27,020 --> 01:02:36,020
+The authors used a unit model and said that this is the efficient way to predict the noise of the reverse process.
+
+634
+01:02:37,020 --> 01:02:46,020
+Given a time step t, it takes as input a noise image and it outputs the noise that should be deducted from this image.
+
+635
+01:02:47,020 --> 01:02:56,020
+As in transformers, time step information is also fed at each step of the model, at each layer of the model to be more precise.
+
+636
+01:02:57,020 --> 01:03:00,020
+This helps the model to know where it is at in the diffusion process.
+
+637
+01:03:01,020 --> 01:03:09,020
+If it's in the beginning of the reverse process, it has to predict more amount of noise or if it's at the end, it has to predict more fine grained noise.
+
+638
+01:03:10,020 --> 01:03:17,020
+Till now we looked at the forward diffusion process, the backward process of denoising.
+
+639
+01:03:18,020 --> 01:03:24,020
+We saw what model should be used, what the loss function should be for training a diffusion model.
+
+640
+01:03:25,020 --> 01:03:29,020
+Let's now look at the broader training algorithm of a diffusion model.
+
+641
+01:03:30,020 --> 01:03:34,020
+We have a sample x0, which belongs to Q of x0.
+
+642
+01:03:35,020 --> 01:03:39,020
+We have time stamps that are uniform from 1 to t.
+
+643
+01:03:40,020 --> 01:03:46,020
+We sample a noise that is a normal distribution, which means zero and variance identity.
+
+644
+01:03:48,020 --> 01:03:51,020
+And we perform gradient descent on the noise.
+
+645
+01:03:52,020 --> 01:04:03,020
+Our model learns epsilon and theta and we use MSC loss function to predict a gradient and until this noise is converged, it keeps interpreting.
+
+646
+01:04:05,020 --> 01:04:11,020
+As for the sampling process, we sample the final time snap x capital T from a normal distribution.
+
+647
+01:04:14,020 --> 01:04:21,020
+And for all the time stamps in the reverse process, we first generate a z from a normal distribution.
+
+648
+01:04:22,020 --> 01:04:28,020
+And then we use the reparameterization trick to sample xt minus 1 given xt.
+
+649
+01:04:29,020 --> 01:04:31,020
+This is the noise predicted from our model.
+
+650
+01:04:31,020 --> 01:04:35,020
+Alpha t values are known, sigma t values are known as well.
+
+651
+01:04:36,020 --> 01:04:41,020
+They are the values for the sigma theta term, capital sigma theta terms.
+
+652
+01:04:42,020 --> 01:04:47,020
+We know what xt will be and we have samples z from over here.
+
+653
+01:04:48,020 --> 01:04:50,020
+So we know everything in this equation 4.
+
+654
+01:04:51,020 --> 01:04:59,020
+And until we go till time 1, where we sample x0 and when we sample x0, we return it.
+
+655
+01:05:02,020 --> 01:05:05,020
+So this is how the reverse process of diffusion looks like.
+
+656
+01:05:06,020 --> 01:05:14,020
+We sample from a normal distribution and we keep denoising it for t time stamps until we get an image.
+
+657
+01:05:18,020 --> 01:05:21,020
+There are several limitations of the DDPM algorithm.
+
+658
+01:05:22,020 --> 01:05:30,020
+The first and foremost limitation is that the initialization of variance schedulers beta t, they keep on linearly increasing.
+
+659
+01:05:31,020 --> 01:05:33,020
+But that is not desirable.
+
+660
+01:05:34,020 --> 01:05:42,020
+We can initialize the values of the beta t's with a more complex distribution like cosine.
+
+661
+01:05:44,020 --> 01:05:47,020
+This leads us to another limitation.
+
+662
+01:05:48,020 --> 01:05:56,020
+The model that we learned only predicts the values of the means and not the variance of the distribution.
+
+663
+01:05:56,020 --> 01:06:03,020
+The variance is usually kept constant to some combination of beta t's.
+
+664
+01:06:04,020 --> 01:06:08,020
+The authors say that this leads to more stability in the model.
+
+665
+01:06:09,020 --> 01:06:17,020
+But if we can somehow learn to predict the values of both the mean and the variance, that is more desirable.
+
+666
+01:06:18,020 --> 01:06:21,020
+And the final and the most important limitation of the DDPM algorithm.
+
+667
+01:06:21,020 --> 01:06:25,020
+There are 1000 time stamps in the forward diffusion process.
+
+668
+01:06:26,020 --> 01:06:27,020
+Capital t is usually kept 1000.
+
+669
+01:06:28,020 --> 01:06:32,020
+And for each time stamp in the reverse process, the model learns to predict the noise.
+
+670
+01:06:33,020 --> 01:06:38,020
+This is extremely time efficient and computationally heavy and it is not desirable at all.
+
+671
+01:06:39,020 --> 01:06:44,020
+So this leads us to another algorithm which is denoising diffusion implicit models.
+
+672
+01:06:45,020 --> 01:06:51,020
+The main assumption of the DDPM algorithm was that the model is assumed to be a Markov chain model.
+
+673
+01:06:52,020 --> 01:06:56,020
+That the current time stamp depends only on the previous time stamp.
+
+674
+01:06:57,020 --> 01:07:00,020
+Denoising diffusion implicit models or the DDIM.
+
+675
+01:07:01,020 --> 01:07:06,020
+It says that the model can be assumed to be a non-Markovian model.
+
+676
+01:07:08,020 --> 01:07:12,020
+And this allows us to skip time stamps during the denoising process.
+
+677
+01:07:12,020 --> 01:07:16,020
+In the DDPMs, we saw how we can skip time stamps during the forward process.
+
+678
+01:07:17,020 --> 01:07:20,020
+We can directly compute the value of x3 from x0.
+
+679
+01:07:21,020 --> 01:07:27,020
+But for the reverse process, it is compulsory in the DDPM to go from x3 to x2 to x1 to x0.
+
+680
+01:07:28,020 --> 01:07:34,020
+But for the DDIM paper, we can directly go from x3 to x1.
+
+681
+01:07:35,020 --> 01:07:36,020
+We can skip the value of x0.
+
+682
+01:07:36,020 --> 01:07:41,020
+So what's new in the DDIM paper?
+
+683
+01:07:42,020 --> 01:07:45,020
+First, they redefine the reverse diffusion process.
+
+684
+01:07:46,020 --> 01:07:51,020
+This is the formulation that they give for the reverse diffusion process for a single step.
+
+685
+01:07:52,020 --> 01:07:56,020
+The reformulation is equal to the formalization of the DDPM paper.
+
+686
+01:07:57,020 --> 01:08:00,020
+But only when the variance is equal to beta t tilde.
+
+687
+01:08:01,020 --> 01:08:09,020
+The authors don't explicitly state that the formulation of sigma over here is just beta tilde t.
+
+688
+01:08:10,020 --> 01:08:13,020
+But with her little algebra, we can find out that's the case.
+
+689
+01:08:19,020 --> 01:08:22,020
+What if we set the value of sigma to be equal to 0?
+
+690
+01:08:23,020 --> 01:08:29,020
+When we set sigma equal to 0, the denoising process becomes completely deterministic.
+
+691
+01:08:30,020 --> 01:08:37,020
+And the only noise is the original noise at x0 because no new noise is added during the denoising process.
+
+692
+01:08:38,020 --> 01:08:41,020
+Notice that there is no noise to the data.
+
+693
+01:08:42,020 --> 01:08:43,020
+That is just this noise.
+
+694
+01:08:44,020 --> 01:08:46,020
+This is the trick of the DDIM paper.
+
+695
+01:08:47,020 --> 01:08:50,020
+The process becomes completely deterministic and we no longer have a Markov chain.
+
+696
+01:08:51,020 --> 01:08:55,020
+Since Markov chains are for probabilistic processes and this is a non-Markovian process.
+
+697
+01:08:56,020 --> 01:09:03,020
+In the diagram shown, we can skip x2 and move from x3 to x1 directly.
+
+698
+01:09:04,020 --> 01:09:11,020
+The authors model the new diffusion process as a subsequence tau, which is a subset of the original diffusion subsequence.
+
+699
+01:09:12,020 --> 01:09:19,020
+For example, I can sample every other diffusion step in the diffusion process to get a subsequence of tau.
+
+700
+01:09:20,020 --> 01:09:23,020
+I can skip x2, I can skip x4, x6.
+
+701
+01:09:28,020 --> 01:09:32,020
+We can also interpolate between the two algorithms, DDIM and DDPM.
+
+702
+01:09:33,020 --> 01:09:37,020
+We can introduce a new variable eta, which lies between 0 and 1.
+
+703
+01:09:38,020 --> 01:09:42,020
+If we keep the value of eta to be equal to 0, then it becomes a DDIM.
+
+704
+01:09:43,020 --> 01:09:48,020
+And if we keep the value of eta to be equal to 1, then the process becomes a DDAPM.
+
+705
+01:09:49,020 --> 01:09:55,020
+And any eta between 0 and 1, it's just an interpolation between the DDIM and DDPM algorithm.
+
+706
+01:09:56,020 --> 01:10:00,020
+The chart below shows DDPM and DDIM.
+
+707
+01:10:01,020 --> 01:10:05,020
+These are the FID scores, fidelity scores, which score diversity and image quality.
+
+708
+01:10:06,020 --> 01:10:10,020
+And this is based on eta and interpolations from 0 to 1.
+
+709
+01:10:11,020 --> 01:10:16,020
+And on S timestamps, which goes from 10 to 1000,
+
+710
+01:10:16,020 --> 01:10:23,020
+the DDPM algorithm performs the best at the original 1000 timestamps.
+
+711
+01:10:24,020 --> 01:10:29,020
+The DDIM closely follows when generating images with much fewer generation steps.
+
+712
+01:10:30,020 --> 01:10:35,020
+We essentially have a tradeoff between image quality and time to generate when using a DDIM,
+
+713
+01:10:36,020 --> 01:10:38,020
+which the original DDPM did not offer.
+
+714
+01:10:39,020 --> 01:10:43,020
+Now we can generate high quality images with such fewer steps.
+
+715
+01:10:46,020 --> 01:10:51,020
+Okay, so this is the example of the reverse process of DDIM and DDPM.
+
+716
+01:10:52,020 --> 01:10:57,020
+As you can see after 10 timestamps, DDIM has already generated a good image.
+
+717
+01:11:00,020 --> 01:11:06,020
+Whereas this is the DDPM algorithm, it is still predicting the noise.
+
+718
+01:11:07,020 --> 01:11:09,020
+And it will go on till 1000 timestamps.
+
+719
+01:11:10,020 --> 01:11:14,020
+We see that after 100 timestamps, the DDIM has already given the output.
+
+720
+01:11:14,020 --> 01:11:16,020
+This is so much time efficient.
+
+721
+01:11:18,020 --> 01:11:24,020
+After 1000 timestamps, DDPM is able to generate similar images with better quality.
+
+722
+01:11:28,020 --> 01:11:33,020
+So, after exploring DDPM and DDIM, we have seen how this method
+
+723
+01:11:33,020 --> 01:11:36,020
+so far impresses results in tasks like image generation and beyond.
+
+724
+01:11:37,020 --> 01:11:42,020
+However, one challenge that persists with this model is the computational intensity
+
+725
+01:11:42,020 --> 01:11:47,020
+and time required for sampling, which can limit their practical applications.
+
+726
+01:11:48,020 --> 01:11:52,020
+Now let's turn our attention to another paper that addresses this challenge.
+
+727
+01:11:54,020 --> 01:12:01,020
+The DDPM solver is a novel approach that significantly accelerates the sampling process in diffusion models.
+
+728
+01:12:02,020 --> 01:12:08,020
+By optimizing the diffusion process, it not only maintains the high quality outputs of its predecessors
+
+729
+01:12:08,020 --> 01:12:11,020
+but also makes the generation process much more efficient.
+
+730
+01:12:13,020 --> 01:12:19,020
+Before I describe what a DPM solver is, let's recap diffusion models as a SD framework.
+
+731
+01:12:22,020 --> 01:12:29,020
+In the forward SD, the forward SD represents the process of adding noise to our original data over time.
+
+732
+01:12:30,020 --> 01:12:36,020
+In this equation, DXD represents the incremental change in our data, XD, at time t.
+
+733
+01:12:36,020 --> 01:12:42,020
+And FT is a drift coefficient that determines the direction and rate at which the noise is added.
+
+734
+01:12:43,020 --> 01:12:47,020
+The term G of t DWT introduces stochasticity in the process.
+
+735
+01:12:48,020 --> 01:12:54,020
+Here, G of t is a diffusion coefficient and DWT represents a vinyl process,
+
+736
+01:12:54,020 --> 01:12:58,020
+which is essentially a mathematical model for random motion.
+
+737
+01:12:59,020 --> 01:13:07,020
+This equation progressively transforms the data into a noise density X of t T at time T.
+
+738
+01:13:08,020 --> 01:13:13,020
+For the reverse process, the reverse SD is the reverse of the forward process,
+
+739
+01:13:13,020 --> 01:13:16,020
+aiming to recover the original data from the noise.
+
+740
+01:13:17,020 --> 01:13:24,020
+Here, DXD indicates a change in our noise data XT at time t, as we attempt to reverse the diffusion.
+
+741
+01:13:25,020 --> 01:13:38,020
+The term F of t XT plus G squared t over sigma t epsilon theta XT t reflects the predicted noise that we are trying to subtract from our noisy data,
+
+742
+01:13:39,020 --> 01:13:44,020
+where epsilon theta XT of t is the output of the neural network parameterized by theta,
+
+743
+01:13:45,020 --> 01:13:48,020
+which is trained to predict the noise added at each step.
+
+744
+01:13:49,020 --> 01:13:52,020
+The network uses its prediction to denoise the data iteratively.
+
+745
+01:13:54,020 --> 01:14:02,020
+The transition from any point XT to capital XT is assumed to be linear and follows a Gaussian distribution.
+
+746
+01:14:03,020 --> 01:14:07,020
+The notation q naught t XT given X naught as we discussed in DDPM,
+
+747
+01:14:08,020 --> 01:14:13,020
+it denotes the probability density of reaching the noisy data XT from the original data X naught.
+
+748
+01:14:13,020 --> 01:14:20,020
+It is characterized by this Gaussian distribution, where the mean is alpha t and deviation is sigma squared t i.
+
+749
+01:14:20,020 --> 01:14:22,020
+Sorry, the mean is alpha t X naught.
+
+750
+01:14:25,020 --> 01:14:31,020
+This transition distribution is crucial because it quantifies the noise at any intermediate step t,
+
+751
+01:14:31,020 --> 01:14:34,020
+allowing us to model the reverse diffusion path accurately.
+
+752
+01:14:36,020 --> 01:14:38,020
+To train the model which predicts the noise,
+
+753
+01:14:40,020 --> 01:14:47,020
+we use a loss function that aims to minimize the expected difference between the true noise and the noise predicted by the neural network.
+
+754
+01:14:48,020 --> 01:14:52,020
+This is captured in the integral expression over here.
+
+755
+01:14:55,020 --> 01:15:01,020
+Here the term omega t is a weighting function and the integral goes from 0 to t.
+
+756
+01:15:01,020 --> 01:15:10,020
+The expectation inside the integral eq naught X naught multiplied by expectation of q epsilon
+
+757
+01:15:10,020 --> 01:15:15,020
+is taken over the distributions of the original data X naught and the noise epsilon.
+
+758
+01:15:16,020 --> 01:15:21,020
+This term is essentially mean squared error between the predicted noise and the actual noise added during the forward process.
+
+759
+01:15:25,020 --> 01:15:31,020
+Sampling in DDPM is akin to discretizing this SDE.
+
+760
+01:15:31,020 --> 01:15:36,020
+It means we approximate the continuous time process by taking small finite steps.
+
+761
+01:15:37,020 --> 01:15:39,020
+Hence the term first order discretization.
+
+762
+01:15:40,020 --> 01:15:44,020
+It allows us to simulate the reverse process step by step on a computer.
+
+763
+01:15:45,020 --> 01:15:48,020
+Now contrast this with diffusion ODE's.
+
+764
+01:15:49,020 --> 01:15:52,020
+These are at the heart of the DDIM algorithm.
+
+765
+01:15:53,020 --> 01:16:00,020
+The equation given over here shows a similar structure but notice the absence of the stochastic term GTE DWT.
+
+766
+01:16:02,020 --> 01:16:08,020
+This implies that DDIM operates deterministically without the randomness inherent to DDPM.
+
+767
+01:16:09,020 --> 01:16:14,020
+Instead of sampling from a distribution at each step, DDIM deterministically calculates the next step,
+
+768
+01:16:15,020 --> 01:16:19,020
+making it far more predictable and more efficient.
+
+769
+01:16:20,020 --> 01:16:27,020
+Both these algorithms, DDPM and DDIM can be seen as different strategies to navigate the space defined by these equations,
+
+770
+01:16:28,020 --> 01:16:32,020
+with the end goal of learning how to denoise or reverse the diffusion process effectively.
+
+771
+01:16:33,020 --> 01:16:38,020
+One of the most critical issues of diffusion probabilistic models or DPMs in short,
+
+772
+01:16:39,020 --> 01:16:40,020
+is the slow sampling speed.
+
+773
+01:16:41,020 --> 01:16:48,020
+Typically to generate a high quality sample, this model requires at least 100 sequential steps to converge from noise to a quarantine.
+
+774
+01:16:49,020 --> 01:16:55,020
+This slow process can be a bottleneck when it comes to practical applications of DPMs,
+
+775
+01:16:56,020 --> 01:17:00,020
+such as real-time generation or integration into interactive systems.
+
+776
+01:17:01,020 --> 01:17:08,020
+Sampling from these methods involves the discretization of diffusion SDE's or ODE's,
+
+777
+01:17:09,020 --> 01:17:13,020
+which necessitates the use of SDE or ODE solvers.
+
+778
+01:17:14,020 --> 01:17:20,020
+While generally ODE solvers tend to converge faster than SDE solvers due to their deterministic nature,
+
+779
+01:17:21,020 --> 01:17:24,020
+they still require around 100 sequential steps to converge.
+
+780
+01:17:26,020 --> 01:17:33,020
+Building on the understanding of diffusion models, slow sampling rate, we now reach a pivotal solution, which is the DPM solver.
+
+781
+01:17:34,020 --> 01:17:42,020
+This innovative approach is a game changer, substantially accelerating the sampling process without sacrificing the quality of the generated images.
+
+782
+01:17:43,020 --> 01:17:50,020
+If you observe the images, remarkably with the same number of steps at the early DDIM images,
+
+783
+01:17:51,020 --> 01:17:54,020
+the DPM solver already provides a clear and detailed image.
+
+784
+01:17:55,020 --> 01:18:03,020
+At 10 steps or 10 number of function evaluations, the output is comparable to what DDIM achieves at 100 steps,
+
+785
+01:18:04,020 --> 01:18:08,020
+showcasing the efficiency and effectiveness of the DPM solver.
+
+786
+01:18:09,020 --> 01:18:19,020
+To solve diffusion ODE's for generative models, traditional methods like Ranga-Kutta are commonly used.
+
+787
+01:18:20,020 --> 01:18:28,020
+However, this method straight the process as a black box, which means that they don't leverage the specific structure of the diffusion equations.
+
+788
+01:18:29,020 --> 01:18:34,020
+This ignorance often leads to inefficiencies as the exact solution XT,
+
+789
+01:18:34,020 --> 01:18:39,020
+for a given time depends on an integral involving both the drift and the diffusion coefficients.
+
+790
+01:18:41,020 --> 01:18:48,020
+Traditional RK45 methods have their limitations, they generally cannot converge in fewer than 20 steps.
+
+791
+01:18:49,020 --> 01:18:56,020
+This is problematic for fast sampling in diffusion models because we want to maintain high quality image generation while also accelerating the process.
+
+792
+01:18:57,020 --> 01:19:12,020
+The key takeaway from this slide is that the need for a solver that can operate efficiently with the diffusion ODE specificities, allowing for rapid convergence with fewer steps.
+
+793
+01:19:14,020 --> 01:19:18,020
+The authors of the DPM solver paper made two key observations.
+
+794
+01:19:19,020 --> 01:19:27,020
+First, they recognized that the diffusion ODE possesses a semi-linear structure, which is pivotal to streamlining the computation.
+
+795
+01:19:28,020 --> 01:19:41,020
+The linear part of the ODE, which is the drift coefficient, it governs a predictable behavior of our system, while the diffusion term adds complexity through to neural networks noise prediction.
+
+796
+01:19:42,020 --> 01:19:46,020
+They use variations of constant formula to solve the ODE.
+
+797
+01:19:47,020 --> 01:19:58,020
+This approach often allows to compute the linear part exactly, which is expressed by this exponent term multiplied by XS.
+
+798
+01:19:59,020 --> 01:20:06,020
+This essentially means scaling the initial value XS by exponential of the integral of F over time.
+
+799
+01:20:07,020 --> 01:20:13,020
+The remainder of the solution incorporates the non-linear noise term, integrating it over the same period.
+
+800
+01:20:15,020 --> 01:20:25,020
+By decoupling the linear and non-linear parts, we gain a clear path to calculate the exact solution for XT at any time t.
+
+801
+01:20:26,020 --> 01:20:37,020
+This precision allows us to avoid the limitations of the black box numerical methods like rangekutta, leading to faster convergence with fewer steps.
+
+802
+01:20:39,020 --> 01:20:47,020
+The second observation that the authors made is simplifying the solution of the diffusion ODE by using law of SNR.
+
+803
+01:20:48,020 --> 01:20:58,020
+This technique pivots under an understanding of the noise transition probability as a normal distribution, with the mean scaled by alpha t and a variance of sigma t square.
+
+804
+01:20:59,020 --> 01:21:11,020
+The log SNR defined as the log of the ratio of alpha t square divided by sigma t square, helps us distill the complex dynamics of the diffusion process into a more tractable form.
+
+805
+01:21:12,020 --> 01:21:25,020
+By defining lambda t to be half of log SNR, we can elegantly express the drift and diffusion coefficients directly in terms of the derivatives of lambda t.
+
+806
+01:21:26,020 --> 01:21:39,020
+This leads to a more efficient computation of the linear term and transforms the integral of the non-linear term into an exponentially weighted integral, which is easier to handle computationally.
+
+807
+01:21:42,020 --> 01:21:54,020
+The exact solution XT can then be represented by these new terms, where the linear part XT is exactly computed and the non-linear part is managed through the exponentially weighted integral.
+
+808
+01:21:55,020 --> 01:22:04,020
+This manipulation significantly stimulates the calculation and it allows for the fast and precise evaluation of the diffusion ODE solution.
+
+809
+01:22:05,020 --> 01:22:18,020
+This is the same equation that was presented in the last slide. The first term can be exactly computed. All we need to do is approximate the second term, which is an approximately weighted integral.
+
+810
+01:22:20,020 --> 01:22:31,020
+Given that we have an approximate solution at a previous time point, we can find the exact solution at the current time by using Taylor-Cillis expansion for the non-linear term involving the predicted noise.
+
+811
+01:22:32,020 --> 01:22:50,020
+What this means is that we have to expand the noise prediction term as a series, where each component of the series is calculated using derivatives of the noise prediction at the previous step, scaled by the difference in our log SNR term raised to the power of n and divided by n factorial.
+
+812
+01:22:51,020 --> 01:22:57,020
+This expansion is then integrated to update our solution from previous time step to the current one.
+
+813
+01:22:58,020 --> 01:23:04,020
+The left hand side over here represents the solution transition from the previous time to the current time.
+
+814
+01:23:05,020 --> 01:23:15,020
+The terms alpha t and alpha t i minus 1 are scaling factors related to the variance of the noise at these times and this adjusts the magnitude of the solution.
+
+815
+01:23:16,020 --> 01:23:23,020
+This Taylor series provides an approximation that becomes increasingly accurate with more terms.
+
+816
+01:23:24,020 --> 01:23:37,020
+However, DPM solver algorithm, it strikes a crucial balance that allows to compute solutions quickly and with high precision and we can ignore the higher order terms.
+
+817
+01:23:38,020 --> 01:23:45,020
+So the DPM solver algorithm is made specifically for diffusion ODE's to minimize errors as much as possible.
+
+818
+01:23:46,020 --> 01:23:55,020
+It does so by leveraging the structure of the diffusion equation which has been broken down into parts, the linear term, derivatives, coefficient and higher order terms.
+
+819
+01:23:56,020 --> 01:24:02,020
+The linear term is exactly computed meaning we apply an exact method to calculate it without approximation.
+
+820
+01:24:03,020 --> 01:24:11,020
+The derivatives on the other hand are approximated using numerical methods because calculating them exactly can be computationally intensive.
+
+821
+01:24:13,020 --> 01:24:23,020
+The coefficients over here, they can be analytically computed using integration by parts and the higher order terms are omitted.
+
+822
+01:24:23,020 --> 01:24:33,020
+They are negligible as we add more terms to the series and to improve the computational efficiency we can safely omit them.
+
+823
+01:24:35,020 --> 01:24:39,020
+As I mentioned before, DDIM is the first order DPM solver.
+
+824
+01:24:40,020 --> 01:24:54,020
+Why did I say that? If we set k equal to 2 for DPM solver equation, we see that we obtained the exact solution that the DDIM algorithm used.
+
+825
+01:24:55,020 --> 01:25:07,020
+Therefore, DDIM is the first order diffusion ODE solver which analytically computes in known terms and that's why we know that why DDIM works well.
+
+826
+01:25:08,020 --> 01:25:15,020
+Okay, so let's now compare how DPM solvers work with comparison to Runge-Gutta methods.
+
+827
+01:25:17,020 --> 01:25:36,020
+We see that for even 12 number of function evaluations, DPM solver is way better than the other two and as the number of function evaluation increases although the above two methods also improve DPM solver is still better than both of them.
+
+828
+01:25:38,020 --> 01:25:48,020
+The circles in this graph show that DPMs converge in almost about 15 to 20 steps.
+
+829
+01:25:53,020 --> 01:25:59,020
+So until now, we discussed three sampling algorithms, DDPM, DDIM and DPM solver.
+
+830
+01:26:00,020 --> 01:26:18,020
+DDPM required noise prediction at each time step which is equal to 1000. It takes around 200 steps to converge whereas DDIM algorithm made it possible to skip some time steps.
+
+831
+01:26:19,020 --> 01:26:22,020
+It still required around 100 time steps to converge.
+
+832
+01:26:25,020 --> 01:26:31,020
+On the other hand, we saw DPM solvers, they only took about 20 time steps to converge.
+
+833
+01:26:33,020 --> 01:26:43,020
+But still, is there a way that we can generate images with just one forward pass in the model?
+
+834
+01:26:44,020 --> 01:26:46,020
+That's where consistency models come into play.
+
+835
+01:26:47,020 --> 01:26:50,020
+They are able to generate images in one shot.
+
+836
+01:26:51,020 --> 01:26:59,020
+Given a noise image, you just pass the noise from the reverse process just once and we can generate X0.
+
+837
+01:27:01,020 --> 01:27:03,020
+So let's now talk about consistency models.
+
+838
+01:27:04,020 --> 01:27:15,020
+Consistency models was proposed by OpenEI and it is a recently released paradigm to generate the images in a single step.
+
+839
+01:27:17,020 --> 01:27:30,020
+The researchers responsible for this have taken inspiration from the diffusion models and their main objective is to generate images in a single shot rather than iterative noise reduction which is typically used in diffusion models.
+
+840
+01:27:31,020 --> 01:27:43,020
+Consistency models introduce new learning methodologies to map noisy images at any time step of the diffusion process to its initial noiseless transformation.
+
+841
+01:27:44,020 --> 01:27:52,020
+The methodology is generalizable and the authors argue that the model can perform image editing type of tasks without any retraining.
+
+842
+01:27:53,020 --> 01:28:03,020
+To address the limitations of diffusion models, which is slow fast sampling, consistency models come into play.
+
+843
+01:28:04,020 --> 01:28:18,020
+Their unique proposition is to generate high quality samples by directly mapping noise to data, enabling fast one step generation while maintaining the quality trade-offs and zero shot data editing capabilities of iterative sampling.
+
+844
+01:28:19,020 --> 01:28:34,020
+The core concept of a consistency model lies in its ability to map any point on a data trajectory determined by a probability flow ODE or in short PFODE back to its origin in a single network evaluation.
+
+845
+01:28:35,020 --> 01:28:44,020
+This approach significantly accelerates the generation process compared to the multi-step generation of other diffusion sampling algorithms.
+
+846
+01:28:45,020 --> 01:28:49,020
+Let's see the background and look at DDPM algorithm again.
+
+847
+01:28:50,020 --> 01:28:58,020
+Given an input image, the forward process keeps on adding noise until we get X-capitality which is pure noise.
+
+848
+01:28:59,020 --> 01:29:09,020
+The first line of these equations refers to the forward process of the DDPM or in general any diffusion process since the forward process is the same for everything.
+
+849
+01:29:09,020 --> 01:29:18,020
+We can generate XT from XT-1 using this normal distribution.
+
+850
+01:29:19,020 --> 01:29:38,020
+After we obtain XT, which is a normal distribution with mean zero and variance identity, we can then denoise the diffusion process through the reverse process and we generally denote the reverse process with P theta.
+
+851
+01:29:39,020 --> 01:29:58,020
+This is joint distribution P theta X0 to T. The time stamps over here are reversed since this is the reverse process and it is generally predicted using a neural network which is parametrized over the parameters theta.
+
+852
+01:29:59,020 --> 01:30:12,020
+This equation is the SDE formulation of the diffusion models. Here nu is the drift coefficient, sigma is the diffusion coefficient and WT is the standard Brownian motion.
+
+853
+01:30:13,020 --> 01:30:20,020
+But we know that consistency models work on ODE's and ODE's tend to converge faster than the SDE's.
+
+854
+01:30:21,020 --> 01:30:32,020
+So in 2021, Song et al. suggested probability flow ODE or PF ODE in short and they propose this as an ODE.
+
+855
+01:30:33,020 --> 01:30:44,020
+This formulation elegantly captures the essence of the SDE in a deterministic way by incorporating the score function which is delta log Pt of X.
+
+856
+01:30:45,020 --> 01:30:55,020
+This is the gradient of the log probability of the data at time t. The score function X is a guide staring the sample from a random noise back to a recognizable data point.
+
+857
+01:30:57,020 --> 01:31:07,020
+Following the settings of Keras et al. if we set the drift coefficient to be zero and the diffusion coefficient to be under root 2T,
+
+858
+01:31:08,020 --> 01:31:18,020
+we obtain an empirical PF ODE which is d of Xt over dt is equal to minus t times the score function.
+
+859
+01:31:19,020 --> 01:31:25,020
+We often write score function as S of phi Xt comma t.
+
+860
+01:31:26,020 --> 01:31:35,020
+And then we can use numerical ODE solvers like Euler or Heuern solvers to get the solution for X of t.
+
+861
+01:31:36,020 --> 01:31:41,020
+As I mentioned before consistency models, they are a new type of generative model.
+
+862
+01:31:42,020 --> 01:31:48,020
+They support single step generation at the core of its design. This is extremely computationally efficient.
+
+863
+01:31:51,020 --> 01:31:57,020
+They also support iterative generation. We can use multiple steps to generate an image.
+
+864
+01:31:58,020 --> 01:32:05,020
+This essentially improves the sample quality of the images but at the expense of compute.
+
+865
+01:32:06,020 --> 01:32:12,020
+To train a computer consistency model, there are two methods. The first is a distillation mode.
+
+866
+01:32:14,020 --> 01:32:20,020
+It refers to training from pre-trained diffusion models and the second is an isolation mode.
+
+867
+01:32:21,020 --> 01:32:23,020
+We will talk more about that in the later slides.
+
+868
+01:32:24,020 --> 01:32:36,020
+Right, so given that we have a solution trajectory Xt where t belongs to epsilon to capital T of the PF ODE,
+
+869
+01:32:37,020 --> 01:32:48,020
+consistency model is defined as f as a function f which takes as input Xt and times ft and outputs X epsilon.
+
+870
+01:32:49,020 --> 01:32:57,020
+Its outputs are consistent for arbitrary pairs of Xt comma t,
+
+871
+01:32:58,020 --> 01:33:08,020
+meaning that for any point lying on the same trajectory, it will always output the same X epsilon.
+
+872
+01:33:09,020 --> 01:33:22,020
+For any consistency function f, we have an identity function which is f of X epsilon comma epsilon equal to X epsilon.
+
+873
+01:33:25,020 --> 01:33:31,020
+This constraint is known as the boundary condition. All consistency models have to meet this boundary condition.
+
+874
+01:33:31,020 --> 01:33:36,020
+As it plays a crucial role in the successful training of consistency models,
+
+875
+01:33:37,020 --> 01:33:43,020
+the boundary condition is also the most confining architectural constraint on consistency models.
+
+876
+01:33:45,020 --> 01:33:49,020
+So, let's now talk about the sampling process of the consistency model.
+
+877
+01:33:50,020 --> 01:33:55,020
+With a well-trained consistency model f theta, we can generate samples by sampling
+
+878
+01:33:56,020 --> 01:34:03,020
+X tilde t from a normal distribution with zero mean and t square times the identity
+
+879
+01:34:04,020 --> 01:34:09,020
+and then evaluating the consistency model for X epsilon hat.
+
+880
+01:34:11,020 --> 01:34:17,020
+This involves only one forward pass through the consistency model and therefore generate samples in a single step.
+
+881
+01:34:18,020 --> 01:34:23,020
+More importantly, we can also evaluate the consistency model multiple times.
+
+882
+01:34:25,020 --> 01:34:30,020
+By alternating denoising and noise injection steps for improved sample quality.
+
+883
+01:34:33,020 --> 01:34:37,020
+An application of consistency model is zero short data editing.
+
+884
+01:34:38,020 --> 01:34:44,020
+As consistency models are trained to recover X from any noisy input Xt,
+
+885
+01:34:45,020 --> 01:34:50,020
+where t belongs to epsilon from epsilon to capital T,
+
+886
+01:34:51,020 --> 01:34:54,020
+they can perform denoising at various noise levels.
+
+887
+01:34:55,020 --> 01:34:58,020
+It can either be in a single step or in various multiple steps.
+
+888
+01:34:59,020 --> 01:35:05,020
+The multi-step generation procedure, which we discussed in the algorithm one in the previous slide,
+
+889
+01:35:06,020 --> 01:35:09,020
+is useful for solving certain inverse problems in zero short,
+
+890
+01:35:10,020 --> 01:35:15,020
+which includes diffusion models, impeding, colorization, super resolution, etc.
+
+891
+01:35:16,020 --> 01:35:20,020
+Let's now talk about how to train consistency models.
+
+892
+01:35:21,020 --> 01:35:24,020
+As I said before, consistency models can be trained in two ways.
+
+893
+01:35:25,020 --> 01:35:28,020
+One is in distillation mode and the other is in isolation mode.
+
+894
+01:35:29,020 --> 01:35:35,020
+In distillation mode, we use the already trained, that is pre-trained diffusion model.
+
+895
+01:35:36,020 --> 01:35:40,020
+So we have a pre-trained score model already, which is S5 X, t.
+
+896
+01:35:41,020 --> 01:35:44,020
+The next step is to discretize the time horizon,
+
+897
+01:35:45,020 --> 01:35:50,020
+which ranges from epsilon to capital T into n-1 subintervals.
+
+898
+01:35:52,020 --> 01:35:57,020
+An important point to note over here is these subintervals are not uniform.
+
+899
+01:35:58,020 --> 01:36:02,020
+They are decided according to the following rule, which was proposed by Kara Settle.
+
+900
+01:36:02,020 --> 01:36:14,020
+Using an ODE solver, then we can obtain the value of X hat phi of tn and phi function over here.
+
+901
+01:36:15,020 --> 01:36:19,020
+It is a single step of an ODE solver.
+
+902
+01:36:20,020 --> 01:36:30,020
+If we are using Euler solver, we know that the solution for Euler solver for the PFOD would be minus t times the score model.
+
+903
+01:36:31,020 --> 01:36:38,020
+Substituting minus t times the score model, we get the following update function for X hat phi t of n.
+
+904
+01:36:40,020 --> 01:36:43,020
+Once we obtain the values for X hat phi tn,
+
+905
+01:36:44,020 --> 01:36:50,020
+we can train the model by minimizing the difference between X tn plus 1 comma X tn hat phi.
+
+906
+01:36:52,020 --> 01:36:54,020
+And the last function that is used is this.
+
+907
+01:36:56,020 --> 01:36:58,020
+But how do we get X tn plus 1?
+
+908
+01:36:59,020 --> 01:37:03,020
+So while training, we first sample X from the data distribution.
+
+909
+01:37:04,020 --> 01:37:10,020
+And using the SD equation for the diffusion process, we generate X tn plus 1.
+
+910
+01:37:12,020 --> 01:37:16,020
+And then using X tn plus 1, we can generate this X hat phi tn.
+
+911
+01:37:18,020 --> 01:37:27,020
+In the last function over here, the matrix used is either L1 or L2 or LP IPS as used in the paper.
+
+912
+01:37:28,020 --> 01:37:30,020
+D is the metric function over here.
+
+913
+01:37:31,020 --> 01:37:37,020
+And in practice, we minimize the objective by stochastic gradient descent on the model parameters theta,
+
+914
+01:37:39,020 --> 01:37:43,020
+while updating theta minus with exponential moving average.
+
+915
+01:37:44,020 --> 01:37:50,020
+Theta minus over here denotes a running average of the past values of theta during optimization.
+
+916
+01:37:52,020 --> 01:37:55,020
+This is the algorithm for training consistency models for our distillation.
+
+917
+01:37:56,020 --> 01:38:00,020
+It is also referred to as consistency distillation or CD for short.
+
+918
+01:38:01,020 --> 01:38:06,020
+The input for this will be a data set, which is denoted by D.
+
+919
+01:38:07,020 --> 01:38:09,020
+Then there is initial model parameters theta.
+
+920
+01:38:10,020 --> 01:38:14,020
+We initialize a learning rate eta and then there is an ODE solver.
+
+921
+01:38:15,020 --> 01:38:19,020
+It can be Euler or UN or any other solver.
+
+922
+01:38:20,020 --> 01:38:25,020
+And then we run a loop where we sample X from D.
+
+923
+01:38:26,020 --> 01:38:32,020
+We sample a value n for the time sense from a uniform distribution of 1 comma n minus 1.
+
+924
+01:38:33,020 --> 01:38:41,020
+And then we sample X t of n plus 1 using the SD equation of the diffusion process.
+
+925
+01:38:42,020 --> 01:38:44,020
+This is the transition distribution for that equation.
+
+926
+01:38:45,020 --> 01:38:48,020
+We sample X tn plus 1 from this distribution.
+
+927
+01:38:49,020 --> 01:38:56,020
+Then we then get X hat by tn using X tn plus 1 and ODE solver.
+
+928
+01:38:57,020 --> 01:39:03,020
+We then compute the loss, update the theta and also update theta minus.
+
+929
+01:39:04,020 --> 01:39:07,020
+And we run this loop until there is convergence.
+
+930
+01:39:08,020 --> 01:39:11,020
+The second way to train consistency models is in isolation.
+
+931
+01:39:12,020 --> 01:39:16,020
+Over here we don't use the already pre-trained score model.
+
+932
+01:39:16,020 --> 01:39:19,020
+We don't rely on any pre-trained diffusion models.
+
+933
+01:39:22,020 --> 01:39:30,020
+As we call from the last slide, in this elation setting we use the S5 of X comma t, which is a pre-trained score model,
+
+934
+01:39:31,020 --> 01:39:33,020
+to approximate the ground route for the score function.
+
+935
+01:39:34,020 --> 01:39:43,020
+But instead of using that, we can use the expectation formula given over here directly,
+
+936
+01:39:43,020 --> 01:39:50,020
+which is negative of expectation X t minus X divided by t square given X t.
+
+937
+01:39:51,020 --> 01:39:58,020
+The authors claim that using this as a score function instead of the already pre-trained score function
+
+938
+01:39:59,020 --> 01:40:05,020
+suffices to replace the pre-trained diffusion model in consistency distillation when using the Euler method.
+
+939
+01:40:06,020 --> 01:40:07,020
+This one is for Euler method.
+
+940
+01:40:08,020 --> 01:40:15,020
+This is the algorithm for consistency models in isolation.
+
+941
+01:40:16,020 --> 01:40:20,020
+It is also referred to as consistency training or CT in short.
+
+942
+01:40:21,020 --> 01:40:25,020
+We are given a dataset D, initial model parameters theta, learning rate eta.
+
+943
+01:40:26,020 --> 01:40:28,020
+Then there is step schedule N.
+
+944
+01:40:29,020 --> 01:40:37,020
+And then there is EMA Decay Rate Schedule, new D matrix and lambda.
+
+945
+01:40:40,020 --> 01:40:45,020
+Theta minus is initially initialized to theta and k is initialized to zero first.
+
+946
+01:40:46,020 --> 01:40:49,020
+And until convergence, we run a for loop.
+
+947
+01:40:50,020 --> 01:40:52,020
+We first sample X just like in distillation mode.
+
+948
+01:40:53,020 --> 01:40:55,020
+We then sample N just like in distillation mode.
+
+949
+01:40:56,020 --> 01:41:01,020
+We sample Z from a normal distribution with zero meaner identity variance.
+
+950
+01:41:02,020 --> 01:41:03,020
+We compute the loss function.
+
+951
+01:41:04,020 --> 01:41:07,020
+This is the same loss function that we used in distillation mode.
+
+952
+01:41:09,020 --> 01:41:15,020
+We update theta using this gradient descent formula.
+
+953
+01:41:16,020 --> 01:41:21,020
+And theta minus one is also upgraded using stop grad.
+
+954
+01:41:22,020 --> 01:41:27,020
+The only difference over here is the step schedule.
+
+955
+01:41:28,020 --> 01:41:38,020
+And we use the expectation formula for the score function instead of the pre-tent score model.
+
+956
+01:41:41,020 --> 01:41:46,020
+As for the experiments, the paper used the following datasets.
+
+957
+01:41:47,020 --> 01:41:58,020
+The matrix used in the paper are FID, inception score, precision and recall.
+
+958
+01:41:59,020 --> 01:42:02,020
+For training, they use Euler and Heuensor D solvers.
+
+959
+01:42:03,020 --> 01:42:10,020
+And D matrix for the loss function is either they have used L2, L1 and LBI.
+
+960
+01:42:11,020 --> 01:42:13,020
+These are the results.
+
+961
+01:42:17,020 --> 01:42:24,020
+This concludes our full presentation on score based generative models and diffusion models in particular.
+
+962
+01:42:25,020 --> 01:42:29,020
+Please feel free to ask any questions or doubts that you have in the comments.
+
+963
+01:42:30,020 --> 01:42:31,020
+We'll try to answer them.
+
+964
+01:42:32,020 --> 01:42:33,020
+Thank you.
+

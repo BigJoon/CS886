@@ -1,0 +1,1168 @@
+1
+00:00:00,000 --> 00:00:05,320
+Okay, hello everyone, and welcome to lecture 12.
+
+2
+00:00:05,320 --> 00:00:14,240
+In this lecture, we discuss optimized training of large language models.
+
+3
+00:00:14,240 --> 00:00:21,160
+In this part, I will be presenting the part related to maximizing the GPU utilization
+
+4
+00:00:21,160 --> 00:00:24,640
+for efficient and scalable training.
+
+5
+00:00:24,640 --> 00:00:27,880
+Now why are we doing this?
+
+6
+00:00:28,320 --> 00:00:32,640
+Well, first of all, we're still seeing a lot of improvements with training bigger models,
+
+7
+00:00:32,640 --> 00:00:34,400
+bigger language models.
+
+8
+00:00:34,400 --> 00:00:44,120
+And as of right now, current GPUs cannot train more than 1.4 billion parameters in one GPU.
+
+9
+00:00:44,120 --> 00:00:49,800
+So how do we achieve bigger models on multiple GPUs?
+
+10
+00:00:49,800 --> 00:00:51,360
+How can we divide them?
+
+11
+00:00:51,360 --> 00:00:54,160
+And this is going to be the main topic of this presentation today.
+
+12
+00:00:54,160 --> 00:00:59,560
+We cannot just throw a lot of GPUs at the problem and think that it's going to be solved.
+
+13
+00:00:59,560 --> 00:01:06,800
+Hopefully, after this presentation, you will appreciate the engineering put into it.
+
+14
+00:01:06,800 --> 00:01:14,080
+So a little bit of an ambitious outline here, but we're going to be talking about parallelism
+
+15
+00:01:14,080 --> 00:01:14,600
+primitives.
+
+16
+00:01:14,600 --> 00:01:19,040
+So we're going to be talking about data parallelism, pipeline parallelism, model parallelism,
+
+17
+00:01:19,040 --> 00:01:22,160
+and then finally the zero optimizer.
+
+18
+00:01:22,160 --> 00:01:26,840
+And we're going to be also talking about some necessary optimizations for these things
+
+19
+00:01:26,840 --> 00:01:31,720
+to work, like activation checkpointing and mixed precision training.
+
+20
+00:01:31,720 --> 00:01:36,680
+So first, let's just talk about data parallelism.
+
+21
+00:01:36,680 --> 00:01:39,040
+What is data parallelism?
+
+22
+00:01:39,040 --> 00:01:47,280
+Data parallelism is the first straightforward implementation of some form of parallelism over
+
+23
+00:01:47,280 --> 00:01:49,320
+multiple GPUs.
+
+24
+00:01:49,320 --> 00:01:58,520
+So the idea is, given a mini-batch, you distribute it over multiple, so you split the mini-batch
+
+25
+00:01:58,520 --> 00:02:02,520
+into multiple micro-batches for every GPU.
+
+26
+00:02:02,520 --> 00:02:06,840
+And basically, every GPU has a copy of the model.
+
+27
+00:02:06,840 --> 00:02:12,200
+Now every GPU does a forward pass, backward pass, computes the gradients, and then they
+
+28
+00:02:12,200 --> 00:02:18,240
+can aggregate these gradients together, either using a parameter server, could be another
+
+29
+00:02:18,240 --> 00:02:24,000
+GPU, or they do some form of old reduce operation.
+
+30
+00:02:24,000 --> 00:02:29,640
+And by this way, they reduce all the gradients together, and then they broadcast the updated
+
+31
+00:02:29,640 --> 00:02:36,760
+model to all of them, and then they go on to the next mini-batch.
+
+32
+00:02:36,760 --> 00:02:41,600
+The good thing about this is that you get immediately, so for these three GPUs, you
+
+33
+00:02:41,600 --> 00:02:46,040
+get three extra throughput.
+
+34
+00:02:46,040 --> 00:02:50,240
+And there is no design that you need to do.
+
+35
+00:03:16,040 --> 00:03:34,080
+Enter pipeline parallelism.
+
+36
+00:03:34,080 --> 00:03:45,840
+It was introduced in GPype and PyveDream, and the idea is, instead of having the model
+
+37
+00:03:45,840 --> 00:03:50,840
+copied in every GPU, you have an interlayer splitting.
+
+38
+00:03:50,840 --> 00:03:54,840
+So you split the model, so the first layer isn't the first GPU, the second layer isn't
+
+39
+00:03:54,840 --> 00:03:59,440
+the second GPU, the third layer isn't the third GPU, and so on.
+
+40
+00:03:59,440 --> 00:04:05,120
+And so hopefully, every layer will have one over the number of devices of the weights,
+
+41
+00:04:05,120 --> 00:04:15,360
+so it will have less memory, and you just pass the mini-batch, you split it into also
+
+42
+00:04:15,360 --> 00:04:21,480
+three micro-batches, and you pass them in sequence in a pipeline.
+
+43
+00:04:21,480 --> 00:04:30,080
+But the naive way to do this will not work, because if you just make the forward through
+
+44
+00:04:30,080 --> 00:04:34,960
+the first layer, then the forward, the second layer, third layer, fourth layer, and then
+
+45
+00:04:34,960 --> 00:04:42,760
+you go backward in each of them, basically you're having the performance of one GPU,
+
+46
+00:04:42,760 --> 00:04:49,240
+and all of the white blocks here are idle, or bubbles.
+
+47
+00:04:49,240 --> 00:04:52,160
+So how can we optimize that?
+
+48
+00:04:52,160 --> 00:04:59,000
+Well, this is the idea behind GPype.
+
+49
+00:04:59,000 --> 00:05:09,000
+The idea is while the first batch does forward, then after that, the next batch goes in, like
+
+50
+00:05:09,000 --> 00:05:14,560
+in a pipeline way, and then the third batch goes in, and then the fourth batch, and the
+
+51
+00:05:14,560 --> 00:05:20,120
+idea is that we want to maximize the number of these full-length columns, because at these
+
+52
+00:05:20,120 --> 00:05:26,400
+full-length columns is when the pipeline is completely utilized, and this is the maximum
+
+53
+00:05:26,400 --> 00:05:32,280
+utilization that we want.
+
+54
+00:05:32,280 --> 00:05:38,120
+So this is an extensive example of this idea in motion.
+
+55
+00:05:38,120 --> 00:05:40,600
+So we have eight micro-batches.
+
+56
+00:05:40,600 --> 00:05:47,440
+We will interleave them forward and backward in the following way.
+
+57
+00:05:47,440 --> 00:05:56,560
+So the moment the first batch finishes, the second batch goes on, and so on.
+
+58
+00:05:56,560 --> 00:06:01,560
+So for the first layer, second layer, third layer, fourth layer, and then you do the backwards
+
+59
+00:06:01,560 --> 00:06:06,800
+for each of them, and essentially this is what you have.
+
+60
+00:06:06,800 --> 00:06:15,880
+You have more full-length columns, and so you have higher throughput and more utilization.
+
+61
+00:06:15,880 --> 00:06:23,440
+If we want to analyze this more firmly, we look at the bubble time per mini-batch.
+
+62
+00:06:23,440 --> 00:06:28,440
+So the bubble time is the number of devices minus one times the forward plus backward
+
+63
+00:06:28,440 --> 00:06:34,680
+time, which is essentially the time that it takes for a mini-batch to fully enter through
+
+64
+00:06:34,680 --> 00:06:38,360
+the pipeline and to fully withdraw.
+
+65
+00:06:38,360 --> 00:06:47,560
+Ideally, we want to be using, so m here is the number of micro-batches, so we want the
+
+66
+00:06:47,560 --> 00:06:53,000
+ideal time is to be m times tf plus tb.
+
+67
+00:06:53,000 --> 00:06:57,760
+So the efficiency that we get out of that is, well, if you do the calculation, it's
+
+68
+00:06:57,760 --> 00:07:01,520
+one minus k minus one over m.
+
+69
+00:07:01,520 --> 00:07:06,800
+And in GPype, they find that empirically for almost linear scaling, you need the number
+
+70
+00:07:06,800 --> 00:07:13,480
+of micro-batches to be bigger than or equal four times the number of devices.
+
+71
+00:07:13,480 --> 00:07:21,520
+And if you plug in this in our analysis here, we get that it's effectively 75 percent scaling
+
+72
+00:07:21,520 --> 00:07:26,480
+efficiency, which is good enough.
+
+73
+00:07:26,480 --> 00:07:35,360
+And if you increase m more than that, well, you get higher efficiency.
+
+74
+00:07:35,360 --> 00:07:41,320
+And well, pipeline parallelism reduces the memory proportional to the number of pipeline
+
+75
+00:07:41,320 --> 00:07:43,800
+stages.
+
+76
+00:07:43,800 --> 00:07:48,920
+So it allows the model size to scale linearly with the number of workers, and it has the
+
+77
+00:07:48,920 --> 00:07:50,800
+lowest communication volume.
+
+78
+00:07:50,800 --> 00:07:56,600
+However, it cannot scale indefinitely, because increasing the pipeline size decreases the
+
+79
+00:07:56,600 --> 00:08:02,360
+computation per pipeline stage.
+
+80
+00:08:02,360 --> 00:08:04,400
+And it needs loads balancing.
+
+81
+00:08:04,400 --> 00:08:10,280
+It is architecture independent, but it does need a little bit of code rewriting.
+
+82
+00:08:10,280 --> 00:08:14,080
+And the memory pair device, it's got to be the maximum partition, so like the maximum
+
+83
+00:08:14,080 --> 00:08:22,440
+width of layer, plus the activations for all the micro-batches, because they are stored
+
+84
+00:08:22,440 --> 00:08:26,000
+as we are going.
+
+85
+00:08:26,000 --> 00:08:34,360
+Enter the next parallelism idea, which is to split it the other way.
+
+86
+00:08:34,360 --> 00:08:41,880
+Instead of splitting it layer by layer, you split the layer itself horizontally.
+
+87
+00:08:41,880 --> 00:08:49,080
+So we split this first layer here, we split these two things, we split them, and so on.
+
+88
+00:08:49,080 --> 00:08:53,920
+And the idea is that we're computing every layer in parallel.
+
+89
+00:08:53,920 --> 00:09:02,040
+And since this really requires us to go into the depth of implementation of these blocks,
+
+90
+00:09:02,040 --> 00:09:09,880
+we're only going to be focusing on the transformer block, which is exactly what the paper megatron
+
+91
+00:09:09,880 --> 00:09:14,920
+did.
+
+92
+00:09:14,920 --> 00:09:25,800
+So what is the main component in training large language models?
+
+93
+00:09:25,800 --> 00:09:29,660
+It's basically matrix multiplication.
+
+94
+00:09:29,660 --> 00:09:34,600
+So we are focusing on generalized matrix multiplication here.
+
+95
+00:09:34,600 --> 00:09:39,320
+And in the paper, they introduce two forms of parallelism.
+
+96
+00:09:39,960 --> 00:09:48,760
+In column parallelism, so you're multiplying x times a, and you want to do this on two
+
+97
+00:09:48,760 --> 00:09:49,920
+devices.
+
+98
+00:09:49,920 --> 00:09:56,520
+So what you do is you split a by column, so you put the first column here, and you put
+
+99
+00:09:56,520 --> 00:10:04,480
+the second column here, and then you replicate x on both devices, and then you do the multiplication.
+
+100
+00:10:04,480 --> 00:10:11,360
+Now when you do the multiplication, this output is going to be the first column of the output,
+
+101
+00:10:11,360 --> 00:10:15,280
+and this output is going to be the second column of the output, and you just want concatenate
+
+102
+00:10:15,280 --> 00:10:19,280
+them.
+
+103
+00:10:19,280 --> 00:10:28,320
+For row parallelism, however, instead of splitting a by column, you split it by rows.
+
+104
+00:10:28,320 --> 00:10:33,820
+So you send the top to the first device, and the bottom to the second device, and you also
+
+105
+00:10:33,820 --> 00:10:37,580
+split x by column this time.
+
+106
+00:10:37,580 --> 00:10:43,260
+So you put the left side on the first device, and the right side on the second device.
+
+107
+00:10:43,260 --> 00:10:51,460
+And when you do the multiplication, now the output is going to be a partial sum of the
+
+108
+00:10:51,460 --> 00:10:52,460
+final output.
+
+109
+00:10:52,460 --> 00:11:01,900
+So it's like this entry should be all of this times all of this.
+
+110
+00:11:01,900 --> 00:11:06,500
+The first device is going to be computing this times this.
+
+111
+00:11:06,500 --> 00:11:11,020
+So it's going to be here, x11, x12, a11, a21.
+
+112
+00:11:11,020 --> 00:11:16,860
+When you multiply this and this, you get y1 of 1, 1.
+
+113
+00:11:16,860 --> 00:11:24,180
+In order to get the rest of it, the second device needs to compute this times this, which
+
+114
+00:11:24,180 --> 00:11:28,820
+is going to be here, then the output is going to be here.
+
+115
+00:11:29,220 --> 00:11:35,180
+The idea here, the costly thing you need to do is you need to sum these up.
+
+116
+00:11:35,180 --> 00:11:39,140
+And summing across devices means that there is some form of communication that needs to
+
+117
+00:11:39,140 --> 00:11:40,140
+happen.
+
+118
+00:11:40,140 --> 00:11:43,460
+Concatenation, you can do the concatenation logically.
+
+119
+00:11:43,460 --> 00:11:46,260
+There doesn't have to be communication between them.
+
+120
+00:11:46,260 --> 00:11:51,900
+You can just think of the tensor as existing into machines but being split.
+
+121
+00:11:51,900 --> 00:11:53,940
+While here, you cannot think of it like that.
+
+122
+00:11:53,940 --> 00:11:56,900
+You have to add them.
+
+123
+00:11:56,900 --> 00:12:02,460
+So how does this apply into the transformer?
+
+124
+00:13:56,900 --> 00:14:01,340
+The idea can apply to the self-attention block except that we basically will parallelize
+
+125
+00:14:01,340 --> 00:14:02,500
+attention heads now.
+
+126
+00:14:02,500 --> 00:14:06,700
+So let's assume, for the sake of example, that we have only two attention heads.
+
+127
+00:14:06,700 --> 00:14:11,940
+We're going to put every attention head on a separate device.
+
+128
+00:14:11,940 --> 00:14:19,020
+So the first device is going to take, again, column parallelism.
+
+129
+00:14:19,020 --> 00:14:25,420
+We're going to take x and we're going to split the v, q, and k by column.
+
+130
+00:14:25,420 --> 00:14:31,300
+And then we are going to do the attention and then we use the row parallelism in order
+
+131
+00:14:31,300 --> 00:14:41,100
+to complete the linear layer at the end of the self-attention.
+
+132
+00:14:41,100 --> 00:14:42,100
+That's basically it.
+
+133
+00:14:42,100 --> 00:14:53,900
+That's how you parallelize a transformer block horizontally.
+
+134
+00:14:53,900 --> 00:14:59,420
+In summary, basically you have two all-reduced operations, one for forward and one for backward
+
+135
+00:14:59,420 --> 00:15:05,140
+for the attention block, and you have the same thing for the model parallel blocks
+
+136
+00:15:05,140 --> 00:15:11,100
+that they are in total for all-reduced operations, which is a lot.
+
+137
+00:15:11,100 --> 00:15:21,700
+So this idea of parallelism is essentially very expensive in terms of communication cost.
+
+138
+00:15:21,700 --> 00:15:26,780
+So the results of that from the paper is that, well, you can, first of all, you can compose
+
+139
+00:15:26,780 --> 00:15:29,220
+it with data parallelism.
+
+140
+00:15:29,220 --> 00:15:34,780
+So model parallel on its own has like 77% scaling efficiency.
+
+141
+00:15:34,780 --> 00:15:45,500
+So at 8 GPUs, instead of getting 8x the performance, you get 77% times 8x of the performance.
+
+142
+00:15:45,500 --> 00:15:50,780
+And if you combine that with data parallel, you get 74% at 512 of GPUs, which is like
+
+143
+00:15:50,780 --> 00:15:54,380
+a lot.
+
+144
+00:15:54,380 --> 00:16:00,540
+And that gives you basically a very high throughput that you can use for training larger and larger
+
+145
+00:16:00,540 --> 00:16:05,740
+language models.
+
+146
+00:16:05,740 --> 00:16:11,780
+But as we said, it's the highest communication volume, but it has the highest memory efficiency
+
+147
+00:16:11,780 --> 00:16:15,380
+because we really split the computation across devices.
+
+148
+00:16:15,380 --> 00:16:21,460
+However, it reduces the granularity of the computation while also increasing the communication
+
+149
+00:16:21,460 --> 00:16:32,660
+overhead, which makes it not very good in cases where it would be across multiple devices.
+
+150
+00:16:32,660 --> 00:16:41,100
+So if you were using GPUs from multiple devices, there becomes a communication bottleneck.
+
+151
+00:16:42,060 --> 00:16:55,420
+So usually we just use model parallelism on GPUs inside the same like node or server,
+
+152
+00:16:55,420 --> 00:16:57,660
+for example.
+
+153
+00:16:57,660 --> 00:17:01,820
+Other details is that it actually parallelizes the embedding layer and the loss layer.
+
+154
+00:17:01,820 --> 00:17:08,020
+And the idea is the same, basically, we use the parallel GMM and masking.
+
+155
+00:17:08,020 --> 00:17:13,980
+And because it is bad across internal GPUs, to scale higher, we use data parallel or model
+
+156
+00:17:13,980 --> 00:17:24,980
+pipelining, like we compose it with other parallelism parameters.
+
+157
+00:17:24,980 --> 00:17:28,860
+So in summary, we can split the data and not the model.
+
+158
+00:17:28,860 --> 00:17:35,740
+We can just send the data to multiple devices and keep the model existing on every device
+
+159
+00:17:35,740 --> 00:17:38,900
+and do the training that is very fast.
+
+160
+00:17:38,900 --> 00:17:45,420
+We can split the model horizontally, so every layer is a split, and we can give it the whole
+
+161
+00:17:45,420 --> 00:17:47,300
+batch at once.
+
+162
+00:17:47,300 --> 00:17:53,340
+That is very communication intensive, but the lowest memory footprint.
+
+163
+00:17:53,340 --> 00:17:59,820
+And we can split it vertically like this and feed the batches to it sequentially.
+
+164
+00:17:59,900 --> 00:18:07,140
+And that is the highest memory efficiency, that is also very high memory efficiency and
+
+165
+00:18:07,140 --> 00:18:12,980
+the lowest communication bottleneck.
+
+166
+00:18:12,980 --> 00:18:14,940
+So can we combine them together?
+
+167
+00:18:14,940 --> 00:18:19,660
+Can we get the best of three worlds in that case?
+
+168
+00:18:19,660 --> 00:18:23,300
+And the answer is yes, actually.
+
+169
+00:18:23,300 --> 00:18:28,860
+You can think of each of these as a device and you can abstract it and subdivide it in
+
+170
+00:18:28,860 --> 00:18:34,460
+these ways, and this is actually what 3D parallelism is.
+
+171
+00:18:34,460 --> 00:18:42,540
+So you take your batch and you split it into microbatches, each microbatch goes into a
+
+172
+00:18:42,540 --> 00:18:44,940
+data parallel slice.
+
+173
+00:18:44,940 --> 00:18:50,020
+The data parallel slice basically consists of the whole model, but the model itself is
+
+174
+00:18:50,020 --> 00:18:56,620
+split sequentially into three stages in that case.
+
+175
+00:18:56,620 --> 00:19:02,700
+They are pipeline parallelism blocks, like we described them earlier.
+
+176
+00:19:02,700 --> 00:19:09,700
+And each one of these pipeline parallel blocks is split into, for example, two model parallel
+
+177
+00:19:09,700 --> 00:19:17,180
+blocks or tensor parallel blocks, such that you can have parallelism at the level of the
+
+178
+00:19:17,180 --> 00:19:19,140
+tensor itself.
+
+179
+00:19:19,140 --> 00:19:25,460
+And because this is the NR level, it's good for communication purposes, and this is good
+
+180
+00:19:25,460 --> 00:19:28,380
+for efficiency purposes, and this is good for scaling purposes.
+
+181
+00:19:28,380 --> 00:19:37,540
+So mixing them all together gives you the highest achievable parallelism you can get
+
+182
+00:19:37,540 --> 00:19:39,300
+with the current technology.
+
+183
+00:19:39,300 --> 00:19:43,860
+And this is actually the state of the art right now.
+
+184
+00:19:43,860 --> 00:19:46,500
+So this is the model for Bloom, for example.
+
+185
+00:19:46,500 --> 00:19:52,620
+It allows, so this is like 384 GPUs.
+
+186
+00:19:52,620 --> 00:19:54,020
+It's like in sign.
+
+187
+00:19:54,020 --> 00:20:01,300
+You get eight copies of the model trained on a total of 384 GPUs.
+
+188
+00:20:01,300 --> 00:20:03,780
+So you get eight copies.
+
+189
+00:20:03,780 --> 00:20:05,420
+This is the data parallelism.
+
+190
+00:20:05,420 --> 00:20:15,180
+Each copy is divided into 12 pipeline parallelism steps.
+
+191
+00:20:15,180 --> 00:20:17,700
+So this is the sequence of steps.
+
+192
+00:20:17,700 --> 00:20:28,220
+And then each pipeline step is divided into four model parallel steps.
+
+193
+00:20:28,220 --> 00:20:33,300
+So one full copy takes 48 GPUs times eight to get 384.
+
+194
+00:20:33,300 --> 00:20:34,300
+Amazing.
+
+195
+00:20:34,300 --> 00:20:41,740
+Okay, now let's talk about mixed precision training.
+
+196
+00:20:41,740 --> 00:20:47,380
+Mixed precision training is basically the idea that allows us to train in smaller precision
+
+197
+00:20:47,380 --> 00:20:56,100
+than 32 bits, because 32 bits, like it's actually, this paper shows that it is not
+
+198
+00:20:56,100 --> 00:21:00,180
+necessary to train in 32 bits.
+
+199
+00:21:00,180 --> 00:21:05,980
+You need to keep the original weights in 32 bits, because the gradient time is the learning
+
+200
+00:21:05,980 --> 00:21:13,540
+rate is sometimes too small, but the memory is dominated by the activations.
+
+201
+00:21:13,540 --> 00:21:18,980
+So it's okay to keep the original weight in 32 bits, and actually convert every single
+
+202
+00:21:18,980 --> 00:21:25,380
+thing else into 16 bits, and you will get very close accuracy.
+
+203
+00:21:25,380 --> 00:21:34,300
+There's a couple of net picks to this, which is in FP16 a lot.
+
+204
+00:21:34,300 --> 00:21:41,340
+So basically part of the gradient that is here, this part is in the subnormalized range,
+
+205
+00:21:41,340 --> 00:21:47,500
+so it's not representable in FP16, and it becomes zero.
+
+206
+00:21:47,500 --> 00:21:55,780
+So the way you do it is actually you just scale the loss, because this is the important
+
+207
+00:21:55,780 --> 00:22:00,780
+part, so you scale the loss a little bit, depending on the kind of model you're using.
+
+208
+00:22:00,780 --> 00:22:08,500
+So you move this part that becomes zero in FP16 from this red line to this orange line
+
+209
+00:22:08,500 --> 00:22:14,740
+by scaling all the gradients, and the easiest way to scale all the gradients is to just
+
+210
+00:22:14,740 --> 00:22:15,740
+scale the loss.
+
+211
+00:22:15,740 --> 00:22:23,460
+You multiply the loss by like 2 power 4 here, and in other situations it's 2 power 8 or
+
+212
+00:22:23,460 --> 00:22:34,900
+2 power 16, depending, not 2 power 8 or 2 power 10, and you get basically essentially
+
+213
+00:22:35,340 --> 00:22:45,220
+the same accuracy, so you get the same exact model as if you did it in 32 bits, and in
+
+214
+00:22:45,220 --> 00:22:50,420
+some situations it's actually slightly a little bit more accurate, and I think it's
+
+215
+00:22:50,420 --> 00:22:55,780
+just because like some regularization effect that happens when you're training in 16 bits,
+
+216
+00:22:55,780 --> 00:23:02,220
+it's like the model generalizes a little bit better.
+
+217
+00:23:02,220 --> 00:23:09,780
+So in summary, FP16 is faster than FP32 anyway, so we prefer that, and it takes less memory.
+
+218
+00:23:09,780 --> 00:23:18,020
+We divide the memory by approximately 2, so that is good.
+
+219
+00:23:18,020 --> 00:23:25,700
+We definitely want to incorporate that, and most of the papers that came after this paper
+
+220
+00:23:25,700 --> 00:23:30,820
+in training large-language models, they utilize this mixed precision training.
+
+221
+00:23:30,820 --> 00:23:39,140
+We also utilize activation checkpointing, which is a very simple idea actually, so usually
+
+222
+00:23:39,140 --> 00:23:44,900
+when you're training a model you keep the forward states, so you train a model, you
+
+223
+00:23:44,900 --> 00:23:48,940
+do forwards, you keep all the forward states with you, and then after you do the forward
+
+224
+00:23:48,940 --> 00:23:53,980
+you compute the loss, and when you're doing the loss you start going backward, and when
+
+225
+00:23:53,980 --> 00:24:00,460
+you're going backward you compute the backward gradient from the saved state and the backward
+
+226
+00:24:00,460 --> 00:24:04,860
+gradient that is coming, so you back propagate here, and then you go here, you get this state,
+
+227
+00:24:04,860 --> 00:24:08,620
+and this you go back propagate, and so on.
+
+228
+00:24:08,620 --> 00:24:14,980
+But you don't need to keep all of these states in memory, in fact you can keep only square
+
+229
+00:24:14,980 --> 00:24:20,140
+root of them, so like you can do one and skip three, and one and skip three, and every time
+
+230
+00:24:20,140 --> 00:24:25,140
+you're doing backward you recompute from the last checkpoint, that is why it's called
+
+231
+00:24:25,140 --> 00:24:26,220
+checkpointing.
+
+232
+00:24:26,220 --> 00:24:31,020
+So from this checkpoint it starts automatically when you start going backward, so it does
+
+233
+00:24:31,020 --> 00:24:36,780
+some forward for you and gives you this so that it's ready for back propagating, and
+
+234
+00:24:36,780 --> 00:24:44,380
+when you do that it triggers this one to start computing too, so when it starts going forward
+
+235
+00:24:44,380 --> 00:24:49,900
+it can meet you somewhere in the middle, so you're not really waiting for it, you can
+
+236
+00:24:49,900 --> 00:24:55,820
+just spend a little bit of extra compute for the sake of reducing the memory tremendously.
+
+237
+00:24:55,820 --> 00:25:01,220
+In the case of doing it, actually every square root steps you get square root of n memory
+
+238
+00:25:01,220 --> 00:25:07,500
+reduction at the expense of like one extra forward per mini batch, it's like 33% of the
+
+239
+00:25:07,500 --> 00:25:16,780
+computation increase, at least in the case of a transformer, which is very, very, very,
+
+240
+00:25:16,780 --> 00:25:20,580
+very good.
+
+241
+00:25:21,580 --> 00:25:35,740
+Now we go to zero. Zero is zero redundancy optimizer, it is from Microsoft. It's basically
+
+242
+00:25:35,740 --> 00:25:43,140
+an optimizer that uses most of the things that we talked about so far, and it does them
+
+243
+00:25:43,140 --> 00:25:53,140
+in a clever way that makes the memory consumption basically amortized to like being actually
+
+244
+00:25:53,140 --> 00:25:56,820
+divided by the number of devices, like the original memory consumption divided by the
+
+245
+00:25:56,820 --> 00:26:03,380
+number of devices, right away like from 120 gigabytes you go down to 1.9 gigabytes, insane.
+
+246
+00:26:03,380 --> 00:26:08,420
+So how does it go? It goes essentially like this, so first of all how much memory does
+
+247
+00:26:08,420 --> 00:26:17,580
+the model take? Well, it takes every parameter, it takes two bytes, like FP16, so it takes
+
+248
+00:26:17,580 --> 00:26:24,460
+two bytes for the parameters, two bytes for the gradients, and then there are some optimizer
+
+249
+00:26:24,460 --> 00:26:33,780
+states, which because these optimizer states are like in 32 bits, they are four plus four
+
+250
+00:26:34,220 --> 00:26:40,580
+bytes, so they are actually 12 here. And then you multiply it by the number of parameters,
+
+251
+00:26:40,580 --> 00:26:51,220
+this is what you get. So there are three levels of parallelism that zero does. The first one
+
+252
+00:26:51,220 --> 00:27:00,860
+is optimizer state parallelism, and then optimizer state plus gradient parallelism, and then
+
+253
+00:27:00,980 --> 00:27:12,060
+optimizer state plus gradient plus parameter parallelism. And in here, we can see the speed
+
+254
+00:27:12,060 --> 00:27:25,460
+up of zero being very high. We can see that, well, the throughput per GPU, it's like consistent,
+
+255
+00:27:26,060 --> 00:27:32,340
+it only starts to go down in like very high model parameters, but the speed up is really high,
+
+256
+00:27:32,340 --> 00:27:43,580
+and the speed up becomes really significant when the model can no longer fit on a single node.
+
+257
+00:27:43,580 --> 00:27:52,260
+So in here, the baseline is model parallelism on a single device where you can see like they
+
+258
+00:27:52,260 --> 00:27:58,900
+are relatively close, but after this point, it can no longer fit on a single node. So you need
+
+259
+00:27:58,900 --> 00:28:04,820
+to have inter node model parallelism in order to fit it. This is where the throughput per GPU
+
+260
+00:28:04,820 --> 00:28:11,580
+goes down really fast, and this is where zero optimizer really shines because it scales so much
+
+261
+00:28:11,580 --> 00:28:20,940
+better in high parameter situations. Okay, so here we see an example of zero on four devices,
+
+262
+00:28:21,540 --> 00:28:30,660
+each device has a portion of the model, so device one has this portion and so on, and then in the
+
+263
+00:28:30,660 --> 00:28:37,460
+forward batch, each party corresponding to a certain section of the model, it sends it to all
+
+264
+00:28:37,460 --> 00:28:43,220
+the clients so that they can do the forward on their respective data. So this is a form of data
+
+265
+00:28:43,220 --> 00:28:49,060
+parallel combined with pipeline parallel. The forward then gets computed with the loss when
+
+266
+00:28:49,060 --> 00:28:56,100
+you're doing the backward loss in your part of the data, in your part of the model, all the parties
+
+267
+00:28:56,100 --> 00:29:02,620
+give you the gradient for this part of the model. And so the communication that happens only happens
+
+268
+00:29:02,620 --> 00:29:09,460
+when needed, and every party only carries the data that it needs. So it's kind of like a complete
+
+269
+00:29:09,460 --> 00:29:15,300
+partitioning of the model and the data at the same time. And when it's time, you update your model
+
+270
+00:29:15,300 --> 00:29:21,300
+with your optimizer states, you get the new model parameters, and then you go for the next batch,
+
+271
+00:29:21,300 --> 00:29:29,940
+and this is essentially the whole idea. Now you can use zero on its own as a data parallel approach
+
+272
+00:29:29,940 --> 00:29:39,340
+in 3D parallelism, and this is the deep speed library. So you can have a data parallel using zero,
+
+273
+00:29:39,340 --> 00:29:46,180
+and then each data parallel inside it, there is pipeline parallel, and each pipeline parallel has
+
+274
+00:29:46,180 --> 00:29:52,740
+inside it model parallel. So you have the 3D parallelism with the zero optimization, which
+
+275
+00:29:52,740 --> 00:30:01,180
+significantly improves the performance. And the way it works is like, okay, model parallelism has
+
+276
+00:30:01,180 --> 00:30:06,460
+the largest communication overhead. So we prioritize placing the model parallel groups within a note
+
+277
+00:30:06,580 --> 00:30:14,620
+to utilize the larger inter-node bandwidth. Then we have Megatron LM for tensor slicing that is
+
+278
+00:30:14,620 --> 00:30:23,700
+happening inside here. And just exactly as I described, then we do the pipeline stages inside.
+
+279
+00:30:23,700 --> 00:30:38,220
+Yeah, and then we see that with zero, we basically combine all the benefits for all the approaches
+
+280
+00:30:38,220 --> 00:30:45,100
+that we talked about, we get more than a trillium parameter model, we can do it, we can do parallelism
+
+281
+00:30:45,100 --> 00:30:51,900
+to more than 1000x, we have very good compute efficiency. And the very good thing about zero is
+
+282
+00:30:51,900 --> 00:30:56,260
+that you really don't need to rewrite the code, because it is just an optimizer that you can
+
+283
+00:30:56,260 --> 00:31:05,060
+apply in PyTorch. You can just use the deep speed library to do it for you. Yeah, and then you can
+
+284
+00:31:05,060 --> 00:31:14,660
+see that you really need 3D parallelism in order to do stuff on the GPT3 scale. So for, for example,
+
+285
+00:31:14,660 --> 00:31:19,420
+if you're doing model parallel equal one, there's literally no way you can get any performance on a
+
+286
+00:31:19,420 --> 00:31:28,140
+GPT3 scale, you need at least model parallel equals two with very high pipeline parallel or and so
+
+287
+00:31:28,140 --> 00:31:37,340
+on. You get the best kind of 3D parallelism is when the pipeline parallel is 20, model parallel is
+
+288
+00:31:37,340 --> 00:31:42,820
+two, and the data parallel is 20. The idea is that model parallel needs to be low for very high
+
+289
+00:31:42,860 --> 00:31:48,180
+performance, because it's only used for memory efficiency, it's not used for performance gains,
+
+290
+00:31:48,180 --> 00:31:58,240
+because it's not very efficient performance wise if we're talking, because of the communication
+
+291
+00:31:58,240 --> 00:32:06,340
+overhead that it introduces. Yep, so do you saw my references? Thank you for listening, and I hope
+
+292
+00:32:06,340 --> 00:32:09,500
+this was useful to you.
+

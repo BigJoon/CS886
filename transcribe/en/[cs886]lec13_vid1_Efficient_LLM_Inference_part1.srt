@@ -1,0 +1,1244 @@
+1
+00:00:00,000 --> 00:00:04,240
+My name is Ibshah Bairan. I'm an author. I'm going to be talking about how we can
+
+2
+00:00:06,000 --> 00:00:11,440
+do algorithms more efficiently. Before starting my first work, I would like to
+
+3
+00:00:11,440 --> 00:00:15,680
+propose these two papers, which form the base for the first chip. I know you're like that.
+
+4
+00:00:16,560 --> 00:00:22,720
+Yeah. So this would form the base for the first paper, that is the algorithmic networks and branching it.
+
+5
+00:00:23,520 --> 00:00:32,800
+So this is what the algorithm looks like. So we conclude through all the layers,
+
+6
+00:00:32,800 --> 00:00:40,720
+and then we autoregressively carry the documents. So what the authors of shallow
+
+7
+00:00:40,720 --> 00:00:50,080
+weak networks experimented, they experimented on to see how each chip evolved during the
+
+8
+00:00:51,040 --> 00:00:57,440
+past. So they classified each layer, and they saw that after some point in the
+
+9
+00:00:57,440 --> 00:01:06,080
+past, the model tends to evolve. Now what is this? If you see the dot, the x-axis represents the layer,
+
+10
+00:01:06,800 --> 00:01:15,120
+and we have two metric prediction entropy, which shows that it can be one of the
+
+11
+00:01:15,120 --> 00:01:20,400
+measures of how confident the model is. And another one is the algorithmic line.
+
+12
+00:01:22,240 --> 00:01:25,040
+It shows how accurate the model is. So we can see that after
+
+13
+00:01:27,440 --> 00:01:38,000
+yeah, up to 10 layers, the confidence of the model is confused, but it becomes more inaccurate.
+
+14
+00:01:38,000 --> 00:01:44,560
+So the model is confident on inaccurate predictions. This is what they call over thinking of the
+
+15
+00:01:45,520 --> 00:01:54,880
+model. So what did we exit at this point? And so this overall mechanism of exiting early
+
+16
+00:01:54,880 --> 00:02:03,280
+during the past is what the early exit mechanism is. Yeah, so it looks like this. So we
+
+17
+00:02:05,200 --> 00:02:12,240
+take the output of any of the middle layer, and we proceed autoregressively as we did our
+
+18
+00:02:15,200 --> 00:02:22,960
+now what metric, how do we decide when to exit? So the shallow deep network uses prediction
+
+19
+00:02:22,960 --> 00:02:31,680
+probabilities to exit, and the branching act uses entropy scores to exit. So in the example,
+
+20
+00:02:31,680 --> 00:02:39,600
+the threshold is 0.9. So whenever the metric exceeds this threshold, we exit from that layer.
+
+21
+00:02:39,600 --> 00:02:48,320
+So this is a pin 9 method. And yeah, the way to draw back is that the higher confidence score
+
+22
+00:02:48,320 --> 00:02:52,400
+of high probability doesn't necessarily imply that the tasker is correct.
+
+23
+00:02:54,480 --> 00:03:04,960
+Right, so one of the other methods is to use patience. So here we set a hyper parameter, which
+
+24
+00:03:05,760 --> 00:03:14,000
+for example, will be set P. So if the model's output at the layer remains same for T plus
+
+25
+00:03:14,000 --> 00:03:20,000
+one consecutive layers, then we exit at the T plus one layer. So in the example, the patient is one.
+
+26
+00:03:20,560 --> 00:03:31,040
+And so if the output of the layer remains same for two consecutive times, then we exit at this
+
+27
+00:03:31,360 --> 00:03:43,280
+layer. Yeah, so this approach uses Albert model as a base model, and it is evaluated on the viewbench
+
+28
+00:03:43,280 --> 00:03:51,520
+model. And you can see speed up of around 1.5 times. And one thing to notice here is that for all
+
+29
+00:03:51,520 --> 00:03:57,360
+the tasking viewbench model, the accuracy on development set as well as the test set increases
+
+30
+00:03:57,360 --> 00:04:06,320
+from the base model. So why is the case? So author claims and proves that as long as this
+
+31
+00:04:06,320 --> 00:04:13,040
+condition is maintained, the accuracy of the model will increase, which I will not go into
+
+32
+00:04:13,040 --> 00:04:20,640
+detail now, but we can discuss it again in time permits. And for some, for some of the patients,
+
+33
+00:04:22,160 --> 00:04:26,160
+certain range of the patients, the accuracy of the model increases for different tasks you can see
+
+34
+00:04:26,160 --> 00:04:33,040
+the x part such as accuracy and accuracy is the layers, the patients are.
+
+35
+00:04:36,240 --> 00:04:45,040
+Yeah, now the author is also claiming that it also depends the model, this mechanism also
+
+36
+00:04:45,040 --> 00:04:52,480
+depends against the development set attack. So this text pooler model is the one, the model that
+
+37
+00:04:52,560 --> 00:05:01,280
+invades, we ever see the text. So what it means that it changes some token, some words to its
+
+38
+00:05:02,720 --> 00:05:08,480
+replaces it with its synonyms and the output model changes. So this is what this is one kind
+
+39
+00:05:08,480 --> 00:05:21,920
+of attack called token manipulation. And so this, yeah, so this attack successfully works on
+
+40
+00:05:22,480 --> 00:05:28,800
+bird model, bird base model, and it decreases the accuracy from 8.96 to 5.5. So the attack
+
+41
+00:05:28,800 --> 00:05:39,360
+goes pretty well. And after employing this early exit phase mechanism, the accuracy after the attack
+
+42
+00:05:39,360 --> 00:05:44,560
+increases from 5.5 to 9.3. So it somewhat depends against the attack. Now why is this the case?
+
+43
+00:05:44,560 --> 00:05:51,600
+Because we saw that the model reaches the correct predictions at some point in the
+
+44
+00:05:51,600 --> 00:06:00,720
+power pass, but after that it misclassifies the output. So if we exit early in the power pass then
+
+45
+00:06:03,840 --> 00:06:06,960
+in general it increases accuracy.
+
+46
+00:06:09,600 --> 00:06:16,960
+Yeah, so this works on some input samples. So the overall
+
+47
+00:06:16,960 --> 00:06:28,880
+observation is that for some input samples, we don't need to pass through like compute
+
+48
+00:06:28,880 --> 00:06:35,120
+to all the layers instead we can exit in the middle. Yeah, so this was the first different
+
+49
+00:06:35,120 --> 00:06:43,760
+questions here. Can you go back to the previous page? So the attack you are depending against here
+
+50
+00:06:43,840 --> 00:06:48,880
+in this paper is to ensure that some of the non-crafted sentence or statement that will
+
+51
+00:06:48,880 --> 00:06:56,080
+generate more statements of the example I think. So it's one of the, like what I would say that
+
+52
+00:06:58,080 --> 00:07:04,800
+it's one of the pros I could say that this mechanism depends against, so the overall aim was not to
+
+53
+00:07:05,440 --> 00:07:10,000
+show this, but it's one of the outcomes of the mechanism that it depends against the
+
+54
+00:07:10,560 --> 00:07:18,000
+attack. Okay, yeah. As far as the defense against additive attacks goes, this is defending against
+
+55
+00:07:18,000 --> 00:07:21,840
+certain types of attacks that are built for normal LLM models. If somebody knows that they're using
+
+56
+00:07:21,840 --> 00:07:26,960
+this type of fort circuit system, they just defend like a design adversarial attack that will
+
+57
+00:07:26,960 --> 00:07:34,720
+exploit this confidence. It's their assessment of its ability to defend the alliance attacks
+
+58
+00:07:34,720 --> 00:07:38,160
+because they're they're defending against attacks that may not be used on that model.
+
+59
+00:07:38,160 --> 00:07:43,280
+So one thing that it depends against this token manipulation, the particular kind of attack,
+
+60
+00:07:43,280 --> 00:07:54,160
+and yeah, it can be possible that we could train the up who learn to accommodate this,
+
+61
+00:07:54,160 --> 00:07:58,560
+but if you see that accuracy only includes like 5459 points, so it's somewhat different
+
+62
+00:07:58,560 --> 00:08:03,040
+to this, but yeah, it's possible that it learns this as early as 5. I have one other question.
+
+63
+00:08:03,760 --> 00:08:30,240
+So my main question is if we're dealing with more general tasks, does this confidence,
+
+64
+00:08:30,240 --> 00:08:33,440
+do you think that's still effective, or do you think that this is really only effective
+
+65
+00:08:33,440 --> 00:08:42,240
+when we're dealing with in sample situations? Okay. I'm not sure about this particular mechanism,
+
+66
+00:08:42,240 --> 00:08:50,640
+but there are other techniques in which we use some kind of calibration set. And it like the
+
+67
+00:08:50,640 --> 00:08:56,480
+next thing that I'm going to present is it is training, it is calibrated on set and it provides
+
+68
+00:08:56,480 --> 00:09:04,400
+some finite sample statistical identity. So it works on finite sample, but the calibration set
+
+69
+00:09:04,400 --> 00:09:08,560
+we can pay, we can update the calibration set and work on the individual institution.
+
+70
+00:09:11,040 --> 00:09:14,240
+I'm not sure about this, but there are other methods which work, so we'll generalize this.
+
+71
+00:09:16,800 --> 00:09:19,840
+What's the difference between PABY and Shell?
+
+72
+00:09:20,160 --> 00:09:30,960
+Yeah, so PABY uses the patients and Shell is the one that uses the branching probabilities
+
+73
+00:09:31,680 --> 00:09:35,680
+and branching probabilities for Shell and entropy for branching.
+
+74
+00:09:36,560 --> 00:09:38,560
+Okay.
+
+75
+00:09:46,080 --> 00:09:52,720
+Yeah, so this algorithm adaptive language model is also an early exit-based mechanism,
+
+76
+00:09:52,720 --> 00:09:57,920
+but it provides a principal method for increasing efficiency
+
+77
+00:09:59,280 --> 00:10:05,360
+by remaining confident in the quality of the resulting prediction. So it overall checks the
+
+78
+00:10:06,320 --> 00:10:15,760
+output sequence and it checks the quality of it. We ensure that the output sequence is of high
+
+79
+00:10:15,760 --> 00:10:22,400
+computing and it also addresses other challenges. So that will see positive gain more insights or
+
+80
+00:10:22,400 --> 00:10:30,480
+gain more insight in the office table. So one thing that you want in the early exit-based
+
+81
+00:10:30,560 --> 00:10:38,240
+mechanism is, yeah, so in attention mechanism, if you want to compute the hidden state of
+
+82
+00:10:38,240 --> 00:10:43,200
+layer, of some layer, we would need the hidden state of previous layers for all the time
+
+83
+00:10:43,200 --> 00:10:50,960
+steps, but if we were to exit here, then we won't have these hidden states. So what we
+
+84
+00:10:50,960 --> 00:10:57,360
+do is it's propagate the hidden states down the layers. So basically copy the hidden states
+
+85
+00:10:58,320 --> 00:11:10,480
+and so the authors here try to find the impact of it on the accuracy. So they did this while
+
+86
+00:11:10,480 --> 00:11:17,840
+performing an order contest in which they exited from the layer where the output of the layer
+
+87
+00:11:17,840 --> 00:11:26,960
+matches the ground proof. So in this case, at this layer, the output is equal to y1. So they exit
+
+88
+00:11:26,960 --> 00:11:36,400
+from this layer, likewise all the other types. So the only divergence that the output will have
+
+89
+00:11:37,200 --> 00:11:43,360
+is because of the state copying mechanism. So this was an order contest that they performed
+
+90
+00:11:44,560 --> 00:11:52,720
+and they found out that the accuracy of the model decreased from 38.32 to 38.24, that's a slight
+
+91
+00:11:52,720 --> 00:12:01,840
+decrease and on average out of eight layers, it used 1.53 layers. So this indicates two things,
+
+92
+00:12:02,400 --> 00:12:09,360
+that the state copying mechanism works and there's a great potential for saving compute
+
+93
+00:12:09,600 --> 00:12:12,320
+if you use only basic poly exit based mechanism.
+
+94
+00:12:19,760 --> 00:12:26,560
+Then authors also did two kinds of perturbations. First one is sampling based in which
+
+95
+00:12:27,520 --> 00:12:33,920
+they sampled at a time step, they sampled 10th rank token and for all other time
+
+96
+00:12:33,920 --> 00:12:39,360
+step, they sampled, they sampled greatly the first rank token that is available. So that sampling
+
+97
+00:12:39,360 --> 00:12:45,280
+based on layer based in which they selected, I did answer, they selected the output of the
+
+98
+00:12:45,280 --> 00:12:53,600
+first layer and for and same as above, for all other layers, they sampled greatly by last layer.
+
+99
+00:12:54,880 --> 00:13:01,920
+And they found out that for sampling based, we were to select 10th rank token
+
+100
+00:13:02,880 --> 00:13:09,600
+initially in the inference process, the time step, it greatly affects the model,
+
+101
+00:13:09,600 --> 00:13:19,120
+the accuracy drops very much. And if it were to work on later in the time step, then the accuracy
+
+102
+00:13:19,120 --> 00:13:26,080
+isn't dropping that much. And one more thing that for the layer based, that is the orange line,
+
+103
+00:13:27,040 --> 00:13:33,760
+even if we perform this perturbation earlier in the inference, it doesn't drop a case like that.
+
+104
+00:13:33,760 --> 00:13:38,960
+So overall, what this shows is if the model receives perturbation at earlier time step,
+
+105
+00:13:38,960 --> 00:13:50,160
+it negatively affects the performance. So what they did is they decide they set different thresholds
+
+106
+00:13:50,160 --> 00:13:55,680
+for different time steps. So we can use a higher threshold for earlier time steps and lower thresholds
+
+107
+00:13:55,760 --> 00:14:06,960
+for later time steps. Or we can use a decaying function for lambda based on like we can
+
+108
+00:14:08,880 --> 00:14:12,640
+configure it based on the temperature. So initially we would have a higher
+
+109
+00:14:13,440 --> 00:14:18,400
+threshold and later we did in the time steps, different times lower threshold.
+
+110
+00:14:18,800 --> 00:14:24,800
+Now on what metric do we apply these thresholds on? So they experimented with three
+
+111
+00:14:26,320 --> 00:14:34,320
+confidence measure. So first the software goes to the difference between top two software's values
+
+112
+00:14:37,520 --> 00:14:42,720
+and they apply threshold on the difference. Another is the density situation. So they
+
+113
+00:14:43,680 --> 00:14:50,560
+compute the cosine similarity between two constitutive hidden layers and early exit
+
+114
+00:14:50,560 --> 00:14:56,320
+classifiers and they decay to classifiers. Classifier to predict the likelihood of exiting early.
+
+115
+00:14:59,120 --> 00:15:05,840
+Yeah, so we have thresholds, we have metrics. So what this method is, we calibrate the local
+
+116
+00:15:05,840 --> 00:15:11,600
+or token exit decisions. That is, we calibrate those thresholds such that the global sequence
+
+117
+00:15:11,680 --> 00:15:18,320
+level constraints are maintained. So that the quality of the final output is in checker
+
+118
+00:15:19,520 --> 00:15:26,560
+with some arbitrary, with arbitrarily high probability that I talk about it later. So it's a user chosen
+
+119
+00:15:28,720 --> 00:15:36,480
+probability. Yeah, so what do we need for the elimination set which consists of
+
+120
+00:15:37,280 --> 00:15:42,160
+prompts to elimination and the global constraint that I talked about? Let's keep the final prediction
+
+121
+00:15:42,160 --> 00:15:51,600
+in check. Yeah, so the global constraint, so if we denote wildly that it as the adaptive output
+
+122
+00:15:51,600 --> 00:15:58,720
+and the standard output as bipolar, then any dissimilarity and we have a dissimilarity function.
+
+123
+00:15:59,520 --> 00:16:04,720
+So the dissimilarity between these two should be less than some tolerance
+
+124
+00:16:05,680 --> 00:16:11,440
+and the confidence of this being less than some tolerance should be greater than some probability
+
+125
+00:16:11,440 --> 00:16:15,120
+and this probability is 1 minus epsilon and where epsilon is the derivative
+
+126
+00:16:15,760 --> 00:16:27,520
+and it is user chosen. So basically we calibrate the lambda using this constraint
+
+127
+00:16:28,080 --> 00:16:38,560
+and it's not necessary that a given prompt has a single gold answer. It can have multiple
+
+128
+00:16:39,280 --> 00:16:45,760
+gold answers. So what we do is we bound the risk. So we compare the wildly with the gold answer
+
+129
+00:16:46,400 --> 00:16:54,720
+or set up gold answer and it should be bounded by the risk of
+
+130
+00:16:58,000 --> 00:17:02,320
+standard output should be less than some tolerance. So this both this
+
+131
+00:17:03,840 --> 00:17:07,920
+dissimilarity function and this function we use a standard metric based on the
+
+132
+00:17:08,320 --> 00:17:15,120
+data set, the method that we use for data set. So here are the three data sets that
+
+133
+00:17:15,120 --> 00:17:32,000
+they offer. So now we have global constraint, we have the local thresholds. What's the method?
+
+134
+00:17:32,000 --> 00:17:36,960
+The method is because we specify grid of possible values, possible lambdas, possible
+
+135
+00:17:36,960 --> 00:17:42,800
+thresholds and that may result in acceptable generation and we choose the lambda using some
+
+136
+00:17:42,800 --> 00:17:52,640
+statistical tools. So in short we cast this hyper parameter selection problem to multiple
+
+137
+00:17:52,640 --> 00:17:58,480
+angles this testing problem and this is done by applying this learn then test framework.
+
+138
+00:17:58,800 --> 00:18:09,920
+So basically it identifies the statistically valid subset of this specified lambda values
+
+139
+00:18:09,920 --> 00:18:16,800
+and it gives us a subset of this that is valid. Now what does this statistically valid mean?
+
+140
+00:18:17,200 --> 00:18:28,240
+It means that for example the error radius 0.05. So this means that the optimal risk
+
+141
+00:18:28,240 --> 00:18:36,000
+is guaranteed to be within tolerance at least 95% of time. So that's why we use this
+
+142
+00:18:38,640 --> 00:18:43,840
+hypothesis testing problem instead of the hyper parameter selection. So here are some
+
+143
+00:18:43,840 --> 00:18:52,960
+statistical guarantees. So these are the three data sets, CNN, DN, the list for textualization,
+
+144
+00:18:52,960 --> 00:19:02,000
+WNT promotion translation and for something. So basically so the three lines that you see here
+
+145
+00:19:02,000 --> 00:19:09,040
+is the softmax, the orange one is the even state saturation metric and these are the three
+
+146
+00:19:09,040 --> 00:19:17,760
+metrics that is solid and the X-axis is average decoder layers protocol. So it is like you can
+
+147
+00:19:17,760 --> 00:19:30,000
+see that softmax has a higher accuracy in almost all the tasks for a given decoder for every
+
+148
+00:19:30,000 --> 00:19:40,320
+for given average decoder layers. So you can see in sorry you can see in table as well. So
+
+149
+00:19:40,320 --> 00:19:46,000
+these are the three data sets and so these are different tolerance level that the authors
+
+150
+00:19:46,000 --> 00:19:52,480
+experimented and they took the for all the experiments they took the error radius 0.05.
+
+151
+00:19:53,440 --> 00:20:03,840
+Yeah so in all of the experiment the number of average decoder layers used by the softmax is
+
+152
+00:20:04,960 --> 00:20:10,800
+less compared to the other two and in majority of the cases the speed up that we see
+
+153
+00:20:11,760 --> 00:20:18,560
+is more in softmax. So these are the empirical results and on an average it uses
+
+154
+00:20:18,560 --> 00:20:23,840
+round 2 to 1.5 to we see maximum
+
+155
+00:20:26,880 --> 00:20:37,120
+2.8, 3.5. On an average it uses at 1.5 to 3.5 times it shows it shows 1.5 to 3.5 times speed up
+
+156
+00:20:38,000 --> 00:20:43,040
+but at a cost of the floating point operation it has more floating point operations involved
+
+157
+00:20:43,040 --> 00:20:49,760
+in softmax. Yeah so for all the softmax sufferings and it generates the greatest decreasing number of
+
+158
+00:20:49,760 --> 00:20:59,520
+decoder layers and that's because part of the statement can be increased.
+
+159
+00:20:59,520 --> 00:21:16,240
+So these two methods where we've gone on the exiting mechanism so in the power pass we evaluate
+
+160
+00:21:16,240 --> 00:21:21,840
+whether you want to exit at a particular layer or not. Now the third one is
+
+161
+00:21:21,840 --> 00:21:31,280
+a third one is a bit different so here we sample from the model in a faster way
+
+162
+00:21:32,320 --> 00:21:35,440
+such that it doesn't make any changes to all
+
+163
+00:21:38,080 --> 00:21:45,840
+and so by computing the function parallel so to give it an overview so here we have
+
+164
+00:21:46,320 --> 00:21:52,000
+a draft model and approximation model which is much smaller and efficient
+
+165
+00:21:53,520 --> 00:22:00,800
+and we use that model to make a guess or to make few guesses and these guesses will be
+
+166
+00:22:03,760 --> 00:22:11,120
+confirmed by the or confirmed by a target model in parallel. To give an example so suppose
+
+167
+00:22:11,120 --> 00:22:24,160
+assuming that we have this output from the model till now and we select the like we select
+
+168
+00:22:24,160 --> 00:22:31,280
+how many guesses we want from the smaller model let's say two so we predict we sequentially
+
+169
+00:22:31,920 --> 00:22:37,760
+in predict the two tokens from the smaller model it may be 97 million parameters in the
+
+170
+00:22:38,080 --> 00:22:46,720
+model so now at this point after the sequential prediction we would have three inputs
+
+171
+00:22:49,520 --> 00:23:00,640
+three setup inputs that we would so that is the quickdown box first one and the second is the
+
+172
+00:23:00,640 --> 00:23:07,600
+quickdown box jumps and third one that includes over and we give this three input to our target
+
+173
+00:23:07,600 --> 00:23:17,520
+model which is our that has large number of parameters and we predict but the next token
+
+174
+00:23:17,520 --> 00:23:24,960
+for all the three inputs in parallel so it for the for the question put it its jumps for the second
+
+175
+00:23:25,280 --> 00:23:36,000
+it's over and now we compare this outputs with we compare the output of the target model with the
+
+176
+00:23:36,000 --> 00:23:44,240
+output of the dark model that's the approximation model and if it's correct then we take hand so
+
+177
+00:23:44,240 --> 00:23:51,360
+this is the this is one iteration of the process of the speculative decoding and if in the best
+
+178
+00:23:51,360 --> 00:24:06,080
+case scenario is that all the tokens are accepted so and if we take if we have if you made gamma
+
+179
+00:24:06,080 --> 00:24:10,560
+guesses then we would have gamma plus one prediction at the end of prostitution
+
+180
+00:24:10,800 --> 00:24:24,800
+yeah and what if one of the guesses is wrong so the target model we have taken eight instead of
+
+181
+00:24:24,800 --> 00:24:33,360
+jump so we will discard all the predictions that the trap model made after this point
+
+182
+00:24:34,320 --> 00:24:38,320
+and we'll just replace it with eight
+
+183
+00:24:41,760 --> 00:24:51,120
+right yeah so this is the algorithm that I just showed so here we make gamma guesses
+
+184
+00:24:51,120 --> 00:24:59,600
+sequentially then we are using the mq that is our approximation model then we make
+
+185
+00:25:00,560 --> 00:25:11,440
+uh when we use mq that is our target model then we use this to compute the tokens in parallel
+
+186
+00:25:12,400 --> 00:25:20,080
+and then this particular block is the modified rejection sampling so it's the method to
+
+187
+00:25:20,640 --> 00:25:27,760
+check whether uh this to output is same or not so it uses this rejection something about
+
+188
+00:25:27,760 --> 00:25:37,520
+rejection sampling which is given overview is a way to sample our data from a complex distribution
+
+189
+00:25:38,160 --> 00:25:49,360
+using as easy like analytically feasible wrap up analytically feasible distribution
+
+190
+00:25:49,520 --> 00:25:59,120
+is this one such as caution so you can see you can say that this analytically feasible distribution
+
+191
+00:25:59,120 --> 00:26:08,240
+is our draft model distribution and this is the uh a target model distribution so
+
+192
+00:26:09,280 --> 00:26:14,720
+in short we try to match the distribution the complex distribution with the help of
+
+193
+00:26:15,360 --> 00:26:16,880
+this approximation distribution
+
+194
+00:26:20,080 --> 00:26:26,080
+yeah so what it does is that it guarantees that the output from the system
+
+195
+00:26:26,800 --> 00:26:30,160
+have the same distribution as those of the as those of the target model
+
+196
+00:26:35,280 --> 00:26:41,520
+yeah so they're also in like similar to the second model it also checks the
+
+197
+00:26:41,840 --> 00:26:52,160
+global or global output takes the quality of the final sequence and they call this the whole
+
+198
+00:26:52,160 --> 00:27:02,720
+process because it's something okay yeah so yes it's just notice that it
+
+199
+00:27:03,680 --> 00:27:11,840
+completely it computes multiple inputs in parallel so it will require some additional
+
+200
+00:27:13,840 --> 00:27:15,360
+memory so
+
+201
+00:27:17,440 --> 00:27:24,480
+yeah so the additional computation resources should be available if we want to use this approach and
+
+202
+00:27:24,960 --> 00:27:34,720
+and we are using this method we are able to accelerate the inference without changing the
+
+203
+00:27:34,720 --> 00:27:42,480
+architecture uh without changing the training procedure operating models and without changing
+
+204
+00:27:42,480 --> 00:27:46,640
+the model models our frustration by using the modified distribution sampling episode
+
+205
+00:27:46,960 --> 00:27:58,480
+yeah so if we so we have the number of tokens there to be guessed if we denote it as gamma
+
+206
+00:27:59,280 --> 00:28:09,840
+and we denote the measure of how well the draft model approximates the target model as alpha
+
+207
+00:28:09,840 --> 00:28:17,920
+so how much they are close will be alpha then if like for a certain gamma like say seven real
+
+208
+00:28:17,920 --> 00:28:27,120
+outline if the uh measure if they are good the distribution output distribution are closer
+
+209
+00:28:27,120 --> 00:28:34,640
+to each other there is a high alpha so we will be able to uh guess more number of tokens kind of
+
+210
+00:28:34,640 --> 00:28:44,000
+easy so if it's seven and if it's seven and the alpha is there it's a coin and then we will be able to
+
+211
+00:28:47,600 --> 00:28:50,640
+guess round six that is 90 percent of the token property
+
+212
+00:28:53,440 --> 00:28:58,480
+so in short the alpha is proportional to the expected number of tokens that are accepted
+
+213
+00:28:59,280 --> 00:29:01,280
+also
+
+214
+00:29:05,120 --> 00:29:10,880
+for a family of model alpha depends on the size of the approximation model as well
+
+215
+00:29:11,600 --> 00:29:22,160
+so if the draft model distribution is very close to uh the target target model then it means that
+
+216
+00:29:23,040 --> 00:29:29,840
+the draft model is bigger as well that it is able to run the kind of representations
+
+217
+00:29:31,760 --> 00:29:38,560
+so there's a trade-off right so uh between making nq and anti-similar and nq
+
+218
+00:29:40,240 --> 00:29:44,560
+model to like making the nq model cheap to
+
+219
+00:29:44,960 --> 00:29:46,960
+do
+
+220
+00:29:50,400 --> 00:29:57,520
+yeah so what's the one time what time is the total running time of the model so the last row you
+
+221
+00:29:57,520 --> 00:30:05,280
+can see maybe it's a base so yellow part is the nq part and the southern uh the violet the purple
+
+222
+00:30:05,360 --> 00:30:15,520
+blocks are the uh one decoding time step and uh the red red so if we use the speculative
+
+223
+00:30:15,520 --> 00:30:22,880
+speculative decoding then the red line here is the target models encoder and the blue strips that
+
+224
+00:30:22,880 --> 00:30:32,560
+we see is a sequential run of the uh approximation models recorded so overall it improves the
+
+225
+00:30:32,560 --> 00:30:35,840
+ball time so decreases the ball time
+
+226
+00:30:45,840 --> 00:30:53,760
+the yellow one is the uh target models mp is the target models p is the target model and q is the
+
+227
+00:30:53,760 --> 00:31:00,160
+draft model oh the selector yeah so the larger model will take more time in encoding as well as
+
+228
+00:31:00,160 --> 00:31:06,160
+decoding compared to the draft models uh
+
+229
+00:31:10,240 --> 00:31:20,160
+oh okay but why is pool actually this here oh this is pool yeah that's true but it's yeah
+
+230
+00:31:22,720 --> 00:31:26,720
+so the combination is so there are multiple blue strips here oh i see
+
+231
+00:31:27,120 --> 00:31:31,280
+so the the larger the cover the more acceleration
+
+232
+00:31:32,400 --> 00:31:40,560
+but it depends on how uh well like how well the um target model and draft model are
+
+233
+00:31:41,440 --> 00:31:47,040
+right yeah close to each other in time yeah right so yeah the model is low and they are not
+
+234
+00:31:48,320 --> 00:31:54,400
+closely like they are not closing up then it to yeah right okay go go back
+
+235
+00:31:54,880 --> 00:32:01,200
+yeah so they didn't like uh improve the gamma flow right so at some point like the gamma
+
+236
+00:32:02,480 --> 00:32:08,480
+increasing that's all yeah exactly yeah that's my that would be my other point so we have to choose
+
+237
+00:32:09,360 --> 00:32:13,680
+optimal gamma yeah okay i see yeah so
+
+238
+00:32:13,680 --> 00:32:27,840
+yeah so as i said that oh yeah so let's suppose if the alpha is pointed so the draft model and
+
+239
+00:32:27,840 --> 00:32:37,120
+target model are much closer and here sees the cost coefficient so it's a ratio of the time taken
+
+240
+00:32:37,120 --> 00:32:46,160
+to run the draft model by the ratio of time taken to by the time taken to run the target model so
+
+241
+00:32:46,160 --> 00:32:52,640
+that's cost coefficient okay so if it's higher then we can cannot afford to like have incorrect
+
+242
+00:32:52,640 --> 00:33:00,640
+more number of incorrect places so it will take more time so for c equals to 0.1 we have
+
+243
+00:33:01,600 --> 00:33:09,440
+uh lower optimal gamma compared to the model that has uh
+
+244
+00:33:11,040 --> 00:33:18,480
+there is there is much more smaller or much more faster to run so it has higher number
+
+245
+00:33:20,640 --> 00:33:23,120
+so they have derived this uh particular
+
+246
+00:33:23,120 --> 00:33:31,040
+uh they have derived this plot as well as this plot using mechanical
+
+247
+00:33:31,600 --> 00:33:41,920
+generations so yeah we can compute if we know that if we know the uh acceptance rate of
+
+248
+00:33:43,680 --> 00:33:47,600
+uh the draft model then we can compute this
+
+249
+00:33:47,920 --> 00:33:50,400
+okay
+
+250
+00:33:54,080 --> 00:34:00,480
+and yeah so the screen so they used e5 xxl 0.1 million times the target model
+
+251
+00:34:00,480 --> 00:34:07,280
+approximation of the experiment is at least three yeah 8800 million 250 million and scientists
+
+252
+00:34:07,280 --> 00:34:15,520
+are looking and yeah they used english to german translation and text summarization to these two
+
+253
+00:34:15,760 --> 00:34:29,280
+datasets and with uh and they observed that the t5 model with like the balance of this gamma
+
+254
+00:34:29,920 --> 00:34:38,720
+so the guess tokens and alpha they get around 3.4 to 3.1 speed up around two to three times
+
+255
+00:34:39,440 --> 00:34:48,320
+oh what is that uh oh alpha is the measure is the measure of how well their draft model
+
+256
+00:34:48,320 --> 00:34:50,560
+approximates the diagram
+
+257
+00:34:51,840 --> 00:34:56,240
+sorry i have a question um do you know that one plot where you've got optimal gamma and uh the
+
+258
+00:34:56,240 --> 00:35:02,480
+measure itself on the axes intuitively i think that the more tokens you're guessing the less likely
+
+259
+00:35:02,480 --> 00:35:06,560
+your measure of draftness would be like that it's almost as if this is moving in the opposite of
+
+260
+00:35:06,560 --> 00:35:10,960
+a friendly direction right so if you have to confirm every single token and you've got a higher
+
+261
+00:35:10,960 --> 00:35:15,840
+probability of guessing that because you don't have like long range compounding errors
+
+262
+00:35:18,800 --> 00:35:24,160
+so if i've got my small model and my big model right and gamma is how many tokens i'm going to
+
+263
+00:35:24,160 --> 00:35:28,800
+predict small model and then i compare with my big model and there's a measure of acceptance
+
+264
+00:35:28,800 --> 00:35:33,680
+based on how many tokens i predicted the longer uh the bigger gamma is the more tokens i have to
+
+265
+00:35:33,680 --> 00:35:38,800
+accurate they get i would assume the measure for success would go down if the number is going up
+
+266
+00:35:38,800 --> 00:35:44,640
+it doesn't collect it represents the optimal gamma not the gamma so these are the optimal
+
+267
+00:35:44,640 --> 00:35:52,720
+gamma values right but for a measure of uh 0.9 so i'm very likely to accept it they have 24 tokens
+
+268
+00:35:52,720 --> 00:36:00,320
+is the the number of tokens for uh the model that is very efficient to run so we get a poor
+
+269
+00:36:00,400 --> 00:36:06,000
+more number of calls to the model but if it's if you see that if the model is uh
+
+270
+00:36:07,680 --> 00:36:13,840
+not efficient to run then the number of tokens are very less so we can afford to have a great
+
+271
+00:36:13,840 --> 00:36:22,240
+guesses for each model that is that has less runtime then we take this large gamma values okay so this
+
+272
+00:36:22,240 --> 00:36:28,160
+isn't relating to the actual probability of being accepted but it's how much i can afford yeah
+
+273
+00:36:28,160 --> 00:36:30,160
+it's exactly what i'm talking about yeah i'll check
+
+274
+00:36:35,600 --> 00:36:40,160
+yeah so then i'm going to mention that the limitation of this model is that you need extra compute
+
+275
+00:36:43,280 --> 00:36:49,440
+the memory is less yeah so that's a no yeah one other question when we're doing that confirmation
+
+276
+00:36:49,440 --> 00:36:53,280
+figure out that we discard what was predicted by the smaller model is that just a single token
+
+277
+00:36:53,280 --> 00:36:57,760
+at the end of what was predicted that we do and we assume everything else was successful or how do we
+
+278
+00:36:58,400 --> 00:37:01,680
+kick how much we're confirming because if you were to confirm the whole sequence
+
+279
+00:37:01,680 --> 00:37:06,880
+then you'd build up like a buffer of lag computation over time because the slower model
+
+280
+00:37:06,880 --> 00:37:11,360
+would be doing one token at a time and the faster model would have done like 24 so the big model
+
+281
+00:37:11,360 --> 00:37:16,960
+kicked forever to figure out what's the success no we passed sequentially predict like if we take
+
+282
+00:37:16,960 --> 00:37:23,360
+like 10 guesses and we sequentially predict all the guesses yep and then we give 11 inputs to the
+
+283
+00:37:24,000 --> 00:37:31,520
+model to compute in parallel and once the once the target model has completed all the levels
+
+284
+00:37:31,520 --> 00:37:40,160
+all the 11 inputs then we'll have like 11 outputs right and then we then we confirm
+
+285
+00:37:40,160 --> 00:37:46,640
+sequentially that uh which token writes a parameter so i guess my question is because the
+
+286
+00:37:46,640 --> 00:37:50,480
+smaller model runs really efficiently is going further and further and further ahead in the
+
+287
+00:37:51,040 --> 00:37:56,880
+model as it tries to confirm doesn't that don't you get to a point where you'll never actually
+
+288
+00:37:56,880 --> 00:38:02,160
+be able to confirm because the smaller model is just so far ahead no no no we limit it we limit it
+
+289
+00:38:02,160 --> 00:38:09,280
+we limit it by the uh gamma the picture so in one iteration if the number of tokens that are
+
+290
+00:38:09,280 --> 00:38:16,880
+available here is two then in that iteration we only we only guess two tokens after it and it stops
+
+291
+00:38:17,840 --> 00:38:24,960
+and it will target model compounds it and then really so the smaller model will have to wait for
+
+292
+00:38:24,960 --> 00:38:29,680
+the reference but then don't you see the efficiency gain because i'm just bound by the target model
+
+293
+00:38:29,680 --> 00:38:35,680
+speed again no no the target model only needs to do like just for it i don't know that that's
+
+294
+00:38:38,160 --> 00:38:43,440
+okay yeah so yeah the the target model still needs to go over all of them but but it's like
+
+295
+00:38:43,440 --> 00:38:48,960
+the impactful right it's not my opinion that's why that's true yeah yeah that's why i think so
+
+296
+00:38:51,040 --> 00:38:52,160
+yeah any other versions
+
+297
+00:38:54,960 --> 00:39:00,080
+i know that this was only the scope of inference but uh i don't know if you're really looking to if
+
+298
+00:39:00,080 --> 00:39:06,960
+there's any any part of research doing this for training to like kind of train a model that
+
+299
+00:39:06,960 --> 00:39:11,840
+i think summits the small model that i put summits the large and larger like you mean feedback
+
+300
+00:39:13,520 --> 00:39:18,080
+you know the confirmation can bring feedback that the small model can learn from
+
+301
+00:39:18,080 --> 00:39:21,280
+just i don't know that if you do something similar do you train yourself
+
+302
+00:39:22,480 --> 00:39:28,480
+uh that's interesting point but i'm not sure about the training part
+
+303
+00:39:30,240 --> 00:39:34,160
+so you mean some sort of distillation yes yeah like kind of
+
+304
+00:39:34,400 --> 00:39:40,080
+i mean like so you're using small model to approximate the larger models uh
+
+305
+00:39:40,080 --> 00:39:45,920
+if you do it like yes and if i were to speak back from the model to improve the small models
+
+306
+00:39:46,480 --> 00:39:49,680
+yes so exactly feedback it's more implementation
+
+307
+00:39:53,360 --> 00:39:58,720
+approximately like you know you might say okay i'll handle it yeah yeah then there has to be papers
+
+308
+00:39:59,040 --> 00:40:06,480
+so overall the first two models pavy and calm adopted an early exit strategy
+
+309
+00:40:08,000 --> 00:40:13,440
+and in addition to that calm also took in into account the global consistency
+
+310
+00:40:15,360 --> 00:40:22,960
+finally the uh the last approach uh is compatible with the first two models
+
+311
+00:40:22,960 --> 00:40:31,200
+as well as any other uh dynamic speed up uh yeah that's also my part
+

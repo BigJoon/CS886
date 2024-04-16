@@ -1,0 +1,1664 @@
+1
+00:00:00,000 --> 00:00:07,080
+Hello everyone, my name is Mohamed and in this presentation together with Yunyi we'll
+
+2
+00:00:07,080 --> 00:00:12,160
+present for you the topic of large multimodal models.
+
+3
+00:00:12,160 --> 00:00:15,640
+So let's have a quick review of what we will cover.
+
+4
+00:00:15,640 --> 00:00:21,080
+Basically we will cover eight models or eight papers.
+
+5
+00:00:21,080 --> 00:00:23,960
+Actually the last one, Germany, is more of a technical report.
+
+6
+00:00:23,960 --> 00:00:31,120
+So the models are Flamingo, visual instruction tuning, Lava, InstructBleep, Poly, Poly3,
+
+7
+00:00:31,120 --> 00:00:36,920
+Emo2, InternVL and Gemini.
+
+8
+00:00:36,920 --> 00:00:45,400
+So from these models the first four will be presented by me and the next four by Yunyi.
+
+9
+00:00:45,400 --> 00:00:47,920
+Let's go for Flamingo.
+
+10
+00:00:47,920 --> 00:00:55,440
+So Flamingo is called the GPT-3 Momentum Multimodal Vision Language Tasks.
+
+11
+00:00:55,440 --> 00:00:56,720
+Let's see what is Flamingo.
+
+12
+00:00:56,720 --> 00:01:02,560
+Flamingo is a visual language model capable of multimodal tasks like captioning, visual
+
+13
+00:01:02,560 --> 00:01:07,080
+dialogue, classification and visual question answering.
+
+14
+00:01:07,080 --> 00:01:10,480
+Here you can see an example of visual question answering.
+
+15
+00:01:10,480 --> 00:01:17,400
+For example, take this photo here, there's a CD and a floppy disk in this image.
+
+16
+00:01:17,400 --> 00:01:22,160
+And when asked what do you think the capacities of these are, the model or Flamingo is able
+
+17
+00:01:22,160 --> 00:01:26,960
+to identify those objects and give the information about their capacity.
+
+18
+00:01:26,960 --> 00:01:36,920
+As you see 1.44 megabits for floppy disk and CD 700 megabyte.
+
+19
+00:01:36,920 --> 00:01:40,920
+Another example is the ability of Flamingo for visual dialogue.
+
+20
+00:01:40,920 --> 00:01:46,280
+For example, in this image there's a bowl of soup with a monster on the top.
+
+21
+00:01:46,280 --> 00:01:52,520
+And when the user asks what is in this picture, the model says it's a bowl of soup with a
+
+22
+00:01:52,520 --> 00:01:56,800
+monster face on it and then asked what's the monster made of.
+
+23
+00:01:56,800 --> 00:02:03,480
+It's able to say of course it's wrong and then user corrects the model and model is
+
+24
+00:02:03,480 --> 00:02:06,760
+asked another question and answers it.
+
+25
+00:02:06,760 --> 00:02:12,080
+And you can see here an example of understanding the video.
+
+26
+00:02:12,080 --> 00:02:16,920
+For example, if you take this one here, these are the frames of a video.
+
+27
+00:02:16,920 --> 00:02:19,760
+There's a pen here, there's a scissor and a rubber band.
+
+28
+00:02:19,760 --> 00:02:25,320
+And when the model is asked to identify the objects, it's able to name them scissor, pen
+
+29
+00:02:25,320 --> 00:02:28,320
+and a rubber band.
+
+30
+00:02:28,320 --> 00:02:31,640
+What are the motivations behind Flamingo?
+
+31
+00:02:31,640 --> 00:02:37,360
+One of the important aspects of intelligence is the ability to quickly learn tasks given
+
+32
+00:02:37,360 --> 00:02:39,840
+short instructions.
+
+33
+00:02:39,840 --> 00:02:45,920
+And we like model to learn the environment to make better use of the data and we like
+
+34
+00:02:45,920 --> 00:02:52,160
+our multimodal systems which will handle vision and language tasks to achieve this property.
+
+35
+00:02:52,160 --> 00:02:58,800
+Prior to Flamingo the dominant computer vision paradigm was larger scale pre-training and
+
+36
+00:02:58,800 --> 00:03:00,560
+task-specific fine-tuning.
+
+37
+00:03:00,560 --> 00:03:06,960
+But there are some problems with this approach such as need for thousands of training samples,
+
+38
+00:03:06,960 --> 00:03:13,840
+need for task-specific hyperparameter tuning and also needing significant computational
+
+39
+00:03:13,840 --> 00:03:14,920
+resources.
+
+40
+00:03:14,920 --> 00:03:19,720
+So basically the authors ask, can we train a multimodal model that has good performance
+
+41
+00:03:19,720 --> 00:03:22,560
+in few-shot regime?
+
+42
+00:03:22,560 --> 00:03:29,520
+Another ability that we want our models to have is ability to handle open-ended tasks.
+
+43
+00:03:29,520 --> 00:03:36,120
+Multimodal models prior to Flamingo like clip and align show good zero-shot performance
+
+44
+00:03:36,240 --> 00:03:37,760
+but they are not flexible.
+
+45
+00:03:37,760 --> 00:03:42,560
+They lack the ability to generate language.
+
+46
+00:03:42,560 --> 00:03:48,680
+By taking inspiration from NLP domain we can see that large language models like GPT-3
+
+47
+00:03:48,680 --> 00:03:54,440
+are flexible few-shot learners and when we give them a few examples of tasks in the form
+
+48
+00:03:54,440 --> 00:04:00,640
+of a prompt plus a query, the language model generates a continuation to produce the predicted
+
+49
+00:04:00,640 --> 00:04:02,280
+output.
+
+50
+00:04:02,280 --> 00:04:07,560
+And the key factor of their success is larger scale pre-training.
+
+51
+00:04:07,560 --> 00:04:13,960
+Observing this the authors say that in principle image and video understanding tasks such as
+
+52
+00:04:13,960 --> 00:04:20,280
+classification, captioning, question answering are basically text prediction problems with
+
+53
+00:04:20,280 --> 00:04:21,960
+visual input conditioning.
+
+54
+00:04:21,960 --> 00:04:27,480
+So they ask this question, can we learn a model capable of open-ended multimodal tasks
+
+55
+00:04:27,480 --> 00:04:34,800
+via pre-training the same ways done for large language models?
+
+56
+00:04:34,800 --> 00:04:40,680
+There are some challenges for creating multimodal generative modeling.
+
+57
+00:04:40,680 --> 00:04:47,880
+One of the challenges is that training large language models is computationally expensive
+
+58
+00:04:47,880 --> 00:04:54,400
+and we like to save resources by when I say we actually the authors like to save resources
+
+59
+00:04:54,400 --> 00:04:59,720
+by starting from a pre-trained language model but we know that the language models are not
+
+60
+00:04:59,720 --> 00:05:04,600
+able to handle inputs of different modalities.
+
+61
+00:05:04,600 --> 00:05:11,760
+So we like to give our models disability to handle multimodal input while they retain
+
+62
+00:05:11,760 --> 00:05:17,960
+the knowledge of the original language models that we want to use.
+
+63
+00:05:17,960 --> 00:05:25,520
+So for that authors are proposing this solution where they interleaving cross-attention layers
+
+64
+00:05:25,520 --> 00:05:31,360
+with language only self-attention layers that are kept frozen during the training.
+
+65
+00:05:31,360 --> 00:05:39,240
+And don't worry we'll discuss cross-attention later in our slides.
+
+66
+00:05:39,240 --> 00:05:44,880
+The other challenge is that we want to enable our model to get both video and image inputs
+
+67
+00:05:44,880 --> 00:05:50,200
+but we know that these are high-dimensional data so flattening them to one-dimensional
+
+68
+00:05:50,200 --> 00:05:55,880
+sequence as used in text generation is costly and this is exacerbated by quadratic cost
+
+69
+00:05:55,880 --> 00:05:57,440
+of self-attention.
+
+70
+00:05:57,440 --> 00:06:03,720
+A secondary goal that we want to achieve is the unified treatment of images and videos
+
+71
+00:06:03,720 --> 00:06:05,640
+in our model.
+
+72
+00:06:05,640 --> 00:06:11,640
+The proposed approach by the authors is using a perceiver-based architecture with a fixed
+
+73
+00:06:11,640 --> 00:06:17,960
+number of visual tokens for both images and the videos and again don't worry we'll discuss
+
+74
+00:06:17,960 --> 00:06:20,800
+perceiver in later slides in more detail.
+
+75
+00:06:20,800 --> 00:06:25,480
+The other challenge is having heterogeneous training data.
+
+76
+00:06:25,480 --> 00:06:31,200
+Large models we know that they require vast training data sets but existing image text
+
+77
+00:06:31,200 --> 00:06:38,040
+data sets such as those used in clip and align are not general enough to reach GPT-3
+
+78
+00:06:38,040 --> 00:06:40,760
+style few-shot learning.
+
+79
+00:06:40,760 --> 00:06:49,360
+There are large internet-based text-only data sets but not for multimodal data and one scalable
+
+80
+00:06:49,360 --> 00:06:57,320
+approach that can be used is scraping webpages with interleaved image and text but the problem
+
+81
+00:06:57,320 --> 00:07:02,360
+with that approach would be such images and text are often only weekly related.
+
+82
+00:07:02,360 --> 00:07:08,400
+So the authors proposed the following approach where they want to combine web scraping with
+
+83
+00:07:08,400 --> 00:07:14,880
+existing paired image text and video text data sets.
+
+84
+00:07:14,880 --> 00:07:23,600
+So Flamingo let's recap what we have for Flamingo as goals so Flamingo will be a visual language
+
+85
+00:07:23,600 --> 00:07:32,360
+model that accepts interleaved inputs as you see text, image or video and it will be given
+
+86
+00:07:32,360 --> 00:07:36,360
+to the Flamingo and Flamingo will give us at the output of text.
+
+87
+00:07:36,360 --> 00:07:41,480
+This framework will enable a broad range of tests for Flamingo to complete such as open
+
+88
+00:07:41,480 --> 00:07:47,480
+and the test and close and the test, visual question answering and captioning are examples
+
+89
+00:07:47,480 --> 00:07:52,720
+of open and the test and classification for close and the test.
+
+90
+00:07:52,720 --> 00:07:58,640
+The first goal is leveraging pre-train models to save computation for example for vision
+
+91
+00:07:58,640 --> 00:08:05,360
+they use encoder from clip and for the language component they use frozen chinchilla and the
+
+92
+00:08:05,360 --> 00:08:13,640
+second goal is bridging these pre-train unimodal models harmoniously using the perceiver resampler
+
+93
+00:08:13,640 --> 00:08:16,680
+and the cross attention.
+
+94
+00:08:16,680 --> 00:08:21,640
+So for achieving these goals let's see what is the architecture that the authors have
+
+95
+00:08:21,640 --> 00:08:22,640
+designed.
+
+96
+00:08:22,640 --> 00:08:29,320
+Here you can see the input it's a text interleaved images the images are taken out of the input
+
+97
+00:08:29,320 --> 00:08:34,080
+and they are given to vision encoders will we keep them frozen during the training the
+
+98
+00:08:34,080 --> 00:08:40,440
+output of vision encoder goes to perceiver resampler and the output of perceiver resampler
+
+99
+00:08:40,440 --> 00:08:47,160
+comes here at these cross attention layers that are named gated extension dense and
+
+100
+00:08:47,160 --> 00:08:54,320
+the text of the input is taken also and it comes directly to the gated extension.
+
+101
+00:08:54,320 --> 00:08:59,440
+At this point they are mixed this is a cross attention layer and the output goes to a frozen
+
+102
+00:08:59,440 --> 00:09:05,540
+language block and then basically this is repeated for a couple of times not actually
+
+103
+00:09:05,540 --> 00:09:13,040
+a couple of times but a few like for a few times until at the output you have the output
+
+104
+00:09:13,040 --> 00:09:18,960
+text and pink color here shows components that will be trained from scratch and the
+
+105
+00:09:18,960 --> 00:09:25,920
+blue color shows the components that will be kept frozen during training.
+
+106
+00:09:25,920 --> 00:09:33,320
+So Flamingo tries to model this probability that you see here which is probability of
+
+107
+00:09:33,320 --> 00:09:40,240
+the text token that will be generated next given the visual condition so that is equal
+
+108
+00:09:40,240 --> 00:09:49,280
+to the multiplication of probabilities of the ELF token given all the prior tokens text
+
+109
+00:09:49,280 --> 00:09:56,920
+tokens coming before it as well as the image token coming before it.
+
+110
+00:09:56,920 --> 00:10:02,720
+Now let's take a look into vision encoder and go a bit into detail so this is the vision
+
+111
+00:10:02,720 --> 00:10:10,120
+encoder and the vision encoder that you Flamingo uses F6 normalizer free resnet or NFnet in
+
+112
+00:10:10,120 --> 00:10:18,080
+short it is pre-trained as dual encoder using contrastive loss employed by a clip and Bert
+
+113
+00:10:18,080 --> 00:10:22,720
+is used for text encoder and it is discarded after pre-training.
+
+114
+00:10:22,720 --> 00:10:32,000
+There are slight differences to clip for example global average pooling is used here in Flamingo
+
+115
+00:10:32,000 --> 00:10:38,160
+to produce the vision embeddings instead of the global attention pooling and the resolution
+
+116
+00:10:38,160 --> 00:10:47,640
+of the images used for this pre-training step of the encoder are 288 by 288 pixels and the
+
+117
+00:10:47,640 --> 00:10:52,320
+dimension of the output embedding is 1376.
+
+118
+00:10:52,320 --> 00:10:59,400
+So the output that vision encoder generates is a 2D special grid of features which is
+
+119
+00:10:59,400 --> 00:11:07,720
+flattened to 1D and for videos the frames are taken out and basically they are sampled
+
+120
+00:11:07,720 --> 00:11:14,920
+at one frame per second and then the generated features for each frame are concatenated to
+
+121
+00:11:14,920 --> 00:11:16,920
+each other.
+
+122
+00:11:16,920 --> 00:11:23,640
+Please also note that vision encoder is frozen after the pre-training step.
+
+123
+00:11:23,640 --> 00:11:28,480
+Now let's take a look into Percever Sampler and why we need it.
+
+124
+00:11:28,480 --> 00:11:33,200
+So as we said the variable number of input frames are processed because you have videos
+
+125
+00:11:33,200 --> 00:11:39,600
+in the input so the vision encoder will produce a variable number of features and that's why
+
+126
+00:11:39,600 --> 00:11:44,720
+we need Percever which will output a fixed number of visual tokens in the case of the
+
+127
+00:11:44,720 --> 00:11:50,200
+paper it is 64 so that we can limit the complexity of attention.
+
+128
+00:11:50,200 --> 00:11:54,520
+So let's take a look into Percever Sampler architecture here.
+
+129
+00:11:54,520 --> 00:11:59,480
+As you can see the frames of the video are given to vision encoders.
+
+130
+00:11:59,480 --> 00:12:07,000
+Basically different set of features is created for each frame and after adding a temporal
+
+131
+00:12:07,000 --> 00:12:15,880
+encoding to the features that vision encoder produces all the features are flattened and
+
+132
+00:12:15,880 --> 00:12:17,600
+are given to attention.
+
+133
+00:12:17,600 --> 00:12:26,200
+There are some learned latent queries here that you can see these latent queries not
+
+134
+00:12:26,200 --> 00:12:32,280
+only we will treat them as queries but we concatenate them to the flattened generated
+
+135
+00:12:32,280 --> 00:12:38,560
+features and we will give them to an attention layer and then the output will be given to
+
+136
+00:12:38,560 --> 00:12:43,460
+a feed forward layer and then we have the final output.
+
+137
+00:12:43,460 --> 00:12:53,240
+Because the number of queries is always fixed it is fixed to 64 we will always have 64
+
+138
+00:12:53,240 --> 00:12:58,240
+tokens at the output.
+
+139
+00:12:58,240 --> 00:13:03,920
+So let's see conditioning the language model and how it will happen.
+
+140
+00:13:03,920 --> 00:13:12,640
+As you can see as I mentioned earlier the output of Percever Sampler comes to this cross
+
+141
+00:13:12,640 --> 00:13:18,560
+attention and the text also comes here and then the output goes to a frozen language
+
+142
+00:13:18,560 --> 00:13:23,800
+but let's see what is the architecture of this gated extension dense layer.
+
+143
+00:13:23,800 --> 00:13:30,400
+We can see that the vision inputs come here and the language input comes as queries they
+
+144
+00:13:30,400 --> 00:13:35,680
+are given to this cross attention layer after that we have a tannage gating then there is
+
+145
+00:13:35,680 --> 00:13:40,640
+a feed forward again a tannage gating and then we have our frozen self attention for
+
+146
+00:13:40,640 --> 00:13:45,600
+language component and feed forward again frozen.
+
+147
+00:13:45,600 --> 00:13:51,560
+And as you can notice there are some tannage gates here basically the reason that we put
+
+148
+00:13:51,560 --> 00:13:57,560
+them is that at the initialization where the pink layers are not trained we want at
+
+149
+00:13:57,560 --> 00:14:03,240
+least like a good performance as the frozen language part so these will be initialized
+
+150
+00:14:03,240 --> 00:14:08,760
+to zero there will be an alpha parameter as you see here so this will be set to zero so
+
+151
+00:14:08,760 --> 00:14:13,000
+that the original performance of the language component is retained.
+
+152
+00:14:13,000 --> 00:14:26,900
+So after each layer there is like a layer norm such as the GPT tool style.
+
+153
+00:14:26,900 --> 00:14:31,600
+About the Flamingo training data Flamingo is trained on image text pairs video text
+
+154
+00:14:31,600 --> 00:14:37,920
+pairs and web page data as you can see this is kind this is one of the image text pairs
+
+155
+00:14:37,920 --> 00:14:44,080
+there is image of Flamingo and caption for that then video text pair you can see in the
+
+156
+00:14:44,080 --> 00:14:49,480
+middle there are frames of video and a caption describing what's going on in the video and
+
+157
+00:14:49,480 --> 00:14:55,480
+this is kind of web page data where like it says welcome to my website there is image
+
+158
+00:14:55,480 --> 00:15:02,420
+of a dog and then it says this is a picture of my dog and then there is a cat and etc.
+
+159
+00:15:02,420 --> 00:15:11,940
+The Flamingo training objective is negative like the average of negative lug likelihood
+
+160
+00:15:11,940 --> 00:15:20,820
+of the next token based on the previous tokens and images and this like expectation happens
+
+161
+00:15:20,820 --> 00:15:27,620
+over the data sets and because we have multiple data sets there is a there is a summation
+
+162
+00:15:27,620 --> 00:15:39,060
+over all of them and of course we need to weight like or balance each data set and here
+
+163
+00:15:39,060 --> 00:15:46,980
+dm denotes the mth data set, lambda m is a positive scalar rate for the mth data set
+
+164
+00:15:46,980 --> 00:15:53,220
+and similar to vision encoder pre-training tuning these weights or this lambda m is important
+
+165
+00:15:53,220 --> 00:16:00,500
+for good performance and as we can see the accumulation strategy is used over the loss
+
+166
+00:16:00,500 --> 00:16:03,980
+for all the data sets.
+
+167
+00:16:03,980 --> 00:16:10,380
+Let's see the evaluation data sets we can see that we have two kind two types two categories
+
+168
+00:16:10,380 --> 00:16:18,860
+of tasks open-ended and close-ended we have image benchmarks and video benchmarks and
+
+169
+00:16:18,860 --> 00:16:25,740
+for open-ended tasks we can see that we have captioning, visual question answering, etc.
+
+170
+00:16:25,740 --> 00:16:31,340
+and for closed-ended tasks we can see that like some examples are classification or image
+
+171
+00:16:31,340 --> 00:16:39,260
+plus text classification and visual dialogue and you can see that there are some gear signs
+
+172
+00:16:39,260 --> 00:16:45,340
+basically that means those data sets have been used for hyper parameter tuning and model
+
+173
+00:16:45,340 --> 00:16:50,740
+training and those that don't have such sign means that they are unseen to the model and
+
+174
+00:16:50,740 --> 00:16:56,380
+only we use them for testing.
+
+175
+00:16:56,380 --> 00:17:04,460
+Let's see the main results here the like we can see different data sets the data sets
+
+176
+00:17:04,460 --> 00:17:10,500
+that we just discussed in the previous slide and we can see the relative performance of
+
+177
+00:17:10,500 --> 00:17:20,140
+32-shot flamingo which is 80 billion parameters and we can see those are the pink color like
+
+178
+00:17:20,140 --> 00:17:28,380
+bars and we can see some gray colored bars which show the previous state-of-the-art zero
+
+179
+00:17:28,380 --> 00:17:38,340
+or few-shot models and like they are relative to the state-of-the-art fine-tuned version
+
+180
+00:17:38,340 --> 00:17:44,580
+and we can see that like flamingo consistently outperforms the state-of-the-art fine-tuned
+
+181
+00:17:44,580 --> 00:17:53,060
+and also few-shot models that come prior to it it also on some data sets you can see that it
+
+182
+00:17:53,060 --> 00:18:00,580
+completely like puts a new state-of-the-art in the performance in the right hand side you can see
+
+183
+00:18:00,580 --> 00:18:09,260
+another diagram which tries to show the effect of scale scaling and also the number of shots the
+
+184
+00:18:09,260 --> 00:18:16,820
+horizontal axis is the number of shots we can see that it ranges from one shot to 32 shots and we
+
+185
+00:18:16,820 --> 00:18:24,900
+can see that as we go for go for higher shot numbers the performance in the performance improves
+
+186
+00:18:24,900 --> 00:18:34,380
+and scaling the model from 3 billion to 9 billion to 80 billion we can see that it enhances the
+
+187
+00:18:34,380 --> 00:18:41,940
+performance of our model the next paper or the model that we will discuss is visual instruction
+
+188
+00:18:41,940 --> 00:18:51,220
+tuning and the model introduced here is Lava so this paper introduces Lava it is a large
+
+189
+00:18:51,300 --> 00:18:57,940
+language and vision assistant it is an end-to-end trained large multimodal model that connects a
+
+190
+00:18:57,940 --> 00:19:05,460
+vision encoder and an LLM it is instruction tuned on multimodal language image instruction
+
+191
+00:19:05,460 --> 00:19:13,460
+following data and for creating such data the paper uses language only GPT-4 which is interesting
+
+192
+00:19:13,460 --> 00:19:20,900
+and just to see what it is capable of doing let's see in a qualitative example we can see this
+
+193
+00:19:20,900 --> 00:19:26,260
+image and when the model is asked what is unusual about this image it is able to say the unusual
+
+194
+00:19:26,260 --> 00:19:33,700
+aspect of this image is a man ironing clothes on the back of a minivan this is not a typical
+
+195
+00:19:33,700 --> 00:19:38,420
+place to perform this activity as one would usually iron clothes in a more stationary and
+
+196
+00:19:38,420 --> 00:19:44,580
+safe location and etc what is the background to this work well this work is inspired by
+
+197
+00:19:44,580 --> 00:19:52,340
+large multimodal models that come before it such as Flamingo and also it is affected by
+
+198
+00:19:53,060 --> 00:19:58,740
+inspired by instruction tuning for large language models and as an example like another
+
+199
+00:19:58,740 --> 00:20:05,940
+qualitative example to see how instruction tuned LLM looks like let's see this for example we have
+
+200
+00:20:05,940 --> 00:20:12,500
+instruction explains humans behavior and the behavior that we give is cry and it's able to
+
+201
+00:20:12,500 --> 00:20:18,580
+say there could be many reasons why a person might cry they could be feeling sad scared angry or etc
+
+202
+00:20:21,220 --> 00:20:30,260
+also as I mentioned this work is inspired by the prior LMMs one of them is blip2 the other is
+
+203
+00:20:30,260 --> 00:20:38,340
+Flamingo Flamingo we discussed earlier but blip2 we won't discuss it but what are the problem with
+
+204
+00:20:38,340 --> 00:20:44,180
+these prior work well it turns out that prior methods generally lack instruction following
+
+205
+00:20:44,180 --> 00:20:50,340
+capabilities so the question that authors ask is how can we create such multimodal models that
+
+206
+00:20:50,340 --> 00:20:57,620
+follow humans intent and the proposed approach is visual instruction tuning before we go to visual
+
+207
+00:20:57,620 --> 00:21:05,940
+instruction tuning let's see what is the instruction tuning method used for LLMs well there are two
+
+208
+00:21:05,940 --> 00:21:11,540
+ways to collect the instruction tuning data where the humans give the instruction also humans give
+
+209
+00:21:11,540 --> 00:21:18,740
+the answer it has high quality but it is hand written by humans so it has a high cost and the
+
+210
+00:21:18,740 --> 00:21:25,860
+other way is the like human is involved but the data is mainly generated by machines so there's a
+
+211
+00:21:25,860 --> 00:21:33,700
+need for a strong LLM based teacher like chat GPT and that makes of course the cost more affordable
+
+212
+00:21:34,340 --> 00:21:42,820
+so let's see how we can use chat GPT for creating instruction tuning data you can see a seed
+
+213
+00:21:42,820 --> 00:21:47,540
+instruction output pair here explain humans behavior and the behaviors cry and a reference
+
+214
+00:21:47,540 --> 00:21:54,340
+answer is given by the human then also there's like another one recommend a movie for me and
+
+215
+00:21:54,340 --> 00:21:59,860
+another answer is given and then we ask the model please generate new instruction output pairs that
+
+216
+00:21:59,860 --> 00:22:08,020
+meet the following requirements and it starts to generate some of the prior LLMs that have used
+
+217
+00:22:08,020 --> 00:22:16,180
+this technique are alpaca vicona GPT for alpaca and we can see that the data source for alpaca is
+
+218
+00:22:16,180 --> 00:22:24,180
+GPT 3.5 for vicona is shared GPT where there's a GPT and human involved and GPT for alpaca which
+
+219
+00:22:24,180 --> 00:22:31,300
+uses GPT for text only and for tulu there there there's mixed data sources
+
+220
+00:22:33,780 --> 00:22:41,380
+so now let's go for visual instruction tuning give an instruction and the image we want the model
+
+221
+00:22:41,380 --> 00:22:49,060
+to follow instruction and give the desired output for that we need three components a visual encoder
+
+222
+00:22:49,780 --> 00:22:55,540
+a cross-modal connector and a language decoder so these are the things that we need a strong
+
+223
+00:22:55,540 --> 00:23:03,460
+pre-trained vision and language models cross-modal connector and after we have these we will do a
+
+224
+00:23:04,500 --> 00:23:12,100
+fine tuning and we will tune the model for following multimodal instructions but what is the problem
+
+225
+00:23:12,100 --> 00:23:18,260
+the problem is that as we saw all the previous teachers used for generating these instruction
+
+226
+00:23:18,260 --> 00:23:26,100
+following data are actually text only models like GPT 3.5 and the others so how we are going to
+
+227
+00:23:26,100 --> 00:23:32,900
+create such data the authors proposed GPT assisted visual instruction data creation
+
+228
+00:23:34,100 --> 00:23:40,660
+which i will discuss in this slide so you can see that like there's an image here actually like
+
+229
+00:23:40,660 --> 00:23:49,060
+they use microsoft coco common objects in context this is one image from that dataset and there are
+
+230
+00:23:49,060 --> 00:23:54,660
+two contexts for it a caption that describes the image a group of people standing outside of a black
+
+231
+00:23:54,660 --> 00:23:59,700
+vehicle with rice luggage and there's another context provided which which is the layout
+
+232
+00:24:00,420 --> 00:24:09,140
+basically you can see that objects are boxed and we have the information or coordinates of the boxes
+
+233
+00:24:10,100 --> 00:24:13,780
+there's also an instruction what are the challenges these people might be facing
+
+234
+00:24:13,780 --> 00:24:18,820
+and then there's output they may have be having difficulty fitting all luggage into the back of
+
+235
+00:24:18,820 --> 00:24:29,620
+this uv and so on so the way that GPT 4 is used is that it is given the caption context and it is
+
+236
+00:24:29,620 --> 00:24:39,220
+given the layout context and then also an instruction and an output and we give a couple
+
+237
+00:24:39,220 --> 00:24:45,460
+like a few more in context examples of visual context instruction output triplets and then
+
+238
+00:24:46,820 --> 00:24:53,940
+for a new image we give the new context for caption new context for layout and then we
+
+239
+00:24:53,940 --> 00:24:58,900
+ask the model please generate new context instruction output triplets that meet following
+
+240
+00:24:58,900 --> 00:25:07,940
+requirements and the GPT 4 starts creating this data using this technique the authors create
+
+241
+00:25:07,940 --> 00:25:17,860
+lava instruct 158k where there are 58k conversation examples 23k detailed description and 77k
+
+242
+00:25:19,060 --> 00:25:26,900
+complex reasoning just to see how a single sample looks like we have here the same image
+
+243
+00:25:26,900 --> 00:25:34,180
+from the previous slides there's captions and boxes the first type of response is conversation
+
+244
+00:25:34,180 --> 00:25:39,780
+the example is what type of vehicle is featured in the image and the answer is an SUV
+
+245
+00:25:41,140 --> 00:25:46,900
+then there's detailed description response type where there's a detailed description of the image
+
+246
+00:25:46,900 --> 00:25:53,700
+and the last one is complex reasoning response type where we can see the question is what challenges
+
+247
+00:25:53,700 --> 00:25:59,540
+do these people face and the answer is well they have hard time to fit all the luggage into the back
+
+248
+00:25:59,540 --> 00:26:10,260
+of the suv so let's see what is the architecture of lava lava has again three components vision
+
+249
+00:26:10,260 --> 00:26:19,140
+encoder which is clip v it large and it it uses 14 image patches the projection is just a linear
+
+250
+00:26:19,140 --> 00:26:28,020
+layer and the language model can be Vekona Loma to chat MPT chat and etc we can see that image
+
+251
+00:26:28,020 --> 00:26:34,260
+comes here goes through vision encoder and embedding is created that embedding is projected by this
+
+252
+00:26:35,220 --> 00:26:44,820
+projection layer to a new embedding and along the language language tokens these are given to the
+
+253
+00:26:44,820 --> 00:26:48,820
+language model and language model generates the required output
+
+254
+00:26:51,460 --> 00:26:57,860
+for training lava there are two stages the first stage is pre-training for feature alignment
+
+255
+00:26:59,220 --> 00:27:06,100
+the language model is frozen vision encoder is frozen and the projection layer can vary
+
+256
+00:27:07,060 --> 00:27:14,900
+for that purpose the data that is used is a filtered cc3m subset which has 595k
+
+257
+00:27:15,940 --> 00:27:24,100
+samples the second stage is end-to-end visual instruction tuning the vision encoder again
+
+258
+00:27:24,100 --> 00:27:31,220
+is frozen but the projection layer and language model can vary and the two tasks are used for
+
+259
+00:27:31,220 --> 00:27:38,900
+this end-to-end visual instruction tuning phase visual chat which is lava instruct 158k that we
+
+260
+00:27:38,900 --> 00:27:45,380
+just saw how is created and it is for open-ended user-oriented visual tasks and the other task
+
+261
+00:27:45,380 --> 00:27:51,060
+that they use for end-to-end training is science qa multimodal reasoning dataset for the science
+
+262
+00:27:51,060 --> 00:28:02,260
+domain after the training lava it shows some emerging properties as we discussed the datasets
+
+263
+00:28:02,260 --> 00:28:09,940
+used for two stages of training were cc3m and instruction tuning coco but these were only
+
+264
+00:28:09,940 --> 00:28:16,660
+common concepts so the domain was limited and no human name annotations were mentioned
+
+265
+00:28:16,660 --> 00:28:24,740
+and no explicit ocr and ocr is like text in the image yet we can see that the lava is able to
+
+266
+00:28:24,740 --> 00:28:33,780
+handle some of the tasks related to like these points for example when asked what is the name of
+
+267
+00:28:33,780 --> 00:28:40,580
+the person here it says this is Elon Musk and even in a more challenging scenario where the face of
+
+268
+00:28:40,580 --> 00:28:46,180
+the one he has been replaced with that of Elon Musk the model is still able to identify him
+
+269
+00:28:48,900 --> 00:28:57,460
+for the evaluation the authors again like suggest the GPT assisted method and as we can see they
+
+270
+00:28:57,460 --> 00:29:03,540
+give the caption context they give the layout context and they give the instruction and they
+
+271
+00:29:03,540 --> 00:29:10,740
+give the output generated by different models for example model one model two and after giving
+
+272
+00:29:10,740 --> 00:29:15,380
+the output of different models they ask the model we would like to request your feedback on the
+
+273
+00:29:15,380 --> 00:29:21,300
+performance of two AI assisted assistance with the following requirements and the model starts to
+
+274
+00:29:21,300 --> 00:29:28,980
+giving score to model one giving score to model two and it and the authors also required the model
+
+275
+00:29:28,980 --> 00:29:36,180
+to give some intuition or reasoning for the scoring that it provides to make that it is
+
+276
+00:29:36,180 --> 00:29:41,060
+consistent for example it says assistant one provides a concise and accurate answer to the
+
+277
+00:29:41,060 --> 00:29:47,220
+question however assistant two went above and beyond by not only identifying the con concepts but
+
+278
+00:29:47,220 --> 00:29:53,220
+also doing such and so so this this helps us make sure that it is consistent in the scoring
+
+279
+00:29:54,020 --> 00:30:01,460
+for the evaluation they create another benchmark lower bench or in the wild the features of these
+
+280
+00:30:01,460 --> 00:30:08,980
+benchmark are like designed such that it is a challenging data set because it requires
+
+281
+00:30:08,980 --> 00:30:15,220
+knowledge beyond training data it also requires multi-lingual understanding and also perception
+
+282
+00:30:15,220 --> 00:30:24,900
+of subtle details these like because it has these challenging features during the evaluation we can
+
+283
+00:30:25,540 --> 00:30:32,020
+like evaluate the consistency and prompt robustness of the models that we evaluate just to have some
+
+284
+00:30:32,020 --> 00:30:38,980
+examples of lower bench you can see here a traditional Chinese dish dish and for example
+
+285
+00:30:38,980 --> 00:30:43,460
+one of the questions asked is what is the name of the restaurant and the model is supposed to
+
+286
+00:30:43,460 --> 00:30:50,820
+understand I guess Chinese script from here like from from the pole and understand the name
+
+287
+00:30:50,820 --> 00:30:56,420
+and tell the name of the restaurant and here in another example we are looking into a refrigerator
+
+288
+00:30:56,420 --> 00:31:03,380
+filled with food and one of the questions asks is what is the brand of the blueberry flavored yogurt
+
+289
+00:31:03,380 --> 00:31:07,940
+and the model is supposed to like be able to read the brand and tell it
+
+290
+00:31:08,740 --> 00:31:18,820
+we can see here the results of evaluation on the lava bench we can see that lava outperforms blip
+
+291
+00:31:18,820 --> 00:31:25,780
+to and open flamingo consistently for conversation detailed description and complex reasoning and
+
+292
+00:31:25,780 --> 00:31:34,100
+overall the next one that we will discuss is instruct blip so first let's see what is capable
+
+293
+00:31:34,100 --> 00:31:39,860
+of doing uh for example here when asked what could have happened based on the current scene
+
+294
+00:31:39,860 --> 00:31:44,740
+the model is able to say based on the current scene in the image it is possible that a hurricane
+
+295
+00:31:44,740 --> 00:31:51,860
+or severe weather event caused significant damage and so on or here for example we have a painting
+
+296
+00:31:51,860 --> 00:31:58,900
+and when asked introduce me this painting it is able to name the name of the painting it's also able
+
+297
+00:31:58,900 --> 00:32:08,820
+to name the painter who created this artistic painting and also the model is able to describe
+
+298
+00:32:08,820 --> 00:32:17,060
+in detail for example mentioned the white pearl earring and other features of the painting
+
+299
+00:32:18,660 --> 00:32:24,100
+so what is the motivations behind instruct blip the goal is that authors want a single
+
+300
+00:32:24,100 --> 00:32:31,300
+model to solve arbitrary tasks specified by user they also see that instruction tuning in lm's is
+
+301
+00:32:31,300 --> 00:32:38,100
+promising and it has recently been leveraged in lm's like blip too but they say that these are
+
+302
+00:32:38,100 --> 00:32:45,060
+preliminary and generalizing to diverse vision language tasks is still a challenge prior to
+
+303
+00:32:45,060 --> 00:32:53,140
+instruct blip two approaches are used for achieving these goals the first approach is multitask
+
+304
+00:32:53,140 --> 00:33:01,060
+learning uh where they formulate formulate all tasks into the same format and the problem
+
+305
+00:33:01,060 --> 00:33:06,900
+with this approach is that it doesn't generalize to unseen tasks the other approach is extending
+
+306
+00:33:06,900 --> 00:33:12,900
+a pre-trained lm with a visual component and train it with image caption data as we saw for
+
+307
+00:33:12,900 --> 00:33:19,220
+example for flamingo and the problem they say that these models have is that they're struggling
+
+308
+00:33:20,100 --> 00:33:22,580
+to generalize beyond visual description tasks
+
+309
+00:33:27,060 --> 00:33:34,500
+the tasks and data sets that the authors use are described in this slide where they have
+
+310
+00:33:34,500 --> 00:33:40,420
+11 vision language categories the categories are image captioning visual reasoning visual
+
+311
+00:33:40,420 --> 00:33:47,700
+conversational qa and other categories so counting the data sets within each of these
+
+312
+00:33:47,700 --> 00:33:55,300
+categories overall there are 26 publicly available data sets these data sets are transformed to
+
+313
+00:33:55,300 --> 00:34:02,580
+instruction tuning format and 10 to 15 instruction templates are used for every task as you can see
+
+314
+00:34:02,580 --> 00:34:09,700
+there are yellowish color data sets those are 13 held in data sets and there are white data sets
+
+315
+00:34:10,660 --> 00:34:17,700
+and those are 13 held out data sets on top of that the authors withhold four task categories
+
+316
+00:34:18,820 --> 00:34:26,980
+and they use it only for testing by by this like for example visual reasoning all the data sets
+
+317
+00:34:26,980 --> 00:34:33,380
+are completely withhold video question answering the model doesn't see any of these data sets so
+
+318
+00:34:33,460 --> 00:34:40,260
+it's it doesn't see the entire task category the other task category that will not be seen
+
+319
+00:34:40,260 --> 00:34:52,500
+by the model is image classification and visual conversational qa so the first time that model
+
+320
+00:34:52,500 --> 00:35:01,220
+will see these is during the testing we can see here the architecture that is used for
+
+321
+00:35:01,220 --> 00:35:09,060
+instruct blip we have again an image encoder there's a large language model which is kept frozen
+
+322
+00:35:09,060 --> 00:35:15,140
+also that's the case for encoder and there's a qformer and we can see that for qformer again
+
+323
+00:35:15,140 --> 00:35:23,380
+there are some learned queries and learned queries along the instructions are passed to qformer
+
+324
+00:35:23,380 --> 00:35:30,420
+let's see what happens inside qformer inside qformer you have queries learned queries you
+
+325
+00:35:30,500 --> 00:35:37,060
+have instructions in the form of tokens they go through a self-attention layer and the outputs
+
+326
+00:35:37,060 --> 00:35:44,740
+goes to a cross attention the other input for this cross attention is the image embeddings
+
+327
+00:35:44,740 --> 00:35:50,180
+produced by the image encoder and after cross attention it goes through a feed forward and then
+
+328
+00:35:50,180 --> 00:35:57,300
+you have the like newly created tokens at the output so these newly created tokens go through a
+
+329
+00:35:57,300 --> 00:36:05,860
+fully connected layer and then you have another set of outputs which alongside the instructions
+
+330
+00:36:05,860 --> 00:36:12,340
+they are given to the large language model and the response is generated as a novelty for this
+
+331
+00:36:12,340 --> 00:36:18,580
+paper the instruction tokens interact with query embeddings through self-attention in qformer
+
+332
+00:36:19,220 --> 00:36:23,940
+so the novelty is instruction-available visual feature extraction
+
+333
+00:36:25,940 --> 00:36:34,420
+there are some implementation details one of the details is related to balancing training
+
+334
+00:36:34,420 --> 00:36:41,460
+datasets the author says that to avoid overfitting on small datasets and underfitting larger ones
+
+335
+00:36:41,460 --> 00:36:47,700
+they use a sampling strategy and their strategy is basically if you have s1 through sd
+
+336
+00:36:48,980 --> 00:36:56,660
+datasets the probability of sampling from each dataset is proportional to the square root of
+
+337
+00:36:56,660 --> 00:37:02,580
+size of that dataset over the summation of a square root of sizes of other datasets
+
+338
+00:37:04,100 --> 00:37:10,020
+the other one is related to inferior methods they use two generation approaches
+
+339
+00:37:10,580 --> 00:37:17,780
+for majority of datasets such as image captioning model is directly prompted to generate
+
+340
+00:37:17,780 --> 00:37:24,340
+and for other tasks like classification and multi-choice vqa a vocabulary ranking is used
+
+341
+00:37:25,700 --> 00:37:31,540
+the other there are like details about the architecture as well the image encoder that
+
+342
+00:37:31,540 --> 00:37:39,540
+they use is vitg with 14 image patches the large language model is either flanty5 which is an
+
+343
+00:37:39,540 --> 00:37:47,860
+encoder decoder transformer instruction tuned from t5 or vicona decoder only transformer
+
+344
+00:37:47,860 --> 00:37:55,380
+instruction tuned from loma we can see here the evaluation for instruct blip
+
+345
+00:37:56,100 --> 00:38:02,180
+instruct blip models are here and these are blip2 models and flamingo and we can see that for
+
+346
+00:38:02,260 --> 00:38:11,220
+different tasks such as captioning visual question answering and others like scientific
+
+347
+00:38:11,220 --> 00:38:20,020
+question answering the instruct blip models consistently outperform the other models such as
+
+348
+00:38:20,020 --> 00:38:30,340
+blip2 and flamingo the last one that i will discuss is poly let's see so here are some
+
+349
+00:38:30,340 --> 00:38:36,340
+qualitative examples for example for this image when asked generate the out text in english it is
+
+350
+00:38:36,340 --> 00:38:42,020
+able to generate a cellar filled with barrels of wine and we can see a couple of other english
+
+351
+00:38:42,020 --> 00:38:51,060
+example additionally it's able to also generate out text in french in thai for example here
+
+352
+00:38:51,860 --> 00:39:01,060
+and in chinese in the last image here so what are the motivations behind poly the authors
+
+353
+00:39:01,060 --> 00:39:07,060
+say that increasing the network capacity has been a successful trend for example for language
+
+354
+00:39:07,060 --> 00:39:16,260
+models t5 and gpt3 have great performance vision models such as vit as they go larger they improve
+
+355
+00:39:16,260 --> 00:39:23,300
+the performance and this is the case also for language vision models such as flamingo but the
+
+356
+00:39:23,300 --> 00:39:29,620
+scale distribution is not equitable in large capacity language vision models usually the
+
+357
+00:39:30,660 --> 00:39:36,980
+language component is much larger and the other problem is that these models are english only
+
+358
+00:39:37,940 --> 00:39:48,420
+so given these let's say problems the poly has been designed to satisfy the following goals
+
+359
+00:39:49,860 --> 00:39:56,900
+they want to reuse large unimodal backbones and they want their model to benefit from jointly
+
+360
+00:39:56,900 --> 00:40:03,140
+scaling vision and language in a more balanced parameter share between language and vision
+
+361
+00:40:03,220 --> 00:40:09,380
+components and they want to enable knowledge sharing between tasks by casting them to a
+
+362
+00:40:09,380 --> 00:40:19,940
+generalized vqa like task and also they train a new high volume dataset of tens of billion
+
+363
+00:40:19,940 --> 00:40:25,140
+image taxpayers across 100 languages not only english
+
+364
+00:40:25,300 --> 00:40:35,140
+so let's have a recap of what is poly designed for poly aims to do both unimodal and multimodal
+
+365
+00:40:35,140 --> 00:40:41,460
+tasks it enables knowledge sharing by casting all tasks to a generalized vqa like task
+
+366
+00:40:42,500 --> 00:40:48,500
+basically the framework is as follows image plus a text string is input and at the output you have a
+
+367
+00:40:48,500 --> 00:40:58,820
+text and it uses pre-trained unimodal models to transfer existing capabilities of those models
+
+368
+00:40:58,820 --> 00:41:07,300
+and also reduce the training cost and visual token are passed to encoder decoder via cross
+
+369
+00:41:07,300 --> 00:41:12,580
+attention in a similar manner to some of the models that we saw before this is the architecture
+
+370
+00:41:12,660 --> 00:41:19,300
+basically there's a v it as vision encoder part and there are transformer encoder and decoder
+
+371
+00:41:20,180 --> 00:41:26,260
+and they enable basically this vision language tasks for poly
+
+372
+00:41:28,180 --> 00:41:35,860
+let's see in more detail what each of those components are so for the vision we can see this
+
+373
+00:41:35,860 --> 00:41:43,460
+like a v it component here the component that they use is the largest vanilla v it
+
+374
+00:41:43,460 --> 00:41:49,780
+that they call v it enormous it's the largest ever trained it has four billion parameters
+
+375
+00:41:50,900 --> 00:41:59,540
+and they say that scaling up v it on multimodal data not only does not saturate but has higher
+
+376
+00:41:59,620 --> 00:42:06,980
+return in terms of accuracy improvement per parameter or number of flops well we know that
+
+377
+00:42:06,980 --> 00:42:15,620
+this is not the case usually actually going beyond some threshold in the scale of v it on like tasks
+
+378
+00:42:15,620 --> 00:42:22,180
+such as classification doesn't give you much better performance but they say that that's not true
+
+379
+00:42:22,180 --> 00:42:32,420
+for this case where the like you have multimodal data the language component is mt5 backbone
+
+380
+00:42:32,420 --> 00:42:41,460
+it's trained on a mix of tasks to avoid catastrophic forgetting and given like these points the overall
+
+381
+00:42:41,460 --> 00:42:50,900
+model will be v it enormous or v it g and one of these like language components mt5 large or mt5
+
+382
+00:42:50,900 --> 00:42:58,260
+xx large so the data that poly is trained on looks like this these are some examples
+
+383
+00:42:59,300 --> 00:43:05,780
+this is for example a free stock photo of matrix and sidekick the ocr are card the card is written
+
+384
+00:43:05,780 --> 00:43:15,060
+here a telecom is written here and there's a number here 5624 and you have here like this
+
+385
+00:43:15,620 --> 00:43:22,260
+image and the out text is in french also there's ocr in french and you have this image there's a
+
+386
+00:43:22,260 --> 00:43:30,820
+tie out text for it and chinese out text for this scene so these like these are some examples from
+
+387
+00:43:30,820 --> 00:43:36,820
+the data set that they use and it's called webbly data sets it's built from image text on public
+
+388
+00:43:36,820 --> 00:43:45,620
+web covering 109 languages it has 10 billion images 12 billion out text and 29 billion image ocr pairs
+
+389
+00:43:47,060 --> 00:43:54,260
+but only top 10 percent scoring are used which is around 1 billion for the training of poly
+
+390
+00:43:55,620 --> 00:44:04,580
+here is a like statistics of the data set we can see that as we could like guess from the beginning
+
+391
+00:44:04,580 --> 00:44:11,300
+largest chunk is for english then japanese chinese and other languages and some medium
+
+392
+00:44:11,300 --> 00:44:18,100
+sized languages like turkish and malay and then some smaller like corpse of data for languages
+
+393
+00:44:18,100 --> 00:44:25,540
+such as oigur and you can see like a comparison of the data set used by poly and those that have
+
+394
+00:44:25,540 --> 00:44:32,020
+been previously used for example you have the data set for clip 400 million for a line 1.8 billion
+
+395
+00:44:32,020 --> 00:44:38,420
+lite 4 billion but these two last columns are for poly webbly basically out text has 12 billion
+
+396
+00:44:38,420 --> 00:44:48,340
+and the webbly ocr has 29 billion pairs and these are the experimental results there are like a couple
+
+397
+00:44:48,340 --> 00:44:59,620
+of sorry there are a few like experiment results on many task categories but for just as an example
+
+398
+00:44:59,620 --> 00:45:07,940
+i've brought here the results for captioning we can see that poly is able to consistently out
+
+399
+00:45:07,940 --> 00:45:16,900
+perform the previous methods including flamingo here and the other experimental result that i've
+
+400
+00:45:16,900 --> 00:45:25,220
+brought here is about the effect of scaling as we can see there are three colors here and the
+
+401
+00:45:25,940 --> 00:45:34,260
+vertical axis shows the absolute score difference between like the this the model
+
+402
+00:45:35,860 --> 00:45:43,540
+denoted by blue color here and the other scaled up versions of that model so the blue color
+
+403
+00:45:43,540 --> 00:45:51,380
+basically shows a poly with three billion parameters the language component is large
+
+404
+00:45:52,260 --> 00:45:58,820
+and the vision component is vitg the green the red color shows poly with 15 billion
+
+405
+00:45:59,540 --> 00:46:06,580
+parameters the language component is xx large the vision component is vitg and there's this
+
+406
+00:46:06,580 --> 00:46:13,780
+yellow color showing a poly with 17 billion parameters the language component is xx large and
+
+407
+00:46:14,260 --> 00:46:22,980
+the vision encoder is vit enormous and there's also like this yellow bordered white color
+
+408
+00:46:24,100 --> 00:46:31,300
+which shows the same poly model with 17 billion parameters as the yellow one but there's a high
+
+409
+00:46:31,300 --> 00:46:38,740
+resolution training phase involved for the vision component and we can see that for tasks such as
+
+410
+00:46:38,740 --> 00:46:49,300
+captioning which are these like three first tasks here actually scaling up the vision component
+
+411
+00:46:49,300 --> 00:46:57,540
+gives much better absolute score difference compared to scaling up the language component
+
+412
+00:46:57,540 --> 00:47:05,540
+and for other tasks like visual question answering we can see that like the language scaling up the
+
+413
+00:47:05,540 --> 00:47:12,980
+language component gives maybe more increase in the absolute score but overall and on average we
+
+414
+00:47:12,980 --> 00:47:20,020
+can see that there's better return for scaling up the vision component
+
+415
+00:47:23,540 --> 00:47:31,780
+and from here like for the next four multimodal models yunyi will continue thank you for your
+
+416
+00:47:31,780 --> 00:47:34,020
+attention
+

@@ -1,0 +1,1148 @@
+1
+00:00:00,000 --> 00:00:06,560
+Hi everyone, I'm Sahel and today with Hoseina Hivani, we are going to talk about instruction
+
+2
+00:00:06,560 --> 00:00:12,460
+training and reinforcement learning with human feedback.
+
+3
+00:00:12,460 --> 00:00:19,520
+Language models are trained on large corpora using mostly unlabeled data from the web.
+
+4
+00:00:19,520 --> 00:00:25,440
+To keep the training process self-supervised, the objective is often the next token prediction
+
+5
+00:00:25,440 --> 00:00:32,760
+or some other language objectives, language masking objectives like denoising for birth,
+
+6
+00:00:32,760 --> 00:00:33,760
+for example.
+
+7
+00:00:33,760 --> 00:00:40,040
+With this setting, the output model learns word embeddings well and it might even do
+
+8
+00:00:40,040 --> 00:00:44,480
+well for some NLP tasks that it's been exposed to during training.
+
+9
+00:00:44,480 --> 00:00:49,920
+However, the objective function during the training does not match the one at inference
+
+10
+00:00:49,920 --> 00:00:56,240
+time, which is to follow the human provided instructions.
+
+11
+00:00:56,240 --> 00:01:01,880
+One common mitigation is to fine-tune the model for our desired task.
+
+12
+00:01:01,880 --> 00:01:09,160
+As shown on the right-hand side figure, the limitation of this method is that it's task-specific
+
+13
+00:01:09,160 --> 00:01:12,160
+and it often requires many examples.
+
+14
+00:01:12,160 --> 00:01:18,840
+The other solution is to rely on the language models in context learning ability and to
+
+15
+00:01:18,840 --> 00:01:23,360
+provide a few examples of the desired task during inference.
+
+16
+00:01:23,360 --> 00:01:31,960
+However, few-shot prompting often requires prompt engineering for an efficient learning
+
+17
+00:01:31,960 --> 00:01:36,240
+and adding examples can make inference costly.
+
+18
+00:01:36,240 --> 00:01:41,960
+And on top of that, you also have challenges because the context size is limited.
+
+19
+00:01:41,960 --> 00:01:48,960
+Today, I'm going to present three papers which propose to improve the performance of
+
+20
+00:01:48,960 --> 00:01:51,160
+language model zero-shot.
+
+21
+00:01:51,160 --> 00:01:56,840
+And by zero-shot here, I mean that language model hasn't seen the task before, not as
+
+22
+00:01:56,840 --> 00:02:01,440
+an in-context example, nor during pre-training or fine-tuning.
+
+23
+00:02:01,440 --> 00:02:05,440
+Let's start with the first paper, which is Flan from Google.
+
+24
+00:02:05,440 --> 00:02:11,480
+Flan authors define the term instruction training as fine-tuning the language model
+
+25
+00:02:11,480 --> 00:02:16,280
+on many tasks that are described via instruction in natural language.
+
+26
+00:02:16,280 --> 00:02:22,160
+The idea is that by being exposed to many instructions, the model will learn to follow
+
+27
+00:02:22,160 --> 00:02:26,840
+the instructions and it will be able to generalize to unseen tasks.
+
+28
+00:02:26,840 --> 00:02:33,120
+And this method works well because many NLP tasks are describable via natural language
+
+29
+00:02:33,120 --> 00:02:38,680
+instructions such as summarize the following program or translate the following sentence
+
+30
+00:02:38,680 --> 00:02:44,400
+from A to B. Let's walk through an example here.
+
+31
+00:02:44,400 --> 00:02:49,040
+As I mentioned, fine-tuning involves training on multiple tasks at the same time.
+
+32
+00:02:49,040 --> 00:02:55,560
+Here we have common sense reasoning, translation, and some other tasks.
+
+33
+00:02:55,560 --> 00:03:02,720
+The inference is zero-shot, meaning that it is on a task that is not used during training.
+
+34
+00:03:02,720 --> 00:03:10,480
+Here we have natural language inference and it doesn't have any in-context examples provided.
+
+35
+00:03:10,480 --> 00:03:17,680
+And both during training and inference time tasks are described as instructions in natural
+
+36
+00:03:17,680 --> 00:03:19,840
+language.
+
+37
+00:03:19,840 --> 00:03:27,040
+To create a dataset for instruction tuning, Flan authors categorize 62 NLP datasets into
+
+38
+00:03:27,040 --> 00:03:29,400
+12 clusters.
+
+39
+00:03:29,400 --> 00:03:33,840
+Each cluster represents a task type.
+
+40
+00:03:33,840 --> 00:03:40,880
+They use cluster granularity to determine whether or not a model has seen a task.
+
+41
+00:03:40,880 --> 00:03:46,680
+This is in contrast with using the dataset granularity.
+
+42
+00:03:46,680 --> 00:03:53,440
+This means that Flan's performance on a dataset is considered to be evaluated zero-shot only
+
+43
+00:03:53,440 --> 00:03:58,920
+if no dataset from its cluster has been used during training or fine-tuning.
+
+44
+00:03:58,920 --> 00:04:04,880
+For each cluster, the authors train the model on the remaining 11 clusters and evaluated
+
+45
+00:04:04,880 --> 00:04:08,720
+the model on the held-out cluster in a zero-shot setting.
+
+46
+00:04:08,720 --> 00:04:16,680
+For each dataset, the authors compose 10 unique templates and to further diversify the prompts
+
+47
+00:04:16,680 --> 00:04:20,600
+up to three of these templates were in reverse format.
+
+48
+00:04:20,600 --> 00:04:27,040
+For example, asking a model to write a movie review for a given sentiment or a question
+
+49
+00:04:27,040 --> 00:04:31,680
+for the provided answer.
+
+50
+00:04:31,680 --> 00:04:35,280
+Among the 12 tasks, some of them are generation tasks.
+
+51
+00:04:35,280 --> 00:04:41,640
+And these work well as is with Flan just because it's a decoder-only model.
+
+52
+00:04:41,640 --> 00:04:46,480
+On the other hand, there are some tasks that are classification tasks such as close QA
+
+53
+00:04:46,480 --> 00:04:48,960
+or sentiment analysis.
+
+54
+00:04:48,960 --> 00:05:00,000
+The authors amended the prompt to the models with options to make sure the model will select
+
+55
+00:05:00,000 --> 00:05:04,000
+one of these options as the next-generated token.
+
+56
+00:05:04,000 --> 00:05:12,440
+Here on the picture, you see that the options are added for sentiment analysis tasks.
+
+57
+00:05:12,440 --> 00:05:19,360
+The authors use Lambda PT as the base model, which is a pre-trained version of the language
+
+58
+00:05:19,360 --> 00:05:23,440
+model for dialogue applications, also from Google.
+
+59
+00:05:23,440 --> 00:05:31,120
+There are other versions of the Lambda model as Lambda fine-tuned, but these models are
+
+60
+00:05:31,120 --> 00:05:36,280
+further fine-tuned using human feedback and conversation qualities.
+
+61
+00:05:36,280 --> 00:05:42,400
+But the Flan authors chose to use the pre-trained-only version.
+
+62
+00:05:42,400 --> 00:05:48,040
+Gamma is a decoder-only model, and it has 137 billion parameters.
+
+63
+00:05:48,040 --> 00:05:54,440
+It's pre-trained on web documents, dialogue data, and Wikipedia data with a total of 2.8
+
+64
+00:05:54,440 --> 00:05:55,440
+trillion tokens.
+
+65
+00:05:55,440 --> 00:06:00,080
+10% of this training data is in non-English.
+
+66
+00:06:00,080 --> 00:06:06,240
+To sample the data sets, the authors mix all the data set examples into a single pool.
+
+67
+00:06:06,240 --> 00:06:11,800
+Then they randomly draw from this pool, and for the sake of keeping every data set well
+
+68
+00:06:11,800 --> 00:06:18,200
+represented in the final training data, they kept the sampling from each data set at 30k,
+
+69
+00:06:18,200 --> 00:06:22,480
+regardless of how large or small the data set was.
+
+70
+00:06:22,480 --> 00:06:32,080
+Similar to the base model, the input had 1,000 tokens, and the output had 256 tokens.
+
+71
+00:06:32,080 --> 00:06:38,920
+While dealing with shorter input lengths, they use packing to combine multiple shorter
+
+72
+00:06:38,920 --> 00:06:43,240
+examples into a single sequence for the sake of training.
+
+73
+00:06:43,240 --> 00:06:50,760
+By multiplying the number of gradient steps and the batch size and the input lengths, it
+
+74
+00:06:50,760 --> 00:06:59,320
+looks like Flan is trained on around 257 billion input tokens.
+
+75
+00:06:59,320 --> 00:07:06,200
+The authors used AdaFactor as the optimizer, which is similar to Adam in the sense that
+
+76
+00:07:06,200 --> 00:07:11,400
+it has an adaptive rate, but it's just more memory efficient.
+
+77
+00:07:11,400 --> 00:07:18,200
+The training took 60 hours for total of 30k gradient steps with batch size of 8k.
+
+78
+00:07:18,200 --> 00:07:23,760
+This slide shows the main results from the paper.
+
+79
+00:07:23,760 --> 00:07:30,880
+The graph shows the zero shot performance of different models for data sets from four
+
+80
+00:07:30,880 --> 00:07:33,080
+held out clusters.
+
+81
+00:07:33,080 --> 00:07:39,120
+As you can see, Flan, which is shown with the star, always outperforms its base model,
+
+82
+00:07:39,120 --> 00:07:41,400
+which is shown with the blue dot.
+
+83
+00:07:41,400 --> 00:07:47,120
+In many cases, Flan also outperforms GPT-3 and GLAM.
+
+84
+00:07:47,120 --> 00:07:52,920
+GLAM here is a generalist language model with MOE structure.
+
+85
+00:07:52,920 --> 00:08:00,280
+For some tasks such as translation or natural language inference, Flan bridges the gap with
+
+86
+00:08:00,280 --> 00:08:02,200
+supervised models as well.
+
+87
+00:08:02,200 --> 00:08:08,160
+Here the supervised models are shown with these vertical gray lines, and they are either
+
+88
+00:08:08,160 --> 00:08:12,360
+based on BERT or T5.
+
+89
+00:08:12,360 --> 00:08:18,080
+In another experiment, Flan compares itself with GPT-3.
+
+90
+00:08:18,080 --> 00:08:23,840
+As shown in this graph, Flan outperforms GPT-3 in both zero shot and few shot settings for
+
+91
+00:08:23,840 --> 00:08:26,200
+some of the tasks.
+
+92
+00:08:26,200 --> 00:08:32,200
+But the authors say that these tasks are selected based on the amount of the performance gain
+
+93
+00:08:32,200 --> 00:08:35,120
+that they've had from instruction tuning.
+
+94
+00:08:35,120 --> 00:08:39,320
+So this is kind of a best case comparison.
+
+95
+00:08:39,320 --> 00:08:44,960
+There are a few ablation studies that I'm going to cover in this presentation.
+
+96
+00:08:44,960 --> 00:08:48,520
+Number one is the number of clusters.
+
+97
+00:08:48,520 --> 00:08:55,920
+In this study, the authors add the clusters during the training one by one, from one being
+
+98
+00:08:56,640 --> 00:09:02,120
+on the leftmost side and seven being on the rightmost side.
+
+99
+00:09:02,120 --> 00:09:08,600
+As you can see, as you add to the number of clusters that has been used during the training,
+
+100
+00:09:08,600 --> 00:09:14,720
+the performance of the fine-tuned model improves for the held-out clusters, which are common
+
+101
+00:09:14,720 --> 00:09:20,000
+sense, natural language inference, and closed-book keyway.
+
+102
+00:09:20,080 --> 00:09:26,160
+Another thing to observe here is that only after cluster number three, the performance
+
+103
+00:09:26,160 --> 00:09:33,160
+of the fine-tuned models actually are better than the performance of the base models, which
+
+104
+00:09:33,520 --> 00:09:38,080
+are here shown with the horizontal dashed lines.
+
+105
+00:09:38,080 --> 00:09:43,960
+Now, because there is no other experiment on the permutation or the order of these clusters
+
+106
+00:09:43,960 --> 00:09:49,960
+that are being added, it's not clear that this performance jump is because of this particular
+
+107
+00:09:50,040 --> 00:09:56,040
+reading comparison cluster that is being added or just because of the number of clusters.
+
+108
+00:09:56,040 --> 00:10:03,040
+Another ablation study is about the impact of fine-tuning for different model sizes.
+
+109
+00:10:05,200 --> 00:10:12,200
+The authors discovered that the accuracy of the model actually gets worse after fine-tuning.
+
+110
+00:10:13,200 --> 00:10:20,200
+If the model is not large enough here, the cut seems to be somewhere between like 8 billion
+
+111
+00:10:21,600 --> 00:10:24,360
+and 68 billion.
+
+112
+00:10:24,360 --> 00:10:29,720
+The last ablation study that I'm going to cover with this paper is the role of instructions.
+
+113
+00:10:29,720 --> 00:10:36,720
+As I mentioned, instruction-tuning is fine-tuning and multiple tasks that are described as instructions
+
+114
+00:10:38,360 --> 00:10:39,880
+in human language.
+
+115
+00:10:39,920 --> 00:10:45,800
+Now, the authors do this experiment to see if the provided instructions are important
+
+116
+00:10:45,800 --> 00:10:46,880
+or not.
+
+117
+00:10:46,880 --> 00:10:53,200
+They fine-tune other versions of the model, one with just the data sets and no instruction,
+
+118
+00:10:53,200 --> 00:11:00,200
+and another one with just the name of the data set and the data itself but no instructions.
+
+119
+00:11:01,640 --> 00:11:06,440
+And then they do evaluation with or without instructions.
+
+120
+00:11:06,520 --> 00:11:12,520
+They see that the best combination is when they train the model, they fine-tune it using
+
+121
+00:11:12,520 --> 00:11:19,520
+the human provided instructions and then they also evaluate using instructions.
+
+122
+00:11:20,720 --> 00:11:27,720
+Second paper that I'm going to cover today is T0 from Hugging Face.
+
+123
+00:11:28,240 --> 00:11:31,520
+The idea here is very similar to Flan.
+
+124
+00:11:31,520 --> 00:11:38,520
+The authors do multitask training and zero-shot generalization.
+
+125
+00:11:38,600 --> 00:11:44,640
+Similar to Flan, T0 authors also group around 60 data sets into 12 clusters.
+
+126
+00:11:44,640 --> 00:11:51,640
+However, while there is some overlap between the two clusterings, they are different both
+
+127
+00:11:51,640 --> 00:11:56,920
+in terms of the data sets that they use and how they group them together.
+
+128
+00:11:56,920 --> 00:12:02,400
+In particular, T0 authors have relied on grouping the data sets based on the format
+
+129
+00:12:02,400 --> 00:12:07,440
+of the output rather than the required scale for doing the task.
+
+130
+00:12:07,440 --> 00:12:14,440
+Unlike Flan, T0 authors use cloud sourcing for creating the template of the prompts.
+
+131
+00:12:17,200 --> 00:12:24,200
+They also excluded non-English prompts such as the prompts that use non-English languages
+
+132
+00:12:24,880 --> 00:12:27,840
+or those that have maths according in them.
+
+133
+00:12:27,840 --> 00:12:34,840
+And finally, they did a pass to remove the prompts with potentially harmful contents.
+
+134
+00:12:35,480 --> 00:12:40,980
+After this prompt collection, they released a public pool of prompts that at the time
+
+135
+00:12:40,980 --> 00:12:47,980
+of writing, it covered like 177 data sets with more than 2000 prompts.
+
+136
+00:12:49,120 --> 00:12:53,920
+The authors use language model adopted version of T5 as their base model.
+
+137
+00:12:53,920 --> 00:13:00,920
+This is because the T5 is trained on Bertostal denoising objective and the authors argue
+
+138
+00:13:01,160 --> 00:13:08,160
+that language model objective, which is introduced in LM adopted variation, makes it more useful
+
+139
+00:13:09,200 --> 00:13:11,840
+for instruction tuning.
+
+140
+00:13:11,840 --> 00:13:17,840
+This model has encoder, decoder architecture with 11 billion parameters.
+
+141
+00:13:18,760 --> 00:13:25,760
+Similar to Flan, T0 authors randomly drew training samples from a mixed pool of data
+
+142
+00:13:25,760 --> 00:13:26,760
+sets.
+
+143
+00:13:26,760 --> 00:13:32,760
+But they kept the number of samples for each data set at 500K rather than 30K.
+
+144
+00:13:32,760 --> 00:13:38,160
+The input and output token lengths here again are similar to Flan with a thousand input
+
+145
+00:13:38,160 --> 00:13:41,080
+and 256 output tokens.
+
+146
+00:13:41,320 --> 00:13:48,320
+T0 is trained with total of 250 billion tokens with batch size of a thousand tokens.
+
+147
+00:13:50,120 --> 00:13:56,120
+Similar to Flan, Edda Factor Optimizer was again used for training T0.
+
+148
+00:13:56,120 --> 00:14:01,120
+This slide shows the main results of the paper.
+
+149
+00:14:01,120 --> 00:14:08,120
+The figure compares the zero shot performance of T0 with its base model and as well as three
+
+150
+00:14:08,520 --> 00:14:12,280
+different sizes of GPT-3.
+
+151
+00:14:12,280 --> 00:14:17,280
+And four different task clusters are used here as held up tasks.
+
+152
+00:14:17,280 --> 00:14:24,280
+Because this is a zero shot evaluation, the author reports the results both for the base
+
+153
+00:14:25,600 --> 00:14:30,240
+model and T0 on all the prompts for each data set.
+
+154
+00:14:30,240 --> 00:14:33,960
+And that's why you see multiple blue or green dots.
+
+155
+00:14:33,960 --> 00:14:40,960
+They do not do any cherry picking or they do not report any average or median.
+
+156
+00:14:40,960 --> 00:14:47,600
+This is in contrast to all the other data points from GPT-3 which is a single number
+
+157
+00:14:47,600 --> 00:14:50,680
+coming from the GPT-3 paper.
+
+158
+00:14:50,680 --> 00:14:57,680
+As you can see, T0 always outperforms the base model.
+
+159
+00:14:58,680 --> 00:15:05,680
+Another noticeable result is that T0 outperforms GPT-3 in all natural language understanding
+
+160
+00:15:05,800 --> 00:15:09,800
+tasks, even though it's 11 times smaller.
+
+161
+00:15:09,800 --> 00:15:16,160
+In an abolition study, the authors studied the effect of the number of prompts during
+
+162
+00:15:16,160 --> 00:15:21,120
+training on the performance of the output model.
+
+163
+00:15:21,120 --> 00:15:27,080
+The one with zero prompts is the base model because it hasn't been trained with any prompts.
+
+164
+00:15:27,080 --> 00:15:34,080
+And the one shown with green is the T0 model with an average of almost eight prompts per
+
+165
+00:15:35,720 --> 00:15:37,560
+data set.
+
+166
+00:15:37,560 --> 00:15:44,240
+As you can see, when you add to the number of prompts, the performance of the model improves.
+
+167
+00:15:44,240 --> 00:15:49,840
+And in many cases, even adding one single prompt is enough to improve the performance
+
+168
+00:15:49,840 --> 00:15:52,520
+of the model significantly.
+
+169
+00:15:52,520 --> 00:15:59,200
+Similar to the previous results, T0 authors here report the results for all the prompts
+
+170
+00:15:59,200 --> 00:16:05,480
+and that's why there is an interval with the rectangle in between and the rectangle is
+
+171
+00:16:05,480 --> 00:16:09,440
+the middle 50% of the performance.
+
+172
+00:16:09,440 --> 00:16:16,440
+As you can see, when you have fewer number of prompts, let's say one or five, even though
+
+173
+00:16:16,440 --> 00:16:22,400
+the median performance has improved in comparison to zero prompt, there is still a big or large
+
+174
+00:16:23,280 --> 00:16:27,000
+variance that you can see among different prompts.
+
+175
+00:16:27,000 --> 00:16:30,680
+For some tasks, having many prompts hurts the performance.
+
+176
+00:16:30,680 --> 00:16:37,680
+As you can see in the graph, this can be because of the varying quality among the prompts that
+
+177
+00:16:38,880 --> 00:16:39,880
+are used.
+
+178
+00:16:39,880 --> 00:16:44,320
+So it's not always the case that the more you add to the number of prompts, the better
+
+179
+00:16:44,320 --> 00:16:46,160
+the results are going to be.
+
+180
+00:16:46,160 --> 00:16:50,800
+This slide provides an overview comparison of T0 versus Flan.
+
+181
+00:16:50,880 --> 00:16:55,920
+Both of these models use instruction tuning to improve the zero shot performance of language
+
+182
+00:16:55,920 --> 00:16:56,920
+models.
+
+183
+00:16:56,920 --> 00:17:02,920
+Flan uses a decoder only model as base model versus T0 uses an encoder, decoder model that
+
+184
+00:17:04,920 --> 00:17:08,080
+is 11 times smaller.
+
+185
+00:17:08,080 --> 00:17:13,320
+In fact, in an abolitionist study, Flan's experiment showed that instruction tuning
+
+186
+00:17:13,320 --> 00:17:20,320
+for a smaller model can degrade the performance which doesn't match what T0 has done in the
+
+187
+00:17:20,880 --> 00:17:21,800
+experiments.
+
+188
+00:17:21,800 --> 00:17:27,800
+Flan's dataset includes 10% non-English data versus T0 has excluded all the non-English
+
+189
+00:17:31,200 --> 00:17:34,800
+dataset and data from their training dataset.
+
+190
+00:17:34,800 --> 00:17:41,800
+You can see this in their experimentation results when Flan is reporting results for translation
+
+191
+00:17:42,520 --> 00:17:48,880
+tasks and in those types it beats the performance of the supervised models versus translation
+
+192
+00:17:48,880 --> 00:17:52,160
+tasks are not included in T0 results.
+
+193
+00:17:52,160 --> 00:17:58,160
+Both of these papers have published their datasets and Flan V2 is a newer version of
+
+194
+00:17:58,160 --> 00:18:04,160
+Flan and in fact it also includes the p3 dataset from T0.
+
+195
+00:18:04,160 --> 00:18:11,000
+The two papers are also different in how they train the model for the held-up task.
+
+196
+00:18:11,000 --> 00:18:18,000
+Flan trains a single model per held-up task versus T0 trains one model for three held-up
+
+197
+00:18:19,160 --> 00:18:26,160
+tasks together and that's a better estimation of the model's generability to a diverse set
+
+198
+00:18:28,840 --> 00:18:30,080
+of unseen tasks.
+
+199
+00:18:30,080 --> 00:18:37,080
+Other than a brief discussion section in T0, the two papers do not compare themselves
+
+200
+00:18:37,840 --> 00:18:44,840
+with one another but both of them report results for a natural language inference task when
+
+201
+00:18:45,400 --> 00:18:52,400
+they compare themselves against GPT-3. Based on the results, they have a very similar performance
+
+202
+00:18:52,520 --> 00:18:57,760
+for most of the natural language inference datasets.
+
+203
+00:18:57,760 --> 00:19:04,760
+There is only one dataset, the commitment bank from SuperGrowl, T0 significantly outperforms
+
+204
+00:19:05,480 --> 00:19:12,480
+Flan, giving that both models are trained on around 250 billion tokens, it's partly
+
+205
+00:19:14,920 --> 00:19:21,920
+possible that the Lambda PT model is under-trained and because of that it has a similar performance
+
+206
+00:19:21,920 --> 00:19:27,400
+to T0 while having a much larger number of parameters.
+
+207
+00:19:27,400 --> 00:19:33,680
+There is a more recent paper that mixes the two training datasets to get the best instruction
+
+208
+00:19:33,680 --> 00:19:40,680
+tuning results at scale. This paper also trains Flan T5 and Flan POM but the next paper that
+
+209
+00:19:41,680 --> 00:19:48,680
+I'm going to cover takes a different direction rather than just scaling up the fine tuning.
+
+210
+00:19:48,680 --> 00:19:54,680
+Let's talk about Lima or less is more for alignment from MetaAI.
+
+211
+00:19:54,680 --> 00:20:00,680
+The hypothesis of this paper is that models have learned the knowledge during pre-training
+
+212
+00:20:02,680 --> 00:20:08,680
+and alignment will only teach them the style or the format they need for interacting with
+
+213
+00:20:08,680 --> 00:20:15,680
+users. With this hypothesis, only limited instruction fine tuning or limited instruction
+
+214
+00:20:15,680 --> 00:20:21,680
+tuning data is required to teach models to produce high quality outputs.
+
+215
+00:20:21,680 --> 00:20:28,680
+To test this hypothesis, Lima focuses on creating only 1,000 carefully curated prompts that
+
+216
+00:20:30,680 --> 00:20:36,680
+have diverse input styles but a unified output style in the format of a helpful assistant
+
+217
+00:20:37,680 --> 00:20:42,680
+AI. Lima authors select their prompt data from different sources.
+
+218
+00:20:42,680 --> 00:20:48,680
+The first source is StackExchange which has over 170 different exchanges. StackOverflow
+
+219
+00:20:48,680 --> 00:20:55,680
+is one of the famous ones, for example. For each StackExchange, the authors sample 200
+
+220
+00:20:57,680 --> 00:21:03,680
+questions. They selected the questions with the highest scores but also questions that
+
+221
+00:21:03,680 --> 00:21:08,680
+were self-contained in the title without any overflow to the body.
+
+222
+00:21:08,680 --> 00:21:14,680
+They also selected top answers for each selected question. As long as the answer, the top answer
+
+223
+00:21:14,680 --> 00:21:21,680
+had at least plus a positive 10 score or upwards. Finally, they excluded answers that didn't
+
+224
+00:21:22,680 --> 00:21:28,680
+match the helpful assistant style. For example, if the answer was too short or too long or
+
+225
+00:21:28,680 --> 00:21:35,680
+if it was written in the first person format or if the answer was not self-contained referencing
+
+226
+00:21:39,680 --> 00:21:45,680
+to other posts for some additional information, they excluded all that. And finally, they removed
+
+227
+00:21:45,680 --> 00:21:52,680
+the links and images from the responses. Vikiha was the second source of data that the authors
+
+228
+00:21:53,680 --> 00:22:00,680
+used for prompt creation. They sampled 200 articles with a two-level sampling method. With
+
+229
+00:22:01,680 --> 00:22:07,680
+this method, they first sampled one category out of the existing 17 categories of articles
+
+230
+00:22:08,680 --> 00:22:15,680
+and then from within that category, they sampled an article to make sure the whole sample
+
+231
+00:22:16,680 --> 00:22:23,680
+count that they have is as diverse as it can be. They used the article title as the input prompt
+
+232
+00:22:24,680 --> 00:22:30,680
+and the body as the response. Similarly, they did some processing to remove the images and
+
+233
+00:22:31,680 --> 00:22:37,680
+links and other tags from the response.
+
+234
+00:22:38,680 --> 00:22:44,680
+Reddit dataset was a third data source that Lima authors used for creating their training
+
+235
+00:22:47,680 --> 00:22:53,680
+dataset. Since Reddit is mostly used for the purpose of entertaining rather than being
+
+236
+00:22:53,680 --> 00:23:00,680
+actually helpful, top voted answers could be sarcastic or funny, but not necessarily in
+
+237
+00:23:00,680 --> 00:23:07,680
+the format of helpful assistant style. To avoid such answers, the authors only manually selected
+
+238
+00:23:08,680 --> 00:23:15,680
+examples from the top most voted posts and they only limited that to two subreddits. Ascended,
+
+239
+00:23:16,680 --> 00:23:23,680
+which is a QA in format of QA and R prompts, which is a subreddit that someone provides a premise
+
+240
+00:23:24,680 --> 00:23:30,680
+of a fictional story and then the users are encouraged to creatively complete that story.
+
+241
+00:23:34,680 --> 00:23:40,680
+As the final step of dataset creation, the authors manually wrote prompts. They used two
+
+242
+00:23:41,680 --> 00:23:46,680
+different groups of authors for training versus testing to make sure evaluation remains
+
+243
+00:23:47,680 --> 00:23:53,680
+where and there is no bias or contamination. The authors also wrote responses for the prompts
+
+244
+00:23:54,680 --> 00:23:59,680
+in the training set. They answered the questions in the style of helpful assistant AI with some
+
+245
+00:24:00,680 --> 00:24:05,680
+acknowledgement of the question followed by the answer, arguing that this format would help the
+
+246
+00:24:06,680 --> 00:24:13,680
+model to form train of thoughts. To further diversify the training set, they selected a single
+
+247
+00:24:14,680 --> 00:24:21,680
+example from 50 natural language generation tasks such as summarization and included that in their
+
+248
+00:24:22,680 --> 00:24:29,680
+training dataset as well. For training, the authors used Lama with 65 billion parameters as the base
+
+249
+00:24:30,680 --> 00:24:37,680
+model and the input size of 2000 tokens. They trained the model on 1000 collected examples and
+
+250
+00:24:37,680 --> 00:24:44,680
+batch size of 32 for 15 epochs because there wasn't enough data to have a single epoch. But they
+
+251
+00:24:45,680 --> 00:24:52,680
+also manually selected the model checkpoint between the 5th and 10th epochs based on the evaluation
+
+252
+00:24:53,680 --> 00:25:00,680
+on the 50 held out deficits rather than only using the last checkpoint after 15 epochs. They
+
+253
+00:25:00,680 --> 00:25:07,680
+also used the special end of turn token to differentiate between the users and the assistant's
+
+254
+00:25:08,680 --> 00:25:15,680
+role. They used Adam W as the optimizer, which is very similar to Adam except for the fact that
+
+255
+00:25:16,680 --> 00:25:23,680
+they've corrected the way the weight decay is implemented. They used dropout of the
+
+256
+00:25:23,680 --> 00:25:30,680
+residual networks. They started with rate 0 at the bottom level and linearly increased at the
+
+257
+00:25:31,680 --> 00:25:39,680
+dropout rate 2.5 for the last layer. To set the effectiveness of Lama, the authors asked human
+
+258
+00:25:40,680 --> 00:25:47,680
+evaluators to compare its output and to compare its output to the average output of the
+
+259
+00:25:47,680 --> 00:25:54,680
+other models for giving prompt and specify if they prefer Lama's response or the other model's
+
+260
+00:25:55,680 --> 00:26:03,680
+response or if they think it's a tie. Since this is a subjective, very subjective task, the
+
+261
+00:26:04,680 --> 00:26:10,680
+authors also measured the inter-annotator agreement over some randomly selected annotations and
+
+262
+00:26:10,680 --> 00:26:17,680
+they showed that the inter-annotator agreement is really high. Human evaluators compared Lama with
+
+263
+00:26:18,680 --> 00:26:25,680
+these 5 models on one-on-one settings. The results summary is showed in the right-hand side graph
+
+264
+00:26:26,680 --> 00:26:34,680
+and it shows that while comparing Lama with Alpaca on 74% of the cases, the results are
+
+265
+00:26:34,680 --> 00:26:43,680
+comparing Lama with Alpaca on 74% of the cases, the human evaluators either preferred Lama
+
+266
+00:26:44,680 --> 00:26:50,680
+or they assumed it's a tie. This is impressive because the Alpaca model, while has the same
+
+267
+00:26:51,680 --> 00:27:03,680
+number of parameters, is trained on 52 times more data. Another impressive finding is that in 43%
+
+268
+00:27:04,680 --> 00:27:12,680
+of the cases, the human evaluators preferred Lama over GPT-4 or they claimed that the two
+
+269
+00:27:13,680 --> 00:27:21,680
+were in a tie. In another evaluation, the authors used GPT-4 as the evaluator and the comparison
+
+270
+00:27:22,680 --> 00:27:28,680
+results had overall a similar trend. However, GPT-4 preferred answers from larger models more
+
+271
+00:27:28,680 --> 00:27:36,680
+often. Interestingly enough, in 90% of the cases, GPT-4 actually preferred Lama's response
+
+272
+00:27:37,680 --> 00:27:45,680
+over its own response. In an appellation study, the authors experimented with the quality
+
+273
+00:27:46,680 --> 00:27:53,680
+and diversity of the training data. To do so, they find in the 7 billion version of the model
+
+274
+00:27:53,680 --> 00:28:00,680
+with 2,000 examples. So they fixed the number of examples, but the sources of these examples
+
+275
+00:28:01,680 --> 00:28:07,680
+were coming from different data sets. Then they asked GPT-4 to grade the helpfulness of
+
+276
+00:28:08,680 --> 00:28:14,680
+each of these trained models, with six being the highest and one being the lowest helpful.
+
+277
+00:28:15,680 --> 00:28:22,680
+For each data set, five examples from its testing split were randomly selected for this evaluation.
+
+278
+00:28:23,680 --> 00:28:30,680
+As you can see in the bar chart, the first data set is coming from Vikiha.
+
+279
+00:28:31,680 --> 00:28:37,680
+This data set has high quality but low diversity because it's a highly moderated data set, hence
+
+280
+00:28:38,680 --> 00:28:43,680
+the high quality, but all the prompts are in the format of how to hence the low diversity.
+
+281
+00:28:43,680 --> 00:28:57,680
+The second data set here is unfiltered stack exchange because it has many different topics,
+
+282
+00:28:58,680 --> 00:29:04,680
+it has high diversity, but since it's unfiltered, it has low quality.
+
+283
+00:29:05,680 --> 00:29:12,680
+The last column, which is the best performing one, is filtered stack exchange, which means
+
+284
+00:29:13,680 --> 00:29:18,680
+it has both high quality and high diversity, and that's why it has the best performance.
+
+285
+00:29:19,680 --> 00:29:24,680
+This experiment confirms that the importance of both quality and diversity of the data
+
+286
+00:29:25,680 --> 00:29:32,680
+is crucial for instruction tuning. Thank you everyone for listening to me so far.
+
+287
+00:29:32,680 --> 00:29:37,680
+Next, Hossein will talk about reinforcement learning with him and feedback.
+

@@ -1,0 +1,1316 @@
+1
+00:00:00,000 --> 00:00:13,460
+Hi, my name is Anthony Boyko and I will be talking about the remaining four papers in the vision transformers lecture that my partner and you just started talking about.
+
+2
+00:00:13,460 --> 00:00:25,740
+The 1st, being emerging properties and self-supervised vision transformers, it focuses on self distillation with no labels. Also called Dino as the proposed model in this paper.
+
+3
+00:00:25,740 --> 00:00:31,380
+It is a self-supervised approach to vision transformers and it builds upon.
+
+4
+00:00:31,380 --> 00:00:46,140
+Diet and highlights the success of canaries neighbors without additional fine tuning under the few stipulations and needs a momentum encoder and multi crop augmentation. I'll discuss about those later in the presentation.
+
+5
+00:00:46,140 --> 00:00:49,040
+Self distillation with no labels.
+
+6
+00:00:49,040 --> 00:00:54,460
+What is it? So I'm going to 1st start by just getting a very brief overview.
+
+7
+00:00:54,460 --> 00:01:01,220
+Of what it is, and then I'll add so go on. It will be more and more in depth. So imagine an input image X.
+
+8
+00:01:01,220 --> 00:01:10,340
+We're going to generate a pair of rent of views X 1 and X 2. So these are some random transformation. Imagine we rotate the image.
+
+9
+00:01:10,340 --> 00:01:14,020
+Crop it, blur it, things of that nature.
+
+10
+00:01:14,020 --> 00:01:17,940
+We're going to input them into the network G beta.
+
+11
+00:01:17,940 --> 00:01:23,380
+In this case, the diagram is showing where there's 1 student 1 teacher.
+
+12
+00:01:23,820 --> 00:01:27,340
+Denoted by the S and T, respectively, but you could have more students.
+
+13
+00:01:28,260 --> 00:01:30,860
+We're going to make a prediction as shown by the soft max.
+
+14
+00:01:31,620 --> 00:01:36,780
+And then we're going to use the probabilities to calculate the loss where the loss function is just the cross entropy.
+
+15
+00:01:38,660 --> 00:01:49,300
+And then we update the weights a few things that you'll notice here is the teacher is influenced by this exponential moving average by the students. I'll explain the purpose of that later.
+
+16
+00:01:49,540 --> 00:01:58,660
+And that's what the stands for exponential moving average. There's a centering operation stop dimension collapse in the teacher network.
+
+17
+00:01:59,740 --> 00:02:02,380
+And then also because we don't really want
+
+18
+00:02:05,220 --> 00:02:11,940
+The teacher to be learning from this from its prediction. We have this stop gradient. So it's values don't update.
+
+19
+00:02:12,780 --> 00:02:23,940
+So, first, we'll go over the network cost function. Like, what are we actually trying to accomplish here? Well, we're given a global set of views, X and a local set of views X 1.
+
+20
+00:02:23,940 --> 00:02:35,940
+Our X prime, sorry, we wish to minimize the cross entropy loss, which is denoted by L under subscript C this multi crop component of the architecture.
+
+21
+00:02:36,260 --> 00:02:46,940
+Has the author uses or this is the multi crop component of the architecture. The author uses to global views at 224 squared and 96 squared.
+
+22
+00:02:46,940 --> 00:02:50,700
+So, these are a small and a large image.
+
+23
+00:02:50,700 --> 00:03:00,300
+Global views are large parts of the original image. Imagine something greater than 50% and local views are small patches.
+
+24
+00:03:01,300 --> 00:03:14,660
+We want to minimize the two views or minimize the loss between the two views using this cross entropy loss. So between the global view and the local views. So that's what the way you're trying to minimize the difference between.
+
+25
+00:03:15,660 --> 00:03:30,020
+And you can see the first summation is all of the local views within the set and the local views do not equal the global views. And then you go over all of the different global views.
+
+26
+00:03:30,020 --> 00:03:48,020
+Unlike knowledge distillation, there's no priority for the teacher. So this is where we solve this by using previous iterations from the students to make that priority. And this is the momentum encoder.
+
+27
+00:03:49,020 --> 00:04:01,020
+The exponential moving average is how this momentum encoder works. And it's based on these previous iterations on how the teacher network updates its weights.
+
+28
+00:04:01,020 --> 00:04:11,020
+Because when you initialize the model, both networks are going to be started at like random weights. And so how do we update the teacher.
+
+29
+00:04:11,020 --> 00:04:20,020
+If we have no basis, we do that based on the student and then the students will learn from now this updated teacher.
+
+30
+00:04:20,020 --> 00:04:32,020
+So the value of this is some parameter lambda, which is just basically how much are we keeping from the original teacher network. And then the inverse of that value between the students.
+
+31
+00:04:32,020 --> 00:04:46,020
+So this is just basically how much are we keeping from the original teacher network and then the inverse of that value between zero and one is going to be how much do the students influence the teacher.
+
+32
+00:04:46,020 --> 00:04:53,020
+Basically how much are they, they're moving average is going to influence the teacher.
+
+33
+00:04:53,020 --> 00:05:03,020
+So I talked about avoiding collapse earlier with the centering. Basically what this is is the model can experience dimension reduction if we train it too much.
+
+34
+00:05:03,020 --> 00:05:13,020
+And then if that happens, it stops being a useful predictor because that means you've lost some sort of variable when you're in your output.
+
+35
+00:05:13,020 --> 00:05:19,020
+And so how do the authors avoid this? Well, these two operations.
+
+36
+00:05:19,020 --> 00:05:33,020
+If you use them individually, you'll see they actually can cause the dimension collapse to expedite. So it's basically a balancing act between the two depending on your data set.
+
+37
+00:05:33,020 --> 00:05:40,020
+You use the centering operation to adjust the update rule for the teacher network to be dependent on the mean of each batch.
+
+38
+00:05:40,020 --> 00:05:49,020
+So basically what this means is each batch and training will have less variance because it's influenced by the mean of all values.
+
+39
+00:05:49,020 --> 00:06:01,020
+So you will see it like you'll see the difference between batches is less and so that means each update will have you less likely to be affected by outliers.
+
+40
+00:06:01,020 --> 00:06:11,020
+However, this means you can have the training collapse to some uniform distribution because eventually like that gap will shrink.
+
+41
+00:06:11,020 --> 00:06:30,020
+So there's this sharpening, which is this edge enhancement, and it has the opposite effect and accomplished by using a low temperature in the softmax normalization basically making the difference when the probabilities are in the softmax or pronounced because you've added in some sort of value there.
+
+42
+00:06:30,020 --> 00:06:41,020
+And if you see the values below here are the centering formulas. So we have some teacher network and then we're just adding some bias term, which is the centering value.
+
+43
+00:06:41,020 --> 00:06:59,020
+And then the centering value is calculated by some parameter that adjusts based on the batch values, which is that that parameter M is how much the batch influences.
+
+44
+00:07:00,020 --> 00:07:10,020
+So we've talked a lot about how does this, what's the goal of what this model is trying to accomplish, what is it actually using.
+
+45
+00:07:10,020 --> 00:07:25,020
+So the architecture for it is it takes the input images, it feeds this into a vision transformer or a ResNet backbone, and then it goes through a projection head, and the projection head is a three layer multi layer perceptron,
+
+46
+00:07:25,020 --> 00:07:38,020
+and then used fed into an L2 norm, which is the function is very similar to Pythagoras, where you're just taking like the square root of each of the components to get the distance.
+
+47
+00:07:38,020 --> 00:07:44,020
+And then you have the fully connected layer, which you use then to make your output.
+
+48
+00:07:44,020 --> 00:07:54,020
+So now we'll go into some experiments that they ran. First they compared it on ImageNet, which they wanted to see both in the linear and the k-nears neighbor evaluation.
+
+49
+00:07:55,020 --> 00:08:02,020
+They did it on both ResNet 50 and vision transformer architectures.
+
+50
+00:08:02,020 --> 00:08:11,020
+And you can see that Dino performs the best in all different areas.
+
+51
+00:08:11,020 --> 00:08:18,020
+And also you'll see in when they're comparing the supervised methods, they only did it on the small vision transformers.
+
+52
+00:08:18,020 --> 00:08:30,020
+So on those tests, like you could see a better result given the larger architecture sizes.
+
+53
+00:08:30,020 --> 00:08:49,020
+Another thing you can see here too is there's a lot less parameters for Dino when you're comparing with these bigger vision transformers, like even at the largest Dino size with the big eight size patches.
+
+54
+00:08:49,020 --> 00:08:59,020
+And even the 16 size, you'll see 85 parameters and then 312 and 63 images.
+
+55
+00:08:59,020 --> 00:09:07,020
+And as you'll see later in the experiments, the smaller patch sizes are better.
+
+56
+00:09:07,020 --> 00:09:21,020
+The only surprising thing is the k-nears neighbors doesn't actually perform the best on the biggest vision transformer network for some reason. It performs better on the smallest one.
+
+57
+00:09:21,020 --> 00:09:33,020
+And so now they also compare the self-supervised learning on four different tasks on ImageNet, being image retrieval, copy detection, video, instant segmentation, and transferring.
+
+58
+00:09:34,020 --> 00:09:49,020
+Image retrieval is evaluated on ImageNet and Google Landmarks V2 dataset and how they measure success is through the mean average precision, and it's based on revisited Oxford and Paris as the two locations.
+
+59
+00:09:49,020 --> 00:09:59,020
+The M and H here refer to the severity of the split, so both medium and hard splits, which is just inherent to the dataset.
+
+60
+00:10:00,020 --> 00:10:14,020
+One thing I find a little weird about this experiment is all the other ones are trained on ImageNet, where the best performing one is trained on a different dataset being this Google Landmarks.
+
+61
+00:10:14,020 --> 00:10:34,020
+So, even though with the Google Landmarks, Dino performs the best, I don't necessarily think it's a fair comparison against this R101 was RMAC architecture because they're not being pre-trained on the same data source.
+
+62
+00:10:34,020 --> 00:10:42,020
+So, it doesn't necessarily say that Dino is performing better.
+
+63
+00:10:42,020 --> 00:10:52,020
+Next is the copy detection. Evaluation is on the strong subset of INRA copy data's dataset. The goal is detecting images that have been distorted.
+
+64
+00:10:52,020 --> 00:11:06,020
+Basically, how I said earlier, we do, we create these views where you can do various effects of them. So, the goal of this is to see has one of those artificial augmentations occurred.
+
+65
+00:11:07,020 --> 00:11:23,020
+So, they train this on 10K destructor images that are randomly sampled from the dataset described on the slide, and the copy detection uses cosign similarity on the features, and that's how they're ranking the precision there.
+
+66
+00:11:24,020 --> 00:11:45,020
+20K images were learned to use the features, so what they mean by this is they fine tune the model, or they train the model on the 20,000 images, and then they augmented 10,000 of them, and then they check to see if it could detect those 10,000.
+
+67
+00:11:46,020 --> 00:11:56,020
+You'll see Dino does perform the best at a smaller dimension size, and even at a smaller resolution.
+
+68
+00:11:56,020 --> 00:12:09,020
+So, that mean, which is a pretty big improvement because the bigger resolution, let me, there's more pixels that the model has to work with, and you can see granularity differences better.
+
+69
+00:12:10,020 --> 00:12:15,020
+So, next is video instant segmentation.
+
+70
+00:12:15,020 --> 00:12:19,020
+Basically, we're trying to track features on video files.
+
+71
+00:12:19,020 --> 00:12:24,020
+Like, imagine we're driving on a road and we want to see the part that's drivable.
+
+72
+00:12:24,020 --> 00:12:38,020
+So, this is what the goal of this task would be. It's basically as the video goes along, maintain the different classes, whether it's like the drivable part of a road in a car, through a camera, or.
+
+73
+00:12:39,020 --> 00:12:49,020
+Separating like an animal in a video as it's flying or something.
+
+74
+00:12:49,020 --> 00:12:57,020
+It's trained on ImageNet, and they use two different metrics for this one. There's the mean region similarity, and then there's the contour.
+
+75
+00:12:57,020 --> 00:13:08,020
+So, the contour would be kind of like your lines, and then the mean region would be just like the overall area. So, one's like edges and one's the area.
+
+76
+00:13:08,020 --> 00:13:17,020
+And, as you can see on the right there, they have one where they're both comparing both of them, like the average between the two, and then them independently.
+
+77
+00:13:17,020 --> 00:13:30,020
+And Dino does the best out of the ImageNet ones. However, there was a different data set that performed significantly better.
+
+78
+00:13:30,020 --> 00:13:40,020
+So, maybe they should have tried this on that data set as well, but on ImageNet, Dino does perform the best.
+
+79
+00:13:48,020 --> 00:13:50,020
+So, here's some examples of this video.
+
+80
+00:13:50,020 --> 00:13:59,020
+Instant segmentation, if you want to see like more qualitative results, you can see like the red area is the segmented object.
+
+81
+00:13:59,020 --> 00:14:09,020
+And then in the supervised approach, you can see more little red dots, especially in the group of ducks in the image where it's not actually the ducks that it's trying to segment.
+
+82
+00:14:10,020 --> 00:14:29,020
+And basically what the segmentation is, is it's a mask obtained. So, we're trying to like, if imagine a matrix, highlight the points where the objects is in that particular class.
+
+83
+00:14:29,020 --> 00:14:36,020
+And the threshold for this is 60% and it's based upon the self-attention maps in the transformer.
+
+84
+00:14:36,020 --> 00:14:47,020
+And the comparison similarity is using the, sorry, the comparison is using the jacquard similarity from images on Pascal VOC12 data set.
+
+85
+00:14:47,020 --> 00:14:53,020
+And Dino performed significantly better than the compared against models.
+
+86
+00:14:53,020 --> 00:14:58,020
+Where the compared against models were almost the same as random.
+
+87
+00:14:58,020 --> 00:15:10,020
+The next task is transfer learning. So Dino versus the supervised approach when evaluating transfer learning, you know, it performs almost every data set for both networks.
+
+88
+00:15:10,020 --> 00:15:27,020
+The difference is very small. So, like, most of these are fairly marginal improvements other than like, maybe the ImageNet one, but it's still an improvement nonetheless.
+
+89
+00:15:27,020 --> 00:15:36,020
+So the abolition study of Dino is basically we're trying to see what parts of the model in Dino are actually more beneficial than others.
+
+90
+00:15:36,020 --> 00:15:49,020
+We first, we noticed that small patch sizes show better performance. However, the cost is significantly slower. So the 16 by 16 patches will perform worse than the 8 by 8s.
+
+91
+00:15:50,020 --> 00:15:56,020
+Given that, but obviously it'll be slower because if there are only 8 by 8 patches, that means there's more tokens for the model to learn.
+
+92
+00:15:56,020 --> 00:16:03,020
+And you can see that by the throughput versus the performance increase.
+
+93
+00:16:03,020 --> 00:16:16,020
+Where the increase benefit is more pronounced is on the DIT transformer going from 16 to 8 has multiple percentage points increase where on vision transformers.
+
+94
+00:16:16,020 --> 00:16:20,020
+It was it's closer to one.
+
+95
+00:16:20,020 --> 00:16:29,020
+Next, it's highlighting on basically what features in Dino affect the performance in the various compared to the default settings.
+
+96
+00:16:29,020 --> 00:16:38,020
+So, for instance, the sync horn knob has minimal effect. If we include that setting.
+
+97
+00:16:38,020 --> 00:16:52,020
+Compared to the base model, there is a 0.6% difference that can use neighbors and a 0.1% difference on the linear.
+
+98
+00:16:52,020 --> 00:17:02,020
+However, if we don't have the momentum encoder, the accuracy goes to zero. So obviously this thing's crucial.
+
+99
+00:17:02,020 --> 00:17:16,020
+Next, the multi crop is about a 5% or we have 4 to 5% depending on if you're looking can years neighbor linear decrease on each of them respectively.
+
+100
+00:17:16,020 --> 00:17:23,020
+And similarly, if you go to mean squared error instead of cross entropy, you see a significant decrease.
+
+101
+00:17:33,020 --> 00:17:38,020
+Next, we're going to talk about mask auto encoders are scalable vision learners.
+
+102
+00:17:38,020 --> 00:17:54,020
+So this paper introduces an asymmetric encoder decoder architecture, which what I mean by this is the encoder uses a subset of the data set and decoder uses encoded data plus learned component to represent the rest of input image.
+
+103
+00:17:54,020 --> 00:17:59,020
+And it shows masking a high proportion of the input image to be meaningful subsurface.
+
+104
+00:17:59,020 --> 00:18:17,020
+My mean by this is learning like mask through a large part of the image is just a good predictor when it comes to vision learning and using mask auto encoders.
+
+105
+00:18:17,020 --> 00:18:25,020
+The training speeds increase from 2.8 to 4.1 times respect, depending on the input parameters in the model.
+
+106
+00:18:25,020 --> 00:18:33,020
+So first we'll talk about what is a mask. Well, I kind of talked about a little bit earlier, but it's a matrix use to determine which parts of the input image to use.
+
+107
+00:18:33,020 --> 00:18:49,020
+So, if on the left hand side we had this cheetah, all the parts that are colored are the parts of the image we want to use that in the mask, and then everything else is represented by zeros in the gray section.
+
+108
+00:18:49,020 --> 00:19:02,020
+And then what the goal of the mask is to do is it's to try and rebuild that image. So that's the middle it's like that's the rebuild what the model would predict, given the initial input image on the right.
+
+109
+00:19:03,020 --> 00:19:14,020
+So if we know we know what a mask is. Well, what kind of strategies are important here. Like, as you can see here, there's random there's block, there's grid, which ones perform better.
+
+110
+00:19:14,020 --> 00:19:24,020
+What about different sizes like what if I only mask 25% of the image 50, 75% do these different ratios of performance.
+
+111
+00:19:24,020 --> 00:19:37,020
+And, but you can see here, when you look at the random that it performs the best out of them, because like if you look at the grid, although the parts where the grid is didn't mask things.
+
+112
+00:19:37,020 --> 00:19:47,020
+It's very clear. You have this grid like block pattern all over where there's a clear distinction on the mask didn't perform too well.
+
+113
+00:19:47,020 --> 00:19:59,020
+And then the block you see a similar like this huge parts of blurring where it just didn't have any information anywhere nearby. So it just like it can't predict that pixel very well where the random.
+
+114
+00:19:59,020 --> 00:20:07,020
+Although certain aspects may be slightly worse overall it's a better image.
+
+115
+00:20:07,020 --> 00:20:12,020
+So now, what is a mask auto encoder. Well,
+
+116
+00:20:13,020 --> 00:20:21,020
+we're going to start the simple approach like as we did on the last paper and we'll slowly expand upon and making it more complex on how we describe it.
+
+117
+00:20:21,020 --> 00:20:32,020
+So first, we're going to take the input image and we're going to ignore a portion of the input, either masking and then we feed into the encoder.
+
+118
+00:20:32,020 --> 00:20:40,020
+That remaining data, then we add some additional features. So this is the positional data. So this is the features we're trying to learn to.
+
+119
+00:20:40,020 --> 00:20:46,020
+So when the decoder can recreate the image.
+
+120
+00:20:46,020 --> 00:20:52,020
+And then once we decode the image we use that data to reconstruct.
+
+121
+00:20:52,020 --> 00:20:55,020
+We use the decoded data to reconstruct the image.
+
+122
+00:20:55,020 --> 00:21:04,020
+So on this figure on the right we have some mass data. We only include this mass data. These blue parts represent the mist where the mask was.
+
+123
+00:21:04,020 --> 00:21:11,020
+Or like the positional data for these input images and then everything else is the gray squares or what we're trying to learn in the decoder.
+
+124
+00:21:11,020 --> 00:21:17,020
+And then we reconstruct the image through that decoded data.
+
+125
+00:21:17,020 --> 00:21:28,020
+So more formally, we approach this as we define the input into a series of patches. So those are the grids. We samples a set of those patches and mask the rest.
+
+126
+00:21:28,020 --> 00:21:32,020
+So each of those patches where the grids on the previous square.
+
+127
+00:21:32,020 --> 00:21:39,020
+The mask encoder, it uses a vision transformer to take the unmasked patches as inputs.
+
+128
+00:21:39,020 --> 00:21:48,020
+We embed the unmasked patches. And then we process this using a series of transformer blocks, which I'll explain more about later.
+
+129
+00:21:48,020 --> 00:22:00,020
+The decoder is both these encoded visible patches and a set of mask tokens. These mass tokens are a shared learn feature vector representing each of the missing patches.
+
+130
+00:22:00,020 --> 00:22:13,020
+The reconstruction target here is the decoder's output that is reshaped to form the reconstructed image. And we've entered the loss of this of the mean squared error between the predicted and the original image.
+
+131
+00:22:13,020 --> 00:22:18,020
+So the abolition study is, once again, what is important in the model.
+
+132
+00:22:18,020 --> 00:22:27,020
+So there's two different things that they're comparing it. It's a fine tuned and a linear probed.
+
+133
+00:22:27,020 --> 00:22:31,020
+Part of the encoder. So.
+
+134
+00:22:31,020 --> 00:22:39,020
+And the first part is saying like, okay, how many blocks should we do.
+
+135
+00:22:39,020 --> 00:22:44,020
+And you can see there's a middle ground like you don't want to go too far.
+
+136
+00:22:44,020 --> 00:22:50,020
+We're both models performed both fine tuning and linear perform best at eight.
+
+137
+00:22:50,020 --> 00:22:54,020
+And then the width.
+
+138
+00:22:54,020 --> 00:23:00,020
+It's just how wise the feature vector.
+
+139
+00:23:00,020 --> 00:23:05,020
+I'm guessing this also has to do more with the input image size.
+
+140
+00:23:05,020 --> 00:23:09,020
+It performs better at the 512.
+
+141
+00:23:09,020 --> 00:23:13,020
+And then is the
+
+142
+00:23:13,020 --> 00:23:21,020
+Is encoding with mass tokens or without better.
+
+143
+00:23:21,020 --> 00:23:23,020
+And you can see.
+
+144
+00:23:23,020 --> 00:23:27,020
+And so the flocks is how much like how much complexity it adds.
+
+145
+00:23:27,020 --> 00:23:32,020
+If we don't include the mass token. So basically we only include.
+
+146
+00:23:32,020 --> 00:23:37,020
+The parts that are meaningful inputs from the image.
+
+147
+00:23:38,020 --> 00:23:43,020
+See a significant increase in the linear probing performance and a slight increase in the fine tuning.
+
+148
+00:23:43,020 --> 00:23:48,020
+But it's 3.3 times less of operations that have to be processed.
+
+149
+00:23:48,020 --> 00:23:51,020
+So that's a significant increase in speed.
+
+150
+00:23:51,020 --> 00:23:53,020
+Where the reconstruction target.
+
+151
+00:23:53,020 --> 00:24:00,020
+You see pixel with normalization performance better than PCA or.
+
+152
+00:24:00,020 --> 00:24:03,020
+The token approach.
+
+153
+00:24:03,020 --> 00:24:05,020
+And date augmentation.
+
+154
+00:24:05,020 --> 00:24:14,020
+The cropped in random size performs better than cropped big size or.
+
+155
+00:24:14,020 --> 00:24:17,020
+Yeah.
+
+156
+00:24:17,020 --> 00:24:24,020
+And mass sampling. So this is the difference with the ratios and.
+
+157
+00:24:24,020 --> 00:24:32,020
+What kind of strategy and here random with 75% mask performs the best.
+
+158
+00:24:32,020 --> 00:24:36,020
+Now here's the comparison to the models.
+
+159
+00:24:36,020 --> 00:24:43,020
+So they can you can see here compares better against Dino.
+
+160
+00:24:43,020 --> 00:24:54,020
+And even also this be it when it's also fine tuned on another data set as well, not just the in the image net 1k.
+
+161
+00:24:54,020 --> 00:25:01,020
+And performs better at all sizes.
+
+162
+00:25:02,020 --> 00:25:09,020
+And then yeah, so the another key thing you'll see here is.
+
+163
+00:25:09,020 --> 00:25:15,020
+The big big 16 the large 16 and huge 16.
+
+164
+00:25:15,020 --> 00:25:22,020
+Are the models and so they just represent the size of the model and also the patch size.
+
+165
+00:25:22,020 --> 00:25:33,020
+And then the their images are all 224 by 224 except for the vision transformer huge is 448.
+
+166
+00:25:33,020 --> 00:25:43,020
+Or the one that has the subscript of that.
+
+167
+00:25:43,020 --> 00:25:48,020
+Next, so in this is another key experiment. It's basically.
+
+168
+00:25:48,020 --> 00:25:53,020
+Rather than just linear probing or full fine tuning.
+
+169
+00:25:53,020 --> 00:25:58,020
+They want to try and do a mini or a mid ground between the two.
+
+170
+00:25:58,020 --> 00:26:02,020
+Which is this like to say, can we.
+
+171
+00:26:02,020 --> 00:26:08,020
+Train a portion of the model like that being some of the transformer blocks.
+
+172
+00:26:08,020 --> 00:26:11,020
+And improve the results rather than training all of them.
+
+173
+00:26:11,020 --> 00:26:19,020
+Where and then you want to do this be the idea behind this is because linear probing does not capture.
+
+174
+00:26:19,020 --> 00:26:27,020
+Nonlinear features because it's a linear method, but it's very good at linear features.
+
+175
+00:26:27,020 --> 00:26:32,020
+Where the fine tuning and the deep learning approach can capture these nonlinear features.
+
+176
+00:26:32,020 --> 00:26:34,020
+So.
+
+177
+00:26:34,020 --> 00:26:41,020
+If we know our data set does have these nonlinear features, we can fine tune some of the transformer blocks.
+
+178
+00:26:41,020 --> 00:26:44,020
+And the order of them is specific.
+
+179
+00:26:44,020 --> 00:26:51,020
+They did the authors in this paper did train specific transformer blocks in an order.
+
+180
+00:26:51,020 --> 00:26:56,020
+Rather than just starting from 1st and because not all of them have the same benefit.
+
+181
+00:26:56,020 --> 00:26:59,020
+But you can see.
+
+182
+00:26:59,020 --> 00:27:04,020
+That it does make a meaningful difference when we're training.
+
+183
+00:27:04,020 --> 00:27:08,020
+4 to 6, you can see a significant improvement.
+
+184
+00:27:08,020 --> 00:27:16,020
+As opposed to 0 and going from 18 to 24, you don't really see much improvement, even from 12.
+
+185
+00:27:16,020 --> 00:27:24,020
+So that can also like speed up your model significantly if you only partially fine tune it.
+
+186
+00:27:24,020 --> 00:27:30,020
+Next is the transfer learning. It's a common task in any machine learning.
+
+187
+00:27:30,020 --> 00:27:35,020
+If we train something once can we.
+
+188
+00:27:35,020 --> 00:27:39,020
+Transfer to a different task that learned component.
+
+189
+00:27:39,020 --> 00:27:46,020
+So the mascot on quarter performs better than all of the other papers.
+
+190
+00:27:46,020 --> 00:27:53,020
+And on all the other data sets unsurprisingly the biggest model performs better.
+
+191
+00:27:53,020 --> 00:28:05,020
+Here, they also compare against using pixels or tokens as the reconstruction target and the difference between them is represented at the bottom through this delta.
+
+192
+00:28:05,020 --> 00:28:11,020
+You can see there really isn't much of a difference between them.
+
+193
+00:28:11,020 --> 00:28:16,020
+Whether you're using the token or the normalized pixel.
+
+194
+00:28:17,020 --> 00:28:30,020
+So the next paper is meta former is actually what you need for vision that proposes a generalized architecture for transformers that don't use attention demonstrates that even a simple token mixer such as pooling can produce competitive results and computer vision tasks.
+
+195
+00:28:30,020 --> 00:28:42,020
+Meta former so we're going to talk about just in a brief idea what the metaphor is and it's model, and then we'll go into it more in depth.
+
+196
+00:28:43,020 --> 00:28:48,020
+So metaphor is an abstracted architecture. It's to drive from transformers.
+
+197
+00:28:48,020 --> 00:29:06,020
+And the idea here is we remove attention from transformers and where intent intention is the token mixer. Let's say metaphor just uses some generalized token mixer and then your specific implementation can use whatever you want.
+
+198
+00:29:06,020 --> 00:29:09,020
+And the authors show that.
+
+199
+00:29:09,020 --> 00:29:22,020
+Meta former that so the like ordering of how you have these blocks is more important by using this architecture called pool former where instead of the more complicated attention task very or.
+
+200
+00:29:22,020 --> 00:29:26,020
+Yeah, they're using this pooling.
+
+201
+00:29:26,020 --> 00:29:30,020
+Block to connect.
+
+202
+00:29:30,020 --> 00:29:35,020
+Instead, and.
+
+203
+00:29:35,020 --> 00:29:38,020
+So, first we'll talk about what is pool former.
+
+204
+00:29:38,020 --> 00:29:44,020
+Sorry, we'll go back here. We'll explain what these things are. So to refresh you.
+
+205
+00:29:44,020 --> 00:29:54,020
+On these what these transformer blocks are is you have some input embedding. And then you feed that in with the normalization through the token mixer. So the token mixer.
+
+206
+00:29:55,020 --> 00:30:05,020
+Affects what the input embedding does and like how much influence of the model. It goes through another normalization and then also through the multi layer perceptron and increase the input.
+
+207
+00:30:07,020 --> 00:30:10,020
+So, this is what a pool former.
+
+208
+00:30:13,020 --> 00:30:15,020
+Block looks like.
+
+209
+00:30:16,020 --> 00:30:27,020
+Like, first we'll talk about the pool former block. It's that's normalization, the pooling, and then the normalization, the channel.
+
+210
+00:30:27,020 --> 00:30:31,020
+So, first we have the input image. Let's say is this cat.
+
+211
+00:30:31,020 --> 00:30:37,020
+The three is just the different channels, red, green, blue, with the image.
+
+212
+00:30:37,020 --> 00:30:40,020
+We embed the image.
+
+213
+00:30:40,020 --> 00:30:46,020
+And then the first stage is we down sample it by four.
+
+214
+00:30:46,020 --> 00:31:04,020
+This stage uses a ratio of a sixth of a sixth of the total number of blocks in the architecture. So, in these transformer architectures, we can have increasingly large number of blocks.
+
+215
+00:31:04,020 --> 00:31:09,020
+And this is basically just saying the ratio of it is one sixth of that number.
+
+216
+00:31:09,020 --> 00:31:19,020
+Then the second, then we go through another patch embedding. We downsize it in half again using also a sixth of the pool former blocks.
+
+217
+00:31:19,020 --> 00:31:30,020
+And then we downsize it again after embedding it and half. And this time we use half of the total number of blocks and then we embed and then do a sixth.
+
+218
+00:31:30,020 --> 00:31:32,020
+And then we create our output.
+
+219
+00:31:32,020 --> 00:31:42,020
+But yeah, the key thing to note here is the ratio of the pool former blocks. So, let's say we had our first architecture, the smallest size was six.
+
+220
+00:31:42,020 --> 00:31:53,020
+Stage one, two and four would each have one one block and then stage three would have three blocks.
+
+221
+00:31:53,020 --> 00:32:05,020
+So, the results. This was on image classification, object detection, and segmentation, and say static segmentation for the three tasks.
+
+222
+00:32:05,020 --> 00:32:20,020
+Here, there's just a bunch of different architectures and they represent different types of things that they're comparing against. So, for instance, pool formers are proposed.
+
+223
+00:32:21,020 --> 00:32:29,020
+Any multi layer perceptron one, which is going to be is done through for spatial MLP. So that's the site.
+
+224
+00:32:29,020 --> 00:32:44,020
+The right side triangle, and then the upwards facing one are your attention based token mixers, and then the downwards one is a resonant so they're comparing against different types of
+
+225
+00:32:44,020 --> 00:32:50,020
+token mixers and the pooling performs better than all of them, even though it's a very simple operation.
+
+226
+00:32:50,020 --> 00:32:57,020
+And also this max is number of like actual
+
+227
+00:32:57,020 --> 00:33:00,020
+actual computing operations it has to do.
+
+228
+00:33:00,020 --> 00:33:12,020
+And it also performs better accuracy at lower number for across all comparisons, where even smaller model sizes is the left hand.
+
+229
+00:33:12,020 --> 00:33:18,020
+Object detection and instant segmentation.
+
+230
+00:33:18,020 --> 00:33:25,020
+So this is just comparing against different sized bounding boxes and
+
+231
+00:33:25,020 --> 00:33:40,020
+different masking ratios. So it's the small, medium, large objects, and then the bounding boxes, the percentage threshold pool former performs better than the resnet comparison.
+
+232
+00:33:40,020 --> 00:33:44,020
+The mask or it's on red in that that it's trained on.
+
+233
+00:33:44,020 --> 00:33:50,020
+And it also has less parameters, other than at the small size,
+
+234
+00:33:50,020 --> 00:33:55,020
+which is consistent with the other experiments.
+
+235
+00:33:55,020 --> 00:33:59,020
+The segmented segmentation.
+
+236
+00:33:59,020 --> 00:34:04,020
+It's done on 20 K images for training and 2 K images for validation.
+
+237
+00:34:04,020 --> 00:34:19,020
+And it's compared against both resonant and tension based architectures, and it performs better than all of them, and out a smaller parameter size.
+
+238
+00:34:19,020 --> 00:34:28,020
+And the target metric here is the mean intersection over union.
+
+239
+00:34:28,020 --> 00:34:33,020
+So the evaluation study is so this is saying like okay.
+
+240
+00:34:33,020 --> 00:34:36,020
+The results of this generalized.
+
+241
+00:34:36,020 --> 00:34:44,020
+They are better because we're talking about metaphormers. We're trying to see, can we generalize transformers.
+
+242
+00:34:44,020 --> 00:34:48,020
+And show that it isn't just attention.
+
+243
+00:34:48,020 --> 00:34:51,020
+So by adjusting the pooling size.
+
+244
+00:34:51,020 --> 00:34:58,020
+You can see there's slight differences in performance, but not majorly, but going to a depth wise convolution.
+
+245
+00:34:58,020 --> 00:35:09,020
+You can see a larger increase in performance similar requirements in computation.
+
+246
+00:35:09,020 --> 00:35:23,020
+And then another thing you see is going for normalization. If you have no normalization you perform significantly worse difference between batch and layer is very small, but this modified layer normalization is the best.
+
+247
+00:35:23,020 --> 00:35:33,020
+So if you have no normalization you perform significantly worse difference between a relu and see Lou and these other activation layers, you'll see slight differences.
+
+248
+00:35:33,020 --> 00:35:43,020
+And other components like this, if you remove the residual residual connection and the multi layer perceptron head.
+
+249
+00:35:43,020 --> 00:35:47,020
+The accuracy just pretty much goes to zero.
+
+250
+00:35:47,020 --> 00:36:01,020
+So here this is also just showing that even though they used pooling for this architecture, the architecture does perform better with attention. So here they've switched stages three and four.
+
+251
+00:36:01,020 --> 00:36:07,020
+So that's two thirds of the total transformer blocks with attention token mixers.
+
+252
+00:36:07,020 --> 00:36:24,020
+You can see a multiple percentage increase in performance with only a 25% increase a little bit over than that and computation that needs to be done, and about a third increase in parameters.
+
+253
+00:36:24,020 --> 00:36:42,020
+So that is a key point that even though this paper focuses on the generalization is not saying that attention doesn't improve the model is just saying that it's not really the key thing you want to focus on when making your architecture.
+
+254
+00:36:42,020 --> 00:36:52,020
+Next it's with former efficient additive attention for transformer based real time mobile vision applications. So in here it's the introduction of efficient additive attention.
+
+255
+00:36:52,020 --> 00:37:10,020
+It reduces the expensive matrix location operations with an additive approach where the tension and all the other ones was, yeah, it's a matrix multiplication. So when we're dealing with these large inputs and just lots of processing because we run many iterations that
+
+256
+00:37:10,020 --> 00:37:25,020
+are expensive operation that is multiple matrix multiplication adds up over time. So the key point here, and that's where most of the time what we spent on is talking about how this reduction occurs.
+
+257
+00:37:25,020 --> 00:37:34,020
+Yeah, so as we remind ourselves, attention squares are computed by taking the soft max of two matrices q and k with the dimensions.
+
+258
+00:37:34,020 --> 00:37:54,020
+And so the time complexity that is n squared times the dimension size. But if we transpose q, instead of K, then that complexity goes to d squared, like n times d squared, instead of n squared times d.
+
+259
+00:37:54,020 --> 00:38:06,020
+And Q, K and V are the three different matrices used in transformers. It's the keys, the values and the query.
+
+260
+00:38:06,020 --> 00:38:22,020
+So the first way that attention has been improved is through this separable self attention. So given K queries, key or K keys and V values being code them element wise.
+
+261
+00:38:22,020 --> 00:38:31,020
+So rather than encoding them matrix wise if we're encoding the elements because this thing scales nonlinearly it'll perform faster.
+
+262
+00:38:31,020 --> 00:38:40,020
+So first to do this we project the query matrix q into n by one vector q apply a soft max to create context scores.
+
+263
+00:38:40,020 --> 00:38:51,020
+We multiply context scores by the matrix K and pool to create a context vector s element wise multiplication between S and V return the attention scores.
+
+264
+00:38:51,020 --> 00:39:05,020
+So instead of just multiplying these two matrix, we have a summation of a bunch of smaller multiplications.
+
+265
+00:39:05,020 --> 00:39:18,020
+Next is efficient additive attention as we saw traditionally attention depends on three components. What if we remove this key value interaction during the encoding.
+
+266
+00:39:18,020 --> 00:39:27,020
+That's what an efficient additive attention is. So the model rather retains that interaction through linear production layer.
+
+267
+00:39:27,020 --> 00:39:38,020
+So now the modeling depends on two matrices q and K. So how does this do it.
+
+268
+00:39:38,020 --> 00:39:51,020
+It creates this global attention query vector. So we're going to let alpha represent this query vector where the weights like W subscript a is a learnable parameter for the attention weights.
+
+269
+00:39:51,020 --> 00:40:03,020
+And we calculate this query vector by multiplying them pre matrix by this weights parameter, which is divided by the square of the dimensions.
+
+270
+00:40:03,020 --> 00:40:07,020
+And now we're going to make a global query vector.
+
+271
+00:40:07,020 --> 00:40:17,020
+So before this was like our attention scores, we're going to create this global query vector by multiplying element wise.
+
+272
+00:40:17,020 --> 00:40:34,020
+So we pull the learned attention with the query matrix to create q the global query vectors, which is this is saying it's the summation of element wise multiplication of the two vectors, or the attention vector multiplied by the query vector.
+
+273
+00:40:34,020 --> 00:40:42,020
+The query matrix and then efficient additive attention output.
+
+274
+00:40:42,020 --> 00:41:01,020
+It's performed element wise multiplication between the key matrix K and global query vector q. So time complexity is N by D for this step, rather than N squared by D or N by D squared.
+
+275
+00:41:01,020 --> 00:41:05,020
+And so to you perform linear transformation tea.
+
+276
+00:41:05,020 --> 00:41:12,020
+This is how we retain that missing matrix that we didn't include. And then we add a normalized query matrix.
+
+277
+00:41:12,020 --> 00:41:16,020
+Q hat. So,
+
+278
+00:41:16,020 --> 00:41:30,020
+what this is doing is we've taken the E matrix and multiply by this global query vector. And because it's a vector, it will multiply faster than another matrix.
+
+279
+00:41:30,020 --> 00:41:51,020
+And then we do the linear transformation to learn that missing interaction on that. And then we add that as a term to the great matrix, because we've included in that linear transformation, the impact of the value to the overall system.
+
+280
+00:41:51,020 --> 00:41:58,020
+So now there's a more visual approach of these different.
+
+281
+00:41:58,020 --> 00:42:06,020
+Methods that I described earlier. So first is the general self attention. It's the three matrix transpose one.
+
+282
+00:42:06,020 --> 00:42:08,020
+Multiply the two together.
+
+283
+00:42:08,020 --> 00:42:11,020
+And then run a soft max.
+
+284
+00:42:11,020 --> 00:42:18,020
+And then multiply by the values. And then use your linear layer to create your output.
+
+285
+00:42:18,020 --> 00:42:30,020
+The most sufferable self attention is the element wise on the Q matrix, then do the multiplication and pool them and then multiply by the values.
+
+286
+00:42:30,020 --> 00:42:34,020
+The efficient additive attention.
+
+287
+00:42:34,020 --> 00:42:39,020
+As you include the attention step in that element wise vector.
+
+288
+00:42:39,020 --> 00:42:41,020
+Then you're just summing them.
+
+289
+00:42:41,020 --> 00:42:45,020
+And then you're multiplying by K.
+
+290
+00:42:45,020 --> 00:42:48,020
+And doing that transformation.
+
+291
+00:42:48,020 --> 00:43:08,020
+And also including a normalization. So, if we look at the complexity of each self attention is usually spatial dimensions on spatial dimensions and it's N by N transpose intention uses on future dimensions and it's D by D.
+
+292
+00:43:08,020 --> 00:43:13,020
+And then separate will uses the element wise operations to improve efficiency and efficient.
+
+293
+00:43:13,020 --> 00:43:21,020
+Added of attention takes a step further with smaller operations being something.
+
+294
+00:43:21,020 --> 00:43:32,020
+So the swift quarter encoder is like, yeah, so we've talked about like how the attention scores are calculated and how.
+
+295
+00:43:33,020 --> 00:43:41,020
+And how the transformer learns, but now we want to talk about the general architecture similar to the previous paper. If all is this four stages.
+
+296
+00:43:41,020 --> 00:43:52,020
+Where the model is decreasing at the same rate, size of the input image by four, then by eight, then by 16 by 32.
+
+297
+00:43:52,020 --> 00:44:01,020
+And you feed it into the convolutional encoder, then you feed it into a swift, a former block, and then you down sample it by two.
+
+298
+00:44:01,020 --> 00:44:04,020
+And then you just repeat for those 4 stages.
+
+299
+00:44:04,020 --> 00:44:14,020
+Each of the swift former encoders has this local representation, which is by the depth wise convolutions 3 by 3 convolution and a 1 by 1 convolution.
+
+300
+00:44:14,020 --> 00:44:20,020
+Then we take that efficient additive attention layer that we explained earlier, then we have our linear transformation.
+
+301
+00:44:20,020 --> 00:44:28,020
+And each common evolution encoder is the depth wise convolution normalization by 1 convolution.
+
+302
+00:44:28,020 --> 00:44:36,020
+The activation layer, which is the gilu and the convo.
+
+303
+00:44:36,020 --> 00:44:39,020
+So here are the results.
+
+304
+00:44:39,020 --> 00:44:44,020
+So swift former is a hybrid between the convalescent and trans transformers.
+
+305
+00:44:44,020 --> 00:44:52,020
+And it has less parameters.
+
+306
+00:44:52,020 --> 00:44:59,020
+Then most than some of the other hybrid approaches, but it has better accuracy.
+
+307
+00:44:59,020 --> 00:45:04,020
+And it has a lower latency. In this case, I don't see.
+
+308
+00:45:04,020 --> 00:45:12,020
+The latency being the biggest issue just in general practice because we're talking in milliseconds. So in any performance setting,
+
+309
+00:45:12,020 --> 00:45:19,020
+prediction, if you're doing something in real time, it just has to be like 60 frames a second. I think it's like the minimum.
+
+310
+00:45:19,020 --> 00:45:31,020
+And so anything like realistically under a latency of 10 milliseconds is going to achieve that goal. The bigger thing is the throughput.
+
+311
+00:45:31,020 --> 00:45:40,020
+It has a better throughput than all of the other hybrid approaches.
+
+312
+00:45:40,020 --> 00:45:47,020
+Not necessarily not all the other transformer ones, but all the other hybrids in most cases.
+
+313
+00:45:47,020 --> 00:45:53,020
+And the throughput here is just your training speed. So the trains faster.
+
+314
+00:45:53,020 --> 00:45:57,020
+And so even though it has less operations that it has to do.
+
+315
+00:45:57,020 --> 00:46:03,020
+If the throughput is like slower, like for instance in DIT.
+
+316
+00:46:03,020 --> 00:46:07,020
+dash T in the second block there.
+
+317
+00:46:07,020 --> 00:46:12,020
+It has a higher throughput even though it has
+
+318
+00:46:12,020 --> 00:46:16,020
+more
+
+319
+00:46:16,020 --> 00:46:21,020
+like computations that it has to do. So like in that case,
+
+320
+00:46:21,020 --> 00:46:26,020
+you're still going to spend a longer time training, even though it is
+
+321
+00:46:26,020 --> 00:46:32,020
+technically faster is due to that it likely has to train more times
+
+322
+00:46:32,020 --> 00:46:42,020
+or more epochs, but you will get a better result with us with form.
+
+323
+00:46:42,020 --> 00:46:47,020
+Next, it's detection and image segmentation. So similar to the last paper.
+
+324
+00:46:47,020 --> 00:46:52,020
+These detection instance segmentations are based on bounding boxes
+
+325
+00:46:52,020 --> 00:46:56,020
+on different thresholds and also masks on different thresholds.
+
+326
+00:46:56,020 --> 00:47:00,020
+And switch former performs the best of all of them.
+
+327
+00:47:00,020 --> 00:47:06,020
+And then they also do on for the semantic. It's the intersection over union.
+
+328
+00:47:06,020 --> 00:47:11,020
+Which is the same metric described earlier.
+
+329
+00:47:11,020 --> 00:47:14,020
+Thank you.
+

@@ -1,0 +1,2980 @@
+1
+00:00:00,000 --> 00:00:04,080
+Hi, everyone. I am Haram and I am with
+
+2
+00:00:04,080 --> 00:00:06,880
+Marie-Anne Smith.
+
+3
+00:00:06,880 --> 00:00:09,760
+We will be discussing compressing and
+
+4
+00:00:09,760 --> 00:00:12,240
+sparsifying large language models.
+
+5
+00:00:12,240 --> 00:00:15,680
+Our presentation is divided into two parts.
+
+6
+00:00:15,680 --> 00:00:17,320
+I will talk about
+
+7
+00:00:17,320 --> 00:00:19,520
+sparsification of large language models and
+
+8
+00:00:19,520 --> 00:00:22,920
+Marie-Anne will discuss quantification of large language models.
+
+9
+00:00:22,920 --> 00:00:24,640
+Here is the outline for today.
+
+10
+00:00:24,640 --> 00:00:26,320
+I'll start off with an introduction.
+
+11
+00:00:26,320 --> 00:00:28,560
+I'll talk about what sparsity is.
+
+12
+00:00:28,640 --> 00:00:32,400
+Then we will extend the mixture of expert principle
+
+13
+00:00:32,400 --> 00:00:34,480
+and talk about G-shard.
+
+14
+00:00:34,480 --> 00:00:38,880
+And after G-shard, we will discuss our third paper, which is Colt T5,
+
+15
+00:00:38,880 --> 00:00:41,200
+a version of the Long T5.
+
+16
+00:00:41,200 --> 00:00:44,960
+We'll talk about its architecture, some evaluation and results.
+
+17
+00:00:44,960 --> 00:00:49,760
+And then I'll hand it over to Marie-Anne to talk about quantification.
+
+18
+00:00:49,760 --> 00:00:51,760
+So what is sparsity?
+
+19
+00:00:51,760 --> 00:00:55,520
+Sparsity uses the idea of conditional computation.
+
+20
+00:00:55,520 --> 00:00:59,360
+In dense models, all parameters are used for all inputs.
+
+21
+00:00:59,360 --> 00:01:04,160
+And sparsity allows us to only run some parts of the whole system.
+
+22
+00:01:04,160 --> 00:01:05,600
+And why we do that?
+
+23
+00:01:05,600 --> 00:01:08,400
+We do that because it helps with efficiency.
+
+24
+00:01:08,400 --> 00:01:09,840
+It helps with speed.
+
+25
+00:01:09,840 --> 00:01:11,760
+It's good for energy consumption.
+
+26
+00:01:11,760 --> 00:01:15,600
+And it's great for capacity generation.
+
+27
+00:01:15,600 --> 00:01:21,280
+So let's talk about what a traditional transformer model looks like.
+
+28
+00:01:21,280 --> 00:01:24,080
+So we have this input layer.
+
+29
+00:01:24,080 --> 00:01:26,480
+And we have the attention layer.
+
+30
+00:01:26,480 --> 00:01:30,800
+Then we have these output tokens.
+
+31
+00:01:32,000 --> 00:01:35,120
+These output tokens are then fed into the feed forward layer.
+
+32
+00:01:35,120 --> 00:01:38,720
+And then we get some output, which is fed onto the next layer.
+
+33
+00:01:38,720 --> 00:01:41,360
+So the key innovation here in the transformers
+
+34
+00:01:41,360 --> 00:01:44,160
+were the attention mechanism that allowed them
+
+35
+00:01:44,160 --> 00:01:46,880
+to consider the entire context of the input data.
+
+36
+00:01:47,760 --> 00:01:51,520
+And this was a substantial leap from the prior sequence models
+
+37
+00:01:51,520 --> 00:01:55,120
+that process data element at a time.
+
+38
+00:01:56,720 --> 00:01:59,200
+So there's a bottleneck here.
+
+39
+00:01:59,200 --> 00:02:03,120
+And the bottleneck is here.
+
+40
+00:02:03,120 --> 00:02:08,720
+So at scale, transformer needs to tackle more data and complex problems.
+
+41
+00:02:08,720 --> 00:02:12,240
+And with the huge number of parameters and operations needed,
+
+42
+00:02:12,240 --> 00:02:14,960
+it makes them very resource intensive
+
+43
+00:02:14,960 --> 00:02:18,560
+and leads to inefficiencies and limits their scalability.
+
+44
+00:02:18,560 --> 00:02:20,400
+So what's the solution for that?
+
+45
+00:02:20,400 --> 00:02:24,080
+The solution is conditional computing or sparse models.
+
+46
+00:02:24,960 --> 00:02:26,880
+So let's talk about it.
+
+47
+00:02:26,880 --> 00:02:30,160
+So we're going to cross this traditional architecture off
+
+48
+00:02:30,160 --> 00:02:32,160
+and we're going to make a few changes.
+
+49
+00:02:32,160 --> 00:02:35,280
+So if you look closely in this diagram,
+
+50
+00:02:35,280 --> 00:02:38,640
+we see that the changes we have made are over here.
+
+51
+00:02:38,640 --> 00:02:42,160
+So we have changed this feed forward network
+
+52
+00:02:42,160 --> 00:02:45,360
+into smaller subnetworks and we're calling them MOEs.
+
+53
+00:02:46,000 --> 00:02:48,080
+And then we have this gating mechanism
+
+54
+00:02:48,080 --> 00:02:51,600
+that decides which input tokens go to which experts.
+
+55
+00:02:52,240 --> 00:02:53,840
+And the rest of the model is same.
+
+56
+00:02:53,840 --> 00:02:56,800
+We have the input layer, tension layer, output tokens.
+
+57
+00:02:57,840 --> 00:03:03,520
+So yeah, what we did is we replaced this entire dense network
+
+58
+00:03:03,520 --> 00:03:05,440
+with smaller subnetworks
+
+59
+00:03:05,440 --> 00:03:09,120
+and we're essentially making it a divide and conquer problem,
+
+60
+00:03:09,120 --> 00:03:13,840
+which is going to be so good in terms of complexity
+
+61
+00:03:13,840 --> 00:03:16,320
+and computational resources.
+
+62
+00:03:19,040 --> 00:03:20,880
+So why are we doing that?
+
+63
+00:03:21,520 --> 00:03:26,480
+We are doing that because it's, as talked about earlier,
+
+64
+00:03:26,480 --> 00:03:27,840
+it's good for efficiency.
+
+65
+00:03:27,840 --> 00:03:30,880
+So a traditional GPT uses all neurons
+
+66
+00:03:30,880 --> 00:03:33,280
+in all matrices for forward passing.
+
+67
+00:03:33,280 --> 00:03:35,600
+So this entire network we see here,
+
+68
+00:03:35,600 --> 00:03:38,960
+all of these neurons are involved in every computation,
+
+69
+00:03:38,960 --> 00:03:40,960
+which is extremely expensive.
+
+70
+00:03:41,760 --> 00:03:45,200
+What if all the neurons are not needed
+
+71
+00:03:45,200 --> 00:03:47,520
+and we only need these orange ones?
+
+72
+00:03:47,600 --> 00:03:50,720
+We are essentially performing triple quadrupled
+
+73
+00:03:50,720 --> 00:03:52,640
+amount of compute that's essential.
+
+74
+00:03:53,840 --> 00:03:58,640
+What if we split this network into smaller subnetwork
+
+75
+00:03:58,640 --> 00:04:00,960
+and each performing a specialized task?
+
+76
+00:04:01,920 --> 00:04:04,320
+In terms of language translation,
+
+77
+00:04:04,320 --> 00:04:06,960
+if we take an example, this number one,
+
+78
+00:04:06,960 --> 00:04:11,840
+this expert would deal with punctuation, for example,
+
+79
+00:04:11,840 --> 00:04:14,000
+and number two would deal with article.
+
+80
+00:04:14,000 --> 00:04:17,840
+So we are dividing this huge problem into a smaller problem
+
+81
+00:04:20,240 --> 00:04:23,760
+and it is very good in terms of complexity.
+
+82
+00:04:25,120 --> 00:04:28,400
+So we saw that there was this routing mechanism
+
+83
+00:04:29,280 --> 00:04:33,280
+that decided which input tokens go to which experts.
+
+84
+00:04:33,280 --> 00:04:35,520
+So let's talk about it in detail.
+
+85
+00:04:36,080 --> 00:04:41,520
+So the routing mechanism is essentially the network
+
+86
+00:04:41,520 --> 00:04:45,200
+that decides which tokens go to which expert.
+
+87
+00:04:45,840 --> 00:04:47,520
+It's actually a learned process.
+
+88
+00:04:47,520 --> 00:04:48,880
+It's not static.
+
+89
+00:04:48,880 --> 00:04:50,960
+It learns and adapts through training.
+
+90
+00:04:50,960 --> 00:04:54,960
+So as the mixture of expert model is exposed to more data,
+
+91
+00:04:54,960 --> 00:04:58,640
+the routing mechanism defines and refines its criteria
+
+92
+00:04:58,640 --> 00:05:02,400
+for selecting the experts for different type of input tokens.
+
+93
+00:05:03,680 --> 00:05:07,360
+So over time, this learning process leads to specialization
+
+94
+00:05:07,360 --> 00:05:10,640
+of experts and each expert becomes more adept
+
+95
+00:05:10,640 --> 00:05:13,200
+at handling specific types of input tokens,
+
+96
+00:05:13,760 --> 00:05:15,760
+which improves the overall efficiency
+
+97
+00:05:15,760 --> 00:05:17,280
+and effectiveness of the model.
+
+98
+00:05:17,840 --> 00:05:21,840
+So at inference time, the routing mechanism learned behavior
+
+99
+00:05:21,840 --> 00:05:26,400
+allows the model to use only a fraction of the experts compute,
+
+100
+00:05:26,400 --> 00:05:27,200
+which is great.
+
+101
+00:05:27,920 --> 00:05:31,600
+So we are essentially performing this amount of computation
+
+102
+00:05:31,600 --> 00:05:34,000
+instead of using the entire network.
+
+103
+00:05:35,360 --> 00:05:36,960
+So let's talk about the paper.
+
+104
+00:05:36,960 --> 00:05:40,000
+The paper is called efficient large-scale language modeling
+
+105
+00:05:40,000 --> 00:05:41,360
+with mixture of experts.
+
+106
+00:05:42,080 --> 00:05:46,560
+So what they do here is they actually use this mixture
+
+107
+00:05:46,560 --> 00:05:52,000
+of expert models at scale and they see how this model performs
+
+108
+00:05:52,000 --> 00:05:54,480
+at scale compared to dense models.
+
+109
+00:05:55,360 --> 00:05:59,600
+So we see that this graph here on the x-axis,
+
+110
+00:05:59,600 --> 00:06:02,560
+we have dense training zeta flops.
+
+111
+00:06:02,560 --> 00:06:05,840
+And on the y-axis, we have an MOE speedup factor.
+
+112
+00:06:06,720 --> 00:06:10,160
+We'll talk about how this is calculated in the next slides,
+
+113
+00:06:10,160 --> 00:06:15,760
+but right now you can just think of it as how much more efficient
+
+114
+00:06:15,760 --> 00:06:19,600
+an MOE model is relative to a dense model.
+
+115
+00:06:21,040 --> 00:06:25,280
+And a speedup factor of 9 would indicate that
+
+116
+00:06:25,280 --> 00:06:28,960
+an MOE model can match the performance of a corresponding
+
+117
+00:06:28,960 --> 00:06:32,720
+dense model using 9 times less compute.
+
+118
+00:06:32,720 --> 00:06:34,960
+So let's talk about the results here.
+
+119
+00:06:34,960 --> 00:06:38,960
+We see that they have tested their model in three domains.
+
+120
+00:06:38,960 --> 00:06:42,160
+So they have tested in domain language modeling,
+
+121
+00:06:42,160 --> 00:06:46,960
+which is testing their model on data that it was trained on.
+
+122
+00:06:46,960 --> 00:06:50,800
+Then they have tested on out of domain, which is a red line,
+
+123
+00:06:51,600 --> 00:06:55,280
+which is testing their model on data that it was not trained on.
+
+124
+00:06:55,280 --> 00:06:56,880
+And then we have zero short priming.
+
+125
+00:06:57,520 --> 00:07:02,560
+So we see that the highest gain is for in domain language modeling.
+
+126
+00:07:02,560 --> 00:07:06,400
+So MOEs are most efficient when evaluated in domain.
+
+127
+00:07:06,400 --> 00:07:13,040
+And we see that the gain is 18 and around 16 or 18 here.
+
+128
+00:07:13,040 --> 00:07:20,560
+So dense models perform 18 to 16 times more better than corresponding
+
+129
+00:07:21,600 --> 00:07:24,640
+MOE models perform better than dense models.
+
+130
+00:07:25,360 --> 00:07:29,920
+So the lowest gain is for the zero short priming, but it's still better.
+
+131
+00:07:30,880 --> 00:07:34,560
+It's around four times better than a dense model.
+
+132
+00:07:36,080 --> 00:07:39,680
+So let's talk about how the speedup factor is calculated.
+
+133
+00:07:40,880 --> 00:07:48,160
+So here C of t is the computed cost function at a given performance level t.
+
+134
+00:07:48,160 --> 00:07:54,080
+So they use interpolation here since they have only discrete values
+
+135
+00:07:54,080 --> 00:07:59,200
+in order to know the continuous values they need to use interpolation.
+
+136
+00:07:59,200 --> 00:08:02,480
+So they use the highest known value and the lowest known value.
+
+137
+00:08:02,480 --> 00:08:07,680
+And then they use a ratio of how far the performance level t
+
+138
+00:08:07,680 --> 00:08:10,560
+is between the lower and the higher reference performances.
+
+139
+00:08:11,280 --> 00:08:16,240
+And then this is the computed cost function.
+
+140
+00:08:17,360 --> 00:08:23,920
+And then the speedup factor is just a ratio of the computed cost of dense and the MOE.
+
+141
+00:08:25,760 --> 00:08:28,240
+Let's talk about the experiments that they performed.
+
+142
+00:08:28,960 --> 00:08:34,400
+So they trained autoregressive transformer models that roughly match the sizes and
+
+143
+00:08:34,400 --> 00:08:35,920
+architecture of GPT-3.
+
+144
+00:08:36,640 --> 00:08:41,440
+They use pre-normalization transformer blocks and GLU activations.
+
+145
+00:08:42,080 --> 00:08:46,400
+And for their dense models, they use only dense attention unlike GPT-3,
+
+146
+00:08:46,400 --> 00:08:49,760
+which uses alternate sparse and dense.
+
+147
+00:08:49,760 --> 00:08:52,240
+And they use top two expert model.
+
+148
+00:08:52,960 --> 00:08:57,520
+And by top two, they mean that when the gating mechanism scores the input
+
+149
+00:08:57,520 --> 00:09:03,680
+based on their relevance and expertise, they use the top two scoring inputs from there.
+
+150
+00:09:04,400 --> 00:09:10,320
+So I want to talk about this table from the paper.
+
+151
+00:09:10,320 --> 00:09:14,000
+So if you look closely, we have the training cost of GPT-3,
+
+152
+00:09:14,000 --> 00:09:15,040
+dense GPT-3.
+
+153
+00:09:15,040 --> 00:09:19,120
+And then they compare it with their dense model and their MOE model.
+
+154
+00:09:19,120 --> 00:09:26,160
+So we see that the training cost of a 13 billion GPT-3 model is 32.67.
+
+155
+00:09:27,120 --> 00:09:28,560
+Zeta flops, that is.
+
+156
+00:09:29,200 --> 00:09:36,800
+And that of an MOE model of 15 billion sizes, just 0.3, which is a huge gap.
+
+157
+00:09:36,800 --> 00:09:43,280
+And we see that these expert models are much, much better performing as compared to dense models.
+
+158
+00:09:45,360 --> 00:09:51,200
+So they pre-trained their data, their model on a union of six English language datasets.
+
+159
+00:09:51,200 --> 00:09:55,600
+I have listed them here and the links are attached to if you want to take a closer look.
+
+160
+00:09:56,160 --> 00:09:59,600
+But I will not be going into too much depth about these.
+
+161
+00:10:01,280 --> 00:10:03,600
+So let's talk about the results.
+
+162
+00:10:03,600 --> 00:10:08,080
+So they evaluate their models based on two metrics.
+
+163
+00:10:08,080 --> 00:10:11,120
+They check perplexity as well as performance.
+
+164
+00:10:11,120 --> 00:10:17,840
+And the reason they choose to is because perplexity is not a great indicator of downstream performance,
+
+165
+00:10:18,480 --> 00:10:19,360
+task performance.
+
+166
+00:10:19,360 --> 00:10:26,400
+So they choose perplexity, which is the confidence that a model has on its predictions.
+
+167
+00:10:26,400 --> 00:10:30,000
+If it's higher perplexity, then that's not good.
+
+168
+00:10:30,000 --> 00:10:31,520
+The model's not confident.
+
+169
+00:10:32,400 --> 00:10:40,000
+And for the data specifics, for in-domain data, they use the reserved portion of the training data,
+
+170
+00:10:40,000 --> 00:10:42,800
+set aside to test the model's performance.
+
+171
+00:10:42,800 --> 00:10:45,360
+And for out-of-domain, they use the pile dataset.
+
+172
+00:10:45,360 --> 00:10:50,160
+Again, these are some of the results from the paper.
+
+173
+00:10:50,160 --> 00:10:54,400
+We, on the left-hand side, we have in-domain data.
+
+174
+00:10:55,040 --> 00:10:59,840
+So this yellow line is for MOE model and this red line is for a dense model.
+
+175
+00:10:59,840 --> 00:11:03,600
+We see that yellow line is constantly less perplexed.
+
+176
+00:11:03,600 --> 00:11:06,480
+So MOE is better performing for in-domain.
+
+177
+00:11:07,120 --> 00:11:13,680
+And even for the out-of-domain data, we see that the yellow line has lesser perplexity.
+
+178
+00:11:14,240 --> 00:11:17,200
+This actually, this gap actually closes at scale.
+
+179
+00:11:18,160 --> 00:11:23,840
+They don't talk about why, but the reason could be overfitting.
+
+180
+00:11:23,840 --> 00:11:29,760
+But still, it performs better than a dense model, constantly less perplexed.
+
+181
+00:11:32,560 --> 00:11:35,680
+Yeah, so these are some of the other results.
+
+182
+00:11:35,680 --> 00:11:41,520
+We see that, so this is a speed-up factor that we talked about earlier.
+
+183
+00:11:41,520 --> 00:11:44,720
+So we see that the best result is for common crawl.
+
+184
+00:11:44,720 --> 00:11:50,880
+And the reason for that is because it's closely related to their model's training data.
+
+185
+00:11:50,880 --> 00:11:56,000
+And we did talk about how their model performs best in in-domain settings.
+
+186
+00:11:56,880 --> 00:12:02,560
+And on the right-hand side, again, we see that this yellow line has the best accuracy,
+
+187
+00:12:03,360 --> 00:12:10,640
+which means MOEs are very good, especially when compared to GPT-3
+
+188
+00:12:10,640 --> 00:12:12,240
+and other dense models.
+
+189
+00:12:12,240 --> 00:12:15,840
+So their accuracy is lesser than the accuracy of MOE.
+
+190
+00:12:19,520 --> 00:12:21,520
+So why are we scaling?
+
+191
+00:12:22,240 --> 00:12:27,520
+We are scaling because it brings dramatic quality gains, as we saw in the previous results.
+
+192
+00:12:28,480 --> 00:12:31,440
+Especially for computer vision and language processing tasks,
+
+193
+00:12:31,440 --> 00:12:36,640
+it yields consistent gains and has led to better classification.
+
+194
+00:12:37,120 --> 00:12:40,720
+This brings me to our second paper, which is Gshard.
+
+195
+00:12:42,000 --> 00:12:48,640
+It's not really an ML paper and more of an engineering paper because they talk about a framework.
+
+196
+00:12:49,760 --> 00:12:55,360
+This is actually a Google's framework called Gshard,
+
+197
+00:12:55,360 --> 00:13:01,840
+where they try to build a one trillion parameter model, but don't quite manage to create it.
+
+198
+00:13:02,160 --> 00:13:08,000
+So they go with the next best thing that they did manage to train and create,
+
+199
+00:13:08,000 --> 00:13:10,560
+which was the 600 billion parameter model.
+
+200
+00:13:12,240 --> 00:13:19,520
+So what they do here is they build a huge MOE model, 600 billion parameter,
+
+201
+00:13:20,160 --> 00:13:29,920
+and they then use parallelization to split their data into multiple machines.
+
+202
+00:13:29,920 --> 00:13:35,680
+So it's the same concept as we discussed earlier, but it's coupled with partition.
+
+203
+00:13:36,400 --> 00:13:42,400
+So here I've written that the large model scale does not come from increasing the depth of the
+
+204
+00:13:42,400 --> 00:13:47,840
+transformer, which is the number of layers, but increasing the width of the transformer,
+
+205
+00:13:47,840 --> 00:13:51,200
+which is the MOE model, essentially.
+
+206
+00:13:52,000 --> 00:13:57,520
+So they combine it with a hard routing to parallelize onto 248 TPUs,
+
+207
+00:13:58,240 --> 00:14:00,880
+and they manage to train it in just four days.
+
+208
+00:14:02,640 --> 00:14:08,240
+And it is based on something that's called SPMD, which means single program multiple data,
+
+209
+00:14:08,240 --> 00:14:14,160
+and it's a concept used in parallel computing, where a single program is executed by processors
+
+210
+00:14:15,200 --> 00:14:19,200
+parallel, but each processor works on a different set of data.
+
+211
+00:14:19,840 --> 00:14:27,840
+So let's talk about the architecture of Gshard. So this is the traditional architecture. We've
+
+212
+00:14:27,840 --> 00:14:34,160
+seen that. And then this is the MOE architecture. We see that we have this feedforward layer,
+
+213
+00:14:34,160 --> 00:14:39,920
+which we have split into multiple networks, subnetworks, and then we have the gating mechanism.
+
+214
+00:14:41,120 --> 00:14:46,720
+So Gshard uses alternate MOE layers with feedforward layers. So we have this MOE layer,
+
+215
+00:14:46,720 --> 00:14:51,920
+then we have a feedforward layer, then we'll have another MOE layer, and then another feedforward,
+
+216
+00:14:51,920 --> 00:14:59,920
+so on and so forth. And then here is what Sharding really is. So they actually split this entire
+
+217
+00:14:59,920 --> 00:15:07,920
+network onto different machines. And this entire thing is actually done by the Gshard framework
+
+218
+00:15:07,920 --> 00:15:12,800
+itself, and the user does not have to worry about the hardware details, which is the great
+
+219
+00:15:12,800 --> 00:15:21,200
+thing about this paper. So every machine has one expert on it. So we have this one expert here,
+
+220
+00:15:21,200 --> 00:15:28,960
+and then this number E expert on this machine. And there are E different machines essentially.
+
+221
+00:15:30,400 --> 00:15:39,680
+So let's talk about the gating mechanism here. So this equation shows us the gating score of
+
+222
+00:15:39,680 --> 00:15:46,640
+each expert. So here this is the input, we feed it into the gate function and we get a score for
+
+223
+00:15:46,640 --> 00:15:53,920
+each expert. And this is what is happening inside each expert. So we multiply the input projection
+
+224
+00:15:54,560 --> 00:15:58,880
+with the weights, then we apply an activation function to it and multiply it with the
+
+225
+00:15:59,520 --> 00:16:06,320
+output weights. And then we the output of each expert is essentially the weighted sum
+
+226
+00:16:07,040 --> 00:16:15,600
+of based on the gating score. So if an expert has a gating score of zero, we don't route any input
+
+227
+00:16:15,600 --> 00:16:23,520
+to it, which intuitively makes sense. And they talk about the considerations that they had while
+
+228
+00:16:23,520 --> 00:16:30,160
+creating this gating function. So they talk about load balancing, they create their gating function
+
+229
+00:16:30,240 --> 00:16:38,960
+in a way that their input is uniformly distributed among each expert. So not a single expert has
+
+230
+00:16:38,960 --> 00:16:47,600
+burden and every expert essentially gets the same number of input tokens. And then they also introduce
+
+231
+00:16:47,600 --> 00:16:56,160
+an auxiliary loss, where the loss function penalizes if it constantly sends inputs to one
+
+232
+00:16:56,160 --> 00:17:04,640
+expert. So it actually appreciates if the distribution is uniform. And then they have
+
+233
+00:17:04,640 --> 00:17:14,480
+random routing. So random routing is where we send the input tokens to the top two experts.
+
+234
+00:17:14,480 --> 00:17:22,880
+But then sometimes if the score difference between the two experts is a lot, one has a very high
+
+235
+00:17:22,880 --> 00:17:28,080
+score and the other has very low, then they'll just neglect the low scoring expert in order to
+
+236
+00:17:29,440 --> 00:17:38,160
+reserve the capacity of each expert. So how do we implement Gshard? As I discussed earlier,
+
+237
+00:17:38,160 --> 00:17:44,400
+it's very efficient and easy to use. We do not do not users essentially do not have to do anything.
+
+238
+00:17:44,400 --> 00:17:50,480
+And everything has been handled. User only adds annotations using the annotation API. So the Gshard
+
+239
+00:17:50,560 --> 00:17:58,640
+framework comes with two main things. It comes with an annotation API that lets users decide
+
+240
+00:17:58,640 --> 00:18:04,960
+whether or not they want something to be replicated or distributed. So the framework
+
+241
+00:18:04,960 --> 00:18:12,720
+would essentially decide itself. 80% of the time the framework would decide for itself whether
+
+242
+00:18:12,720 --> 00:18:20,160
+certain inputs need to be replicated or distributed. But it lets the user have some control as well.
+
+243
+00:18:20,160 --> 00:18:24,640
+So users can decide if they want something to be distributed or replicated.
+
+244
+00:18:25,280 --> 00:18:31,040
+And then it comes with an XLA compiler, which is an accelerated linear algebra compiler,
+
+245
+00:18:31,040 --> 00:18:40,880
+which actually creates a compiled program based on the annotation API and it just
+
+246
+00:18:41,600 --> 00:18:50,000
+shards the input based on that. So these are some characteristics of the XLA compiler.
+
+247
+00:18:50,400 --> 00:18:58,080
+It has unified compilation across frameworks. So it can work with TensorFlow as well as PyTorch.
+
+248
+00:18:58,080 --> 00:19:04,560
+It handles the partitioning itself. So it breaks down large computations into smaller
+
+249
+00:19:04,560 --> 00:19:10,560
+operations. And then it handles data communication as well. So when we are talking about partitioning,
+
+250
+00:19:10,560 --> 00:19:15,520
+a lot of computation and communication needs to happen between partitions as well.
+
+251
+00:19:16,320 --> 00:19:22,240
+And the user does not have to worry about that because the XLA compiler will do it itself.
+
+252
+00:19:22,240 --> 00:19:30,880
+And we will talk about it here. So these are some things that some partitioning considerations
+
+253
+00:19:30,880 --> 00:19:38,480
+that the XLA compiler handles. The two main ones they talk about in the paper are padding
+
+254
+00:19:38,480 --> 00:19:48,880
+and halo exchange. And for example, if a certain tensor does not have even dimensions,
+
+255
+00:19:48,880 --> 00:19:54,160
+so it will not be uniformly distributed. So certain partitions would have more data than
+
+256
+00:19:54,160 --> 00:20:01,200
+other partitions. So what XLA compiler does in such cases is it pads the tensor with either
+
+257
+00:20:01,200 --> 00:20:07,120
+identity matrix or zero. And it then uniformly distributes that tensor.
+
+258
+00:20:08,720 --> 00:20:14,160
+And in some conditions, for example, in convolution tasks, we know that we have a kernel
+
+259
+00:20:14,160 --> 00:20:20,080
+and that sliding window needs to move over our input here. So in this animation, this sliding
+
+260
+00:20:20,080 --> 00:20:28,160
+window is moving over the input. But what if when it reaches this edge here, half of its data is
+
+261
+00:20:28,160 --> 00:20:35,600
+residing on the other partition. So what do we do in such cases? This area in this paper is called
+
+262
+00:20:35,600 --> 00:20:42,320
+halo area. And what the compiler does is when it reaches a halo area, it asks for other partitions
+
+263
+00:20:42,320 --> 00:20:49,680
+to send their halo areas and they do this halo exchange so that each partition has the entire
+
+264
+00:20:49,680 --> 00:20:56,560
+complete window so it can produce accurate results. And this, again, is handled by the XLA
+
+265
+00:20:56,560 --> 00:21:00,880
+compiler and we do not have to worry about it, which is the great thing about it.
+
+266
+00:21:02,800 --> 00:21:09,200
+Let's talk about the experiments they did and the data sets they use. So the data set is mined
+
+267
+00:21:09,200 --> 00:21:15,120
+from the web and it's not available to us. It has documents for over 100 languages
+
+268
+00:21:15,760 --> 00:21:22,880
+to and from English. So the model they train is for massive multilingual machine translation.
+
+269
+00:21:22,880 --> 00:21:28,400
+So it's a machine translation model and it's multilingual. So it translates from different
+
+270
+00:21:28,400 --> 00:21:36,080
+languages to English. The volume is huge. It's a total of 25 billion training examples.
+
+271
+00:21:37,120 --> 00:21:43,040
+And then they have imbalance in language pairs. So say they have languages that have
+
+272
+00:21:43,040 --> 00:21:47,760
+millions of training examples, but for some languages, they do not have a lot of examples
+
+273
+00:21:47,760 --> 00:21:55,600
+for it and they call them low resource languages. And for baseline, they actually train
+
+274
+00:21:55,600 --> 00:22:00,560
+bilingual neural machine translation models for each language pair and then they compare the
+
+275
+00:22:00,560 --> 00:22:07,840
+results with that. So these are some model variations. So they vary two variables. They
+
+276
+00:22:07,840 --> 00:22:14,800
+vary the number of layers in their models and then they vary the number of experts used.
+
+277
+00:22:14,800 --> 00:22:21,600
+So in this table here, we see that they have to start with 2000. They actually start with 128
+
+278
+00:22:21,600 --> 00:22:27,440
+experts and then they move to 512 and then they move to 2048, which is their largest model.
+
+279
+00:22:28,320 --> 00:22:35,200
+And then they start with 12 layers, 36 layers and 60 layered is their largest model.
+
+280
+00:22:35,600 --> 00:22:50,160
+So let's talk about some of the results. So we see that this blue line, so this is actually
+
+281
+00:22:50,160 --> 00:22:59,600
+blue score, delta blue score. So this blue line here is the performance or the delta blue score,
+
+282
+00:22:59,600 --> 00:23:09,600
+which is quality gain of MOE model with 36 layers. So we see that it performs the best and the reason
+
+283
+00:23:09,600 --> 00:23:17,040
+for that is because of the number of layers. So as the number of layers increase, the model
+
+284
+00:23:17,680 --> 00:23:27,280
+due to over parameterization gets to learn a lot. And then this brown line is the 12-layer model,
+
+285
+00:23:27,280 --> 00:23:33,360
+which also intuitively makes sense because we would not expect it to perform better than a
+
+286
+00:23:33,360 --> 00:23:41,680
+deeper model. And then we see that as the scale increases, the quality gain increases as well,
+
+287
+00:23:41,680 --> 00:23:51,680
+which is contributing to our hypothesis that models perform better at scale. So yeah, this is
+
+288
+00:23:51,680 --> 00:23:57,120
+from the graph that we just talked about. We see consistent quality gains with deeper models,
+
+289
+00:23:57,120 --> 00:24:07,040
+so we saw that the model with 36 layers performs better than the model with 12 layers. And then
+
+290
+00:24:07,040 --> 00:24:13,840
+we see that we see improvements for high resource task with more experts. So as the number of experts
+
+291
+00:24:13,840 --> 00:24:22,960
+increase, we see improvements. We see this graph going upward. So this is an other graph that
+
+292
+00:24:22,960 --> 00:24:30,240
+the model talks about. So let's first take a look at the red line here, which is the quality gain
+
+293
+00:24:30,240 --> 00:24:37,200
+measured in delta blue score, which is a standard metric for evaluating the accuracy of machine
+
+294
+00:24:37,200 --> 00:24:46,160
+translation tasks. We see that as we increase the model size, we start off with 37 billion weights
+
+295
+00:24:46,160 --> 00:24:55,840
+and then we move towards 600 billion. And as we increase the size, the blue line, this right here,
+
+296
+00:24:55,840 --> 00:25:02,560
+which is the training wall time, even as our model size increases, this blue line does not
+
+297
+00:25:02,560 --> 00:25:08,880
+increase exponentially, which means that our model is learning really well and is not
+
+298
+00:25:09,680 --> 00:25:15,440
+computationally expensive as compared to dense models. So if you direct your attention to the
+
+299
+00:25:15,440 --> 00:25:23,760
+dotted line here, it represents the computational cost in terms of TPU v3 core years. You'll notice
+
+300
+00:25:23,760 --> 00:25:30,800
+that as we move from a model with 37.5 billion weights to the one with 600 billion weights,
+
+301
+00:25:30,800 --> 00:25:37,920
+the computational cost increases only from 6 to 22 core years. This is just a sublinear increase
+
+302
+00:25:37,920 --> 00:25:48,960
+when considering the 16 fold increase in model size. So it means that MOE models are able to
+
+303
+00:25:48,960 --> 00:25:57,360
+achieve great translation quality in a fraction of time as compared to dense models. They actually
+
+304
+00:25:57,360 --> 00:26:04,640
+talk about the time that their dense model took and it was 235 TPU core years and this is just 22.
+
+305
+00:26:06,480 --> 00:26:11,920
+Let's talk about the training efficiency now. So deeper models are more sample efficient and
+
+306
+00:26:11,920 --> 00:26:18,560
+they converge faster with fewer examples, which is because of the acceleration effect of over
+
+307
+00:26:18,560 --> 00:26:26,960
+parameterization since deeper models have more parameters. We see that here, a model with 12
+
+308
+00:26:26,960 --> 00:26:36,880
+layer takes 995 billion tokens to reach a cross entropy loss of 0.7 while that of just that of
+
+309
+00:26:36,880 --> 00:26:46,160
+36 layers just takes 321 billion tokens, which is three times less than that. Let's discuss the
+
+310
+00:26:46,160 --> 00:26:52,400
+performance now. So the largest model, which is of 600 billion size, can be trained in four days
+
+311
+00:26:53,360 --> 00:27:02,080
+to achieve the best quality while that of 96 layers and 2048 cores took 42 days, which is 10 times
+
+312
+00:27:02,080 --> 00:27:10,000
+more time to train. They also talk about the memory consumption actually. So the memory
+
+313
+00:27:10,000 --> 00:27:16,080
+consumption in Gshard comes from three things. It's the replicated weights, which is in the
+
+314
+00:27:16,080 --> 00:27:20,560
+transformer feedforward layers, then they have distributed weights and then they have activations,
+
+315
+00:27:20,560 --> 00:27:27,360
+which is the output of each layer that is used in forward and backward paths. So if we look here,
+
+316
+00:27:27,360 --> 00:27:36,080
+we see that as we increase the number of experts, so we started off with 128 experts and then we
+
+317
+00:27:36,080 --> 00:27:43,280
+moved towards 2048 experts and as we increase the expert size, our activation weights and our
+
+318
+00:27:44,720 --> 00:27:49,440
+weights actually increase, which intuitively makes sense, but something really interesting
+
+319
+00:27:49,440 --> 00:27:58,000
+happens at the end. So we see that here, instead of the activation weights increasing, we see a
+
+320
+00:27:58,000 --> 00:28:06,400
+little decrease. The reason here is that as the memory size of the activation increases,
+
+321
+00:28:06,400 --> 00:28:14,560
+it cannot be spaced in one partition. So the XLA compiler actually rematerializes this and
+
+322
+00:28:15,520 --> 00:28:22,960
+just uses some of the activations in the memory and then the others are computed during the back
+
+323
+00:28:22,960 --> 00:28:32,640
+pass, which is another great feature of the XLA compiler. So what are the key takeaways here?
+
+324
+00:28:33,360 --> 00:28:40,240
+So Gshard uses SPMD framework for massive scaling, then it provides this annotation
+
+325
+00:28:40,320 --> 00:28:46,400
+APIs that let us decide which tensors we want on every machine and which tensors we want to be
+
+326
+00:28:46,400 --> 00:28:52,160
+split on every machine and then they are able to train a massive multilingual machine translation
+
+327
+00:28:52,160 --> 00:29:01,200
+model of a 600 billion parameter size in just four. Coming to the last paper, which is the
+
+328
+00:29:01,200 --> 00:29:10,000
+conditional long T5. It is a version of the long T5, which uses conditional computation in a very
+
+329
+00:29:10,000 --> 00:29:17,200
+different way. So the last two papers were talking about the same concept, which was the mixture of
+
+330
+00:29:17,200 --> 00:29:26,240
+expert model, but here we have a different concept. They actually use the sparsity in a very different
+
+331
+00:29:26,240 --> 00:29:33,040
+context, which we will discuss in the next slide. So we see that many natural processing tasks
+
+332
+00:29:33,120 --> 00:29:40,480
+benefit from long inputs, but processing long inputs is very expensive. Why? Because of quadratic
+
+333
+00:29:40,480 --> 00:29:45,200
+attention complexity. So every input has to attend to every other input, which is quadratic,
+
+334
+00:29:45,200 --> 00:29:55,120
+and when the input is too long, it's unfeasible to keep it in, to use it as it is. So as the input
+
+335
+00:29:55,120 --> 00:30:04,560
+increases, not all tokens are actually important. So it's the theory of bag of words. So in a bag
+
+336
+00:30:04,560 --> 00:30:10,160
+of words, only a few words are important, right? So this is the intuition behind conditional
+
+337
+00:30:10,160 --> 00:30:16,640
+long T5. The paper is called Faster Long Range Transformers with Conditional Computation. And
+
+338
+00:30:16,640 --> 00:30:22,160
+the intuition, as I discussed earlier, is that some tokens are more important than others,
+
+339
+00:30:22,160 --> 00:30:27,920
+and we can achieve better quality for lower cost by devoting more computation to important
+
+340
+00:30:27,920 --> 00:30:35,600
+tokens. And this is how they do it. So they have a light branch and they have a heavy branch. So
+
+341
+00:30:35,600 --> 00:30:42,080
+they route all tokens through the light branch. And only the important ones go through the heavy
+
+342
+00:30:42,080 --> 00:30:46,720
+branch. And the difference between these branches is that the light branch has light attention,
+
+343
+00:30:46,720 --> 00:30:53,520
+which is local attention, and light MLP layer. And the heavy branch has full attention and a
+
+344
+00:30:53,520 --> 00:31:00,960
+heavy MLP. So these are the three main components of quality five. They have routing modules that
+
+345
+00:31:00,960 --> 00:31:06,320
+decide which input tokens go through the heavy branch. Then they have conditional feed forward
+
+346
+00:31:06,320 --> 00:31:10,640
+in the heavy branch and a conditional attention layer in the heavy branch as well.
+
+347
+00:31:11,440 --> 00:31:16,640
+Again, here, the routing mechanism of quality five is learnable. They just multiply inputs with
+
+348
+00:31:16,640 --> 00:31:22,080
+a learned embedding to obtain routing scores and normalize it. And then they select the top
+
+349
+00:31:22,080 --> 00:31:27,840
+K highest scoring inputs, and they route those inputs through the heavy branch.
+
+350
+00:31:30,240 --> 00:31:38,080
+And here again, this is what the conditional feed forward looks like. We have the light branch on
+
+351
+00:31:38,080 --> 00:31:44,960
+every token, but only a certain amount of tokens would be fed on to the heavy branch based on
+
+352
+00:31:44,960 --> 00:31:50,880
+their score. This is the score that we calculated in the last slide. And then for conditional
+
+353
+00:31:50,880 --> 00:31:56,720
+attention, we know that most tokens have simple interaction, but some tokens benefit from heavier
+
+354
+00:31:56,720 --> 00:32:01,760
+processing. So conditional attention consists of light and heavy branches. And this is what it
+
+355
+00:32:01,840 --> 00:32:09,840
+looks like. So we see that some rows just have blue boxes, but some have additional purple boxes
+
+356
+00:32:09,840 --> 00:32:16,000
+as well. This is where we are adding heavy extra tokens for important input tokens. But
+
+357
+00:32:16,000 --> 00:32:21,040
+for local attention, we are just taking the local span of windows.
+
+358
+00:32:23,200 --> 00:32:28,960
+Let's talk about the training. So that we pre-trained on a C4 data set with a batch size
+
+359
+00:32:28,960 --> 00:32:36,800
+of 256. And they fine tuned using a constant learning rate of 0.001. And these are the models
+
+360
+00:32:36,800 --> 00:32:41,520
+they used. So they use three variations, a base model, a large and an extra large.
+
+361
+00:32:42,640 --> 00:32:51,360
+For a base model, it was $248 million. And for the extra large, it was $5.2 million.
+
+362
+00:32:51,440 --> 00:33:00,640
+These are the data sets. These are some of these are different, but most of them belong to the
+
+363
+00:33:00,640 --> 00:33:09,280
+scrolls benchmark on which Coal T5 actually achieves state of the art. These are the results. So
+
+364
+00:33:10,800 --> 00:33:17,520
+the average performance of the blue line is much, much better than the pink line. So the blue line
+
+365
+00:33:17,520 --> 00:33:24,880
+is Coal T5 and we see that it performs much better. And if we take a look at the time,
+
+366
+00:33:24,880 --> 00:33:31,600
+we see that it requires way less time as compared to the long T5 for inference as well as for fine
+
+367
+00:33:31,600 --> 00:33:42,160
+tuning. So as I talked about earlier, it achieves SOTA on the scrolls benchmark. We see that the
+
+368
+00:33:42,160 --> 00:33:50,800
+Coal T5 extra large model speed is lesser and has greater F1 score than the
+
+369
+00:33:52,320 --> 00:34:00,800
+Long T5 and greater exact match accuracy as well. So they actually, the way they scale is not in the
+
+370
+00:34:00,800 --> 00:34:07,200
+model size, but actually the input size. And we see that it's effectively scales to extremely long
+
+371
+00:34:07,200 --> 00:34:12,000
+inputs and achieves stronger performance. So we see that the blue line has greater F1 score.
+
+372
+00:34:12,800 --> 00:34:19,520
+And they start off with an 8K input length and they move towards 64K. And during all this time,
+
+373
+00:34:19,520 --> 00:34:24,320
+they take way less time as compared to Long T5 and has have greater performance.
+
+374
+00:34:26,080 --> 00:34:34,640
+They do some ablation studies as well. And we see that as we, they actually, one interesting thing
+
+375
+00:34:34,640 --> 00:34:41,360
+they do is they make the routing static. And as we make the routing static, we see that the
+
+376
+00:34:41,360 --> 00:34:49,120
+performance degrades. The score, if you see the score, it's actually way less than the baseline.
+
+377
+00:34:50,080 --> 00:34:57,200
+That actually contributes to the factor that it benefits from dynamically routing token
+
+378
+00:34:57,200 --> 00:35:04,000
+as it learns to identify and give more importance to important token. And this indicates that the
+
+379
+00:35:04,000 --> 00:35:08,160
+model is not just performing better due to having more parameters.
+
+380
+00:35:10,640 --> 00:35:16,800
+They also discussed some limitations of Colt T5 in the paper. They say that Colt T5 applies
+
+381
+00:35:16,800 --> 00:35:23,120
+conditional computation only in the encoder. And it does not apply conditional computation to the
+
+382
+00:35:23,120 --> 00:35:30,640
+decoder because it's complicated. And they leave that for future work. And they also talk about
+
+383
+00:35:30,720 --> 00:35:36,800
+its specialization over long sequences. So it has to be trained from scratch for other types
+
+384
+00:35:36,800 --> 00:35:44,560
+of sequences. This is a small comparison I did between the three models. So Mixture of Expert
+
+385
+00:35:44,560 --> 00:35:51,920
+uses a 1.1 trillion model parameter model and Gshard uses 600 billion while Colt T5 uses 5.3
+
+386
+00:35:51,920 --> 00:36:00,480
+billion. For sparsification, Mixture of Expert just splits the feed forward layer while Gshard's
+
+387
+00:36:00,640 --> 00:36:08,400
+splits the feed forward layer as well as does partitioning while Colt T5 splits by branching.
+
+388
+00:36:08,960 --> 00:36:13,760
+Sparsification for Mixture of Expert is in the feed forward layer. For Gshard, it's in the
+
+389
+00:36:13,760 --> 00:36:22,240
+feed forward layer as well. But for Colt T5, it's in all three layers. Mixture of Expert uses top
+
+390
+00:36:22,240 --> 00:36:29,680
+two experts. Gshard uses top two in random routing and Colt T5 does not use any. For attention,
+
+391
+00:36:29,680 --> 00:36:35,280
+Mixture of Expert uses dense attention. Gshard also uses dense attention, but Colt T5 uses a
+
+392
+00:36:35,280 --> 00:36:44,000
+mixture of both. And for specialization, Mixture of Expert specializes in large-scale data. Gshard
+
+393
+00:36:44,000 --> 00:36:51,760
+specializes in parallelization and Colt T5 specializes in long inputs. Now I will hand it over
+
+394
+00:36:51,760 --> 00:37:09,840
+to Mariam to talk about sparsification. Hi, so I will be discussing the quantization of LLMs.
+
+395
+00:37:14,800 --> 00:37:16,640
+Let me just fix sides a bit.
+
+396
+00:37:21,760 --> 00:37:32,480
+I think a couple of the slides are missing.
+
+397
+00:37:34,880 --> 00:37:43,200
+We'll see the coming slides. Now to overview their mixed precision quantization. So
+
+398
+00:37:44,320 --> 00:37:51,600
+every feature is quantized based on its magnitude. So let's say we have this input tensor.
+
+399
+00:37:51,680 --> 00:38:00,240
+And we have the weight matrix. Now the input tensor will be divided into vectors. And the
+
+400
+00:38:00,240 --> 00:38:05,760
+high-magnitude vectors will be identified. And they will be multiplied normally in floating
+
+401
+00:38:05,760 --> 00:38:13,760
+point 16. While the low-magnitude ones, they will be multiplied in int 8. So they are multiplied
+
+402
+00:38:13,760 --> 00:38:20,400
+with quantization constants, which convert the floating point 16 into int 8. And then the
+
+403
+00:38:20,400 --> 00:38:26,240
+matrix multiplication is performed. And then they are decontized to get the output in the final fp16.
+
+404
+00:38:27,600 --> 00:38:34,400
+So basically, but this bottleneck matrix multiplication part is carried out in int 8. So
+
+405
+00:38:36,720 --> 00:38:43,040
+this is the mathematical form of this, where the floating points, the total output is actually
+
+406
+00:38:43,040 --> 00:38:49,760
+the sum of the floating point matrix multiplication operations and the int 8 matrix multiplication
+
+407
+00:38:49,760 --> 00:38:57,280
+operations. This sf16 is the scaling factor, which is used to adjust int 8 matrix multiplication
+
+408
+00:38:57,280 --> 00:39:01,520
+back into floating point 16. This is basically the decontization happening.
+
+409
+00:39:03,680 --> 00:39:08,640
+Now discussing the vector-wise quantization, this is a form of a block-wise quantization,
+
+410
+00:39:08,640 --> 00:39:17,440
+but such that each row of the tensor or column of the tensor is used as a single vector,
+
+411
+00:39:17,440 --> 00:39:23,440
+and it is independently quantized. Now this improves the quantization precision for most
+
+412
+00:39:23,440 --> 00:39:29,520
+of the features. Now, for example, if this is the input matrix and this is the weight matrix,
+
+413
+00:39:30,240 --> 00:39:37,120
+a1, a2, a3, and b1, b4, and b7, these are, this is the matrix, this is the single operation of
+
+414
+00:39:37,120 --> 00:39:43,200
+multiplication that will form our output matrix. So these vectors are independently quantized.
+
+415
+00:39:44,160 --> 00:39:51,920
+They have their own scaling constants, and then the output is calculated. Once all the vectors are
+
+416
+00:39:51,920 --> 00:39:58,400
+placed together in a matrix and summed, and then decontized. This is the mathematical form,
+
+417
+00:39:59,280 --> 00:40:07,760
+where the output is actually the multiplication of the decontization scaling factor and the
+
+418
+00:40:08,720 --> 00:40:16,000
+in-date output. In-date output is calculated by independently quantizing a vector a and vector b.
+
+419
+00:40:16,800 --> 00:40:23,120
+Basically, the input vectors, let's say the input tensor is made up of these two vectors a and b.
+
+420
+00:40:23,120 --> 00:40:27,760
+So a and b will be independently quantized, and they will be multiplied with the scaling factor
+
+421
+00:40:27,760 --> 00:40:32,640
+to get our final output. Over here is the quantization function.
+
+422
+00:40:33,360 --> 00:40:39,520
+Now, going into more detail of the scaling constants, basically, what are the quantization
+
+423
+00:40:39,520 --> 00:40:45,040
+procedures that they're using? So they have displayed their experiments using
+
+424
+00:40:45,040 --> 00:40:51,200
+AvSmax quantization as well as zero-point quantization. AvSmax is symmetric. It scales the
+
+425
+00:40:51,200 --> 00:40:55,760
+input values via constant derived from the largest absolute value in the tensor. So basically,
+
+426
+00:40:55,760 --> 00:41:04,320
+it's 127, because int8, that's basically just 2 to the power 8 minus 1. So it's the total number,
+
+427
+00:41:04,320 --> 00:41:12,480
+it's the maximum number that can be represented in the in-date representation, and it's divided
+
+428
+00:41:12,480 --> 00:41:21,040
+by the maximum of that vector. So this ensures that the extreme values are captured, but it also
+
+429
+00:41:21,040 --> 00:41:26,480
+leads to less efficient use of the available bit range. The more efficient zero-point quantization
+
+430
+00:41:26,480 --> 00:41:31,600
+is the most efficient, the more efficient quantization technique is the zero-point
+
+431
+00:41:31,600 --> 00:41:37,680
+quantization. It is asymmetric. It involves shifting of the distribution of the input values.
+
+432
+00:41:37,680 --> 00:41:42,880
+So in this way, the entire range of the representation is used effectively, and this
+
+433
+00:41:42,880 --> 00:41:51,440
+accommodates asymmetric data as well. So in this procedure, we will divide twice the
+
+434
+00:41:53,600 --> 00:42:00,720
+maximum number of maximum bit representation divided, and we will divide it by the max minus min.
+
+435
+00:42:00,720 --> 00:42:07,920
+And then in the end, we will also add the vector multiplied by its minimum.
+
+436
+00:42:08,800 --> 00:42:16,080
+So this accommodates the entire range of the bit representation, and this also reduces quantization
+
+437
+00:42:16,080 --> 00:42:24,400
+error across the board. Now, these are some results from their paper. They've calculated their C4
+
+438
+00:42:24,400 --> 00:42:33,520
+perplexity, and as we can see in this table, excuse me.
+
+439
+00:42:37,440 --> 00:42:43,840
+As we can see in this paper, abs max and zero-point, abs max, row wise and vector
+
+440
+00:42:44,800 --> 00:42:56,240
+zero-point vector wise, they reduce the worsen as we scale, and after 2.7 billion parameters,
+
+441
+00:42:56,240 --> 00:43:03,360
+they perform worse. So after 2.7 billion parameters, the methods actually perform worse
+
+442
+00:43:03,360 --> 00:43:13,040
+than smaller models. Zero-point vector wise quantization performs worse after 6.7 billion
+
+443
+00:43:13,040 --> 00:43:22,960
+parameters. So you may notice that zero-point quantization has an advantage over abs max
+
+444
+00:43:22,960 --> 00:43:28,640
+quantization, but it's no longer advantageous when used with the mixed precision decomposition.
+
+445
+00:43:32,880 --> 00:43:38,080
+So as you can see, their method LLM in-date outperforms all existing methods,
+
+446
+00:43:38,080 --> 00:43:47,360
+and it's preserving the perplexity as we scale, and it's exactly comparable.
+
+447
+00:43:47,360 --> 00:43:52,400
+It's very comparable with the 32-bit flow transformer models.
+
+448
+00:43:59,200 --> 00:44:06,480
+So even though this was not a part of their main focus, but they've also given some results
+
+449
+00:44:06,480 --> 00:44:13,360
+related to the time complexity, so they've noticed that the quantization overhead can
+
+450
+00:44:13,360 --> 00:44:19,120
+slow inference for models with less than 6.7 billion parameters as compared to the floating
+
+451
+00:44:19,120 --> 00:44:30,880
+point 16 baseline. However, after 6.7 billion parameters, LLM in-date runs about twice as
+
+452
+00:44:30,880 --> 00:44:38,080
+fast for large metrics multiplications in equivalent to those in 175 billion models.
+
+453
+00:44:39,520 --> 00:44:46,160
+LLM in-date is twice as fast, and there's also to note that even though LLM in-date has some
+
+454
+00:44:47,440 --> 00:44:55,040
+more overhead for models smaller than 6.7 billion parameters, these small models usually fit on
+
+455
+00:44:55,040 --> 00:45:03,200
+most GPUs and quantization is not really needed in practice. Now moving on, we see that we are
+
+456
+00:45:03,200 --> 00:45:07,680
+able to quantize the parameters in the feed-forward and attention projection layers, but during
+
+457
+00:45:07,680 --> 00:45:12,480
+inference. But what about training and what about the attention function computations?
+
+458
+00:45:13,440 --> 00:45:20,960
+So this moves us to our next paper, which is 8-bit optimizers using block-wise quantization.
+
+459
+00:45:21,200 --> 00:45:29,360
+Now these perform optimization in neural networks by using 8-bit statistics to maintain the
+
+460
+00:45:30,000 --> 00:45:35,040
+performance level of 32-bit optimizer states during training. So this paper focuses on
+
+461
+00:45:35,040 --> 00:45:41,200
+optimization during training, and they are also not focused on the weights. Instead,
+
+462
+00:45:41,200 --> 00:45:49,120
+they are going to focus on the optimizer states, because optimizer states use about 33 to 75% of
+
+463
+00:45:49,120 --> 00:45:55,600
+the total memory footprint during training. So what are these optimizer gradient statistics?
+
+464
+00:45:55,600 --> 00:46:00,080
+So basically, regular optimizers in machine learning update model parameters
+
+465
+00:46:01,280 --> 00:46:05,840
+purely based on the gradient calculated from the current batch of data. But state-field
+
+466
+00:46:05,840 --> 00:46:11,360
+optimizers like SGD and Adam, they keep track of the past gradients and use this information to
+
+467
+00:46:11,360 --> 00:46:18,400
+inform updates. For example, SGD uses momentum for smoothing the updates, and Adam keeps track
+
+468
+00:46:18,400 --> 00:46:22,640
+of the squared sum of past gradients to adapt the learning rate for each parameter.
+
+469
+00:46:23,520 --> 00:46:30,000
+So this paper focuses on optimizing the memory footprint of these optimizer states.
+
+470
+00:46:30,640 --> 00:46:37,040
+Now they employ block-wise quantization, and this approach reduces the memory usage of the
+
+471
+00:46:37,040 --> 00:46:42,480
+optimizer states, allowing larger models to be trained within the same memory constraints without
+
+472
+00:46:42,480 --> 00:46:47,520
+losing the performance benefits that come from using stateful optimizer optimizers.
+
+473
+00:46:48,160 --> 00:46:51,920
+The key innovations in this paper are block-wise dynamic quantization
+
+474
+00:46:52,800 --> 00:47:00,480
+and the stable embedding layer. Now this block-wise quantization isolates outliers
+
+475
+00:47:00,480 --> 00:47:07,600
+and disputes the error more equally over all bits. Basically, over here, they break down the tensor
+
+476
+00:47:07,600 --> 00:47:11,840
+into smaller blocks or chunks and then normalize each block independently
+
+477
+00:47:12,560 --> 00:47:15,520
+for efficient computation and for processing in parallel.
+
+478
+00:47:18,480 --> 00:47:25,360
+And this is the mathematical form of it, and they use the normalization constant for block B,
+
+479
+00:47:25,360 --> 00:47:31,920
+which is the maximum absolute value within that block. So the quantized value of the vector is
+
+480
+00:47:31,920 --> 00:47:37,520
+divided by the normalization constant, and this fraction is subtracted from the
+
+481
+00:47:40,080 --> 00:47:43,360
+function mapping the jth element to its quantized form.
+
+482
+00:47:49,200 --> 00:47:53,360
+They are basically unique abs max quantization, which we will see later on.
+
+483
+00:47:54,320 --> 00:48:00,640
+Now why is this method good? Because it's robust to outliers. This is independent from intercore
+
+484
+00:48:01,440 --> 00:48:06,640
+intercore synchronization, because since we are dividing the blocks and those
+
+485
+00:48:10,080 --> 00:48:15,360
+computations are happening in parallel, so we don't need to do the intercore synchronization.
+
+486
+00:48:15,360 --> 00:48:20,720
+So this enhances the computational efficiency, and this method also guarantees that the largest
+
+487
+00:48:20,720 --> 00:48:26,640
+values are quantized without error. So this maintains the precision in the quantization process.
+
+488
+00:48:26,720 --> 00:48:36,400
+Now they've also introduced this dynamic quantization procedure. So
+
+489
+00:48:38,240 --> 00:48:43,280
+over here, this is basically a type of quantization where they are just for both small and large
+
+490
+00:48:43,280 --> 00:48:49,120
+magnitude values with high precision, and they are actually enhancing the dynamic tree quantization
+
+491
+00:48:49,120 --> 00:48:56,160
+for tensors that don't need a sign bit by repurposing it for better precision in the
+
+492
+00:48:56,160 --> 00:49:01,600
+presenting positive values. What this means is this is about adjusting the quantization technique
+
+493
+00:49:01,600 --> 00:49:06,800
+used in optimizers like Adam, which generally involves keeping track of the second state or
+
+494
+00:49:06,800 --> 00:49:12,800
+a running average of the gradients. Since these values are always positive, the sign bit typically
+
+495
+00:49:12,800 --> 00:49:18,080
+used to indicate negative numbers in binary representations don't need it. So the authors
+
+496
+00:49:18,080 --> 00:49:23,840
+utilize this redundant sign bit to increase the precision of the quantization, thus allowing
+
+497
+00:49:23,840 --> 00:49:28,800
+the optimizer to handle a broader range of values that the second state might encounter
+
+498
+00:49:28,800 --> 00:49:33,920
+during training. This modification has to maintain the fidelity of the optimizer state
+
+499
+00:49:33,920 --> 00:49:38,160
+representation. So this is especially important for large language models, which can have
+
+500
+00:49:38,160 --> 00:49:44,160
+significant variations in the scale of gradient information. So this allows accounts for a wide
+
+501
+00:49:44,160 --> 00:49:57,360
+range of magnitudes in this Adam optimizer. So the other key innovation is the stable
+
+502
+00:49:57,360 --> 00:50:03,040
+embedding layer. So basically traditional embedding layers can become unstable with lower
+
+503
+00:50:03,040 --> 00:50:08,240
+precision formats like 8-bit integers, because the reduced precision can lead to large errors
+
+504
+00:50:08,240 --> 00:50:14,080
+or instabilities in the training process. However, the stable embedding layer that they've introduced
+
+505
+00:50:14,880 --> 00:50:20,880
+they allow for the use of 32-bit optimizer states, even when the embeddings are quantized to 8-bit.
+
+506
+00:50:20,880 --> 00:50:24,640
+But this means that the calculations for updating the weights during training
+
+507
+00:50:24,640 --> 00:50:30,320
+can still use higher precision, even though the embeddings themselves use lower precision.
+
+508
+00:50:31,440 --> 00:50:38,560
+So the method they use is the layers initialized with heavier uniform initialization for consistent
+
+509
+00:50:38,560 --> 00:50:44,080
+variants, and then they apply a layer norm before adding the position embeddings. So this
+
+510
+00:50:44,080 --> 00:50:49,680
+ensures that the variant stays around one and it avoids large gradients that could destabilize
+
+511
+00:50:50,560 --> 00:50:56,560
+training. So this offers significant memory savings without altering the original optimizer
+
+512
+00:50:56,560 --> 00:51:01,840
+hyperparameters. And this also facilitates stable training, even when more aggressive
+
+513
+00:51:01,840 --> 00:51:09,840
+quantization techniques are used. These are some of the results. So as we can see,
+
+514
+00:51:12,320 --> 00:51:19,360
+this table basically describes the median performance on many NLP and computer vision tasks.
+
+515
+00:51:20,080 --> 00:51:27,920
+We will be focusing on this language model and transformer tasks. So this is for reference.
+
+516
+00:51:28,000 --> 00:51:38,000
+As you can see, this 8-bit atom, 8-bit optimizer's 8-bit atom reduces the time and mainly the memory
+
+517
+00:51:38,000 --> 00:51:50,320
+saved is huge. So from regular transformers, it's like 8.5 GB saved. So 8-bit is outperforming
+
+518
+00:51:50,320 --> 00:52:04,000
+in terms of memory and speed in all methods. So this is a pretty good paper, we can say,
+
+519
+00:52:04,000 --> 00:52:12,320
+but let's move on to the next paper, which performs fine tuning. So most of the times,
+
+520
+00:52:12,320 --> 00:52:18,720
+for most papers, we do not have the time or the resources to perform the complete training.
+
+521
+00:52:18,720 --> 00:52:24,640
+In most industrial use cases, we only need to fine-tune existing LLMs. So this paper,
+
+522
+00:52:24,640 --> 00:52:28,880
+Chlora focuses on the efficient fine tuning of those quantized LLMs.
+
+523
+00:52:33,600 --> 00:52:41,920
+Now, this fine-tuning LLMs is a memory-intensive procedure and models with like 65 billion
+
+524
+00:52:41,920 --> 00:52:49,840
+parameters require over 680 GB of GPU for the 16-bit fine-tuning. So Chlora reduces this average
+
+525
+00:52:49,840 --> 00:52:58,480
+memory requirements of fine-tuning a 65 billion parameter from 780 to 48 GB only. So this method
+
+526
+00:52:58,480 --> 00:53:05,280
+also reaches 99% of the performance level of chatGBT, while only required 24 hours of fine-tuning
+
+527
+00:53:05,280 --> 00:53:10,640
+on a single GPU. So these are really monumental and these are some amazing results. So let's go
+
+528
+00:53:10,720 --> 00:53:20,320
+into the detail of this architecture. Now, basically, normal fine-tuning is just the
+
+529
+00:53:20,320 --> 00:53:26,000
+base model and the optimizer states and this parameter updates and the gradient flow happens.
+
+530
+00:53:29,040 --> 00:53:38,400
+Happens normally. LLora was the quantization of the transformer model where it's a method that
+
+531
+00:53:38,480 --> 00:53:44,480
+reduces memory requirements by using a small set of trainable parameters. So all of the parameters
+
+532
+00:53:44,480 --> 00:53:53,840
+are not used for fine-tuning. Only a small set of trainable parameters are used which are
+
+533
+00:53:55,200 --> 00:54:01,680
+often termed as adapters. So the full model remains fixed and these adapters are only updated during
+
+534
+00:54:01,680 --> 00:54:06,800
+fine-tuning. So gradients during SGD are passed through the fixed pre-tuned model
+
+535
+00:54:07,760 --> 00:54:16,000
+into the adapter which is then updated to optimize the loss function. Chlora improves this method
+
+536
+00:54:16,000 --> 00:54:21,760
+by quantization the transformer model to 4-bit precision. So instead of a 16-bit transformer,
+
+537
+00:54:21,760 --> 00:54:29,520
+we are using a 4-bit transformer and we're also using paged optimizers to handle memory spikes.
+
+538
+00:54:30,000 --> 00:54:38,720
+So we will go into the detail of this innovation soon. So the key innovations of this paper are
+
+539
+00:54:38,720 --> 00:54:45,520
+they've introduced a new data type 4-bit normal float. So that is information theoretically
+
+540
+00:54:45,520 --> 00:54:51,760
+optimal for normally distributed weight. They also utilize double quantization to reduce the
+
+541
+00:54:51,760 --> 00:54:57,120
+average memory footprint. So what they're doing is they're performing quantization and then they
+
+542
+00:54:57,120 --> 00:55:02,560
+are quantizing the quantization constants as well. So this is double quantization and this reduces
+
+543
+00:55:02,560 --> 00:55:07,760
+the memory footprint and that's also using paged optimizers to manage memory spikes.
+
+544
+00:55:09,040 --> 00:55:14,320
+Now let's discuss the 4-bit normal float. So this quantization approach is different because
+
+545
+00:55:14,960 --> 00:55:20,720
+it balances the data across quantization bins more evenly. Traditional methods may not
+
+546
+00:55:20,720 --> 00:55:25,200
+distribute data as uniformly especially when there are outliers or a wide range of values.
+
+547
+00:55:25,760 --> 00:55:30,160
+So this method focuses on equalizing the number of values in each bin
+
+548
+00:55:30,160 --> 00:55:35,360
+and optimizing for a normal distribution. So this aims to minimize the information loss during
+
+549
+00:55:35,360 --> 00:55:41,040
+quantization process. So this is particularly suited to a neural network weights that usually
+
+550
+00:55:41,040 --> 00:55:46,400
+follow a normal distribution. So they spread out the outliers more evenly. Instead of putting them
+
+551
+00:55:46,400 --> 00:55:51,520
+together in a in a chunk or box and then quantizing them, they spread out the outliers more evenly
+
+552
+00:55:51,520 --> 00:55:55,840
+in the form of a normal distribution and this way you get a better representation of the whole
+
+553
+00:55:55,840 --> 00:56:00,640
+distribution with smaller number of bits. So this is more efficient than traditional methods.
+
+554
+00:56:02,480 --> 00:56:08,240
+Now double quantization. So this is a two-step process to compress the quantization constants
+
+555
+00:56:08,240 --> 00:56:13,520
+themselves which are used in the first quantization steps. So this further compresses the quantization
+
+556
+00:56:13,520 --> 00:56:18,720
+constants to save memory. They implement a secondary quantization process on the constants
+
+557
+00:56:18,720 --> 00:56:24,400
+themselves using 8-bit floats to reduce the memory footprint without memory loss. So this is
+
+558
+00:56:24,400 --> 00:56:29,280
+different from traditional single-step quantization by adding a second layer of quantization for the
+
+559
+00:56:29,280 --> 00:56:37,760
+constants. So this significantly reduces the parameter memory cost. Page optimizers are
+
+560
+00:56:37,760 --> 00:56:44,800
+automatic page-to-page transfers between the CPU and GPU. This is more on the computer network side.
+
+561
+00:56:44,800 --> 00:56:49,840
+So this is for LFE GPU processing. So when the GPU occasionally runs out of memory,
+
+562
+00:56:50,720 --> 00:56:57,440
+they will perform page-to-page transfers between the GPU and this CPU. This utilizes the NVIDIA
+
+563
+00:56:57,440 --> 00:57:05,600
+unified memory feature. Now let's compare clora versus standard fine-tuning. So these are some
+
+564
+00:57:05,600 --> 00:57:13,680
+quantized LLMs, OPT, bloom, pithya, and lama of different sizes from 125 million to 65 billion
+
+565
+00:57:13,680 --> 00:57:19,360
+with different data types. So they're evaluated on language modeling and a set of zero-shot tasks.
+
+566
+00:57:19,360 --> 00:57:28,080
+So here's the mean zero-shot accuracy using lama models with different 4-bit drill types. And as we
+
+567
+00:57:28,080 --> 00:57:36,880
+can see, normal float that they've introduced, normal 4-bit float, and dynamic quantization
+
+568
+00:57:36,880 --> 00:57:44,960
+outperforms the other methods in mean zero-shot accuracy, it's even outperforming the normal
+
+569
+00:57:44,960 --> 00:57:51,360
+float data type. Sorry, not normal float data type and the regular float data type.
+
+570
+00:57:53,760 --> 00:58:00,000
+So but we can see that double quantization only leads to minor gains, but this allows for a more
+
+571
+00:58:00,000 --> 00:58:04,640
+fine-grained control over the memory footprint to fit models of a certain size.
+
+572
+00:58:07,760 --> 00:58:13,360
+These are also some results on the pile common crawl dataset, and this is the mean
+
+573
+00:58:13,360 --> 00:58:19,040
+per-pexity for different data types. And as we can see, normal float plus dynamic quantization
+
+574
+00:58:19,040 --> 00:58:27,840
+is outperforming the other methods. Now this is a comparison with 16-bit fine-tuning of
+
+575
+00:58:28,160 --> 00:58:44,800
+Roberta and T5 models from actually 80 million to 11 billion. And now they're asking the question,
+
+576
+00:58:44,800 --> 00:58:51,600
+can the lost performance in 4-bit inference be recovered by conducting 4-bit adapter fine-tuning?
+
+577
+00:58:51,600 --> 00:58:59,280
+So they have quantized transformers to 4-bits and they are comparing the inference.
+
+578
+00:59:00,960 --> 00:59:05,200
+So in their method, they have connected 4-bit adapter fine-tuning with other methods,
+
+579
+00:59:05,200 --> 00:59:13,040
+they have not performed this adapter fine-tuning and only doing 4-bit inference. So as we can see,
+
+580
+00:59:13,040 --> 00:59:19,120
+we observe that for both datasets, we observe that 16-bit, 8-bit, and 4-bit adapter methods
+
+581
+00:59:19,120 --> 00:59:23,280
+replicate the performance of the fully fine-tuned 16-bit base model.
+
+582
+00:59:26,720 --> 00:59:32,480
+This suggests that the performance loss due to the imprecise quantization can be fully recovered
+
+583
+00:59:32,480 --> 00:59:40,480
+through adapter fine-tuning after quantization. And now discussing clora with chatbot state of
+
+584
+00:59:40,480 --> 00:59:46,960
+the art. And as you can see, Guanaco is the model that they have used with clora. And as we can see,
+
+585
+00:59:46,960 --> 00:59:58,400
+the mean accuracy or zero-shot accuracy, this model is outperforming all the other models.
+
+586
+00:59:58,400 --> 01:00:05,200
+So we can safely say that it is possible to fine-tune a quantized 4-bit model without any
+
+587
+01:00:05,200 --> 01:00:13,920
+performance degradation. These are also some results with the different sizes of Lama fine-tuned
+
+588
+01:00:13,920 --> 01:00:22,000
+and the corresponding datasets. And as we can see, all of the results are very comparable
+
+589
+01:00:23,040 --> 01:00:26,240
+to the Lama with no fine-tuning results.
+
+590
+01:00:32,080 --> 01:00:37,680
+Now moving on to our next paper, BitNet scaling one-bit transformers for large-language models.
+
+591
+01:00:38,560 --> 01:00:45,920
+This is pretty surprising to read at first about having one-bit transformers.
+
+592
+01:00:46,720 --> 01:00:51,680
+So we will go into the detail of this paper and see how they're actually implementing this.
+
+593
+01:00:52,640 --> 01:00:59,280
+This is a very interesting paper. So now this is a scalable and stable one-bit transformer
+
+594
+01:00:59,280 --> 01:01:06,160
+architecture. They introduce BitLinear. They basically convert nn.linear layer,
+
+595
+01:01:06,160 --> 01:01:11,280
+the linear layer of the neural network into a BitLinear layer. And that is
+
+596
+01:01:14,560 --> 01:01:20,320
+created to train one-bit weights from scratch. So they are performing training from scratch,
+
+597
+01:01:20,320 --> 01:01:26,800
+but they are using one-bit transformers. So a one-bit precision for the weights.
+
+598
+01:01:28,000 --> 01:01:31,280
+So they are directly training on the one-bit precision weights rather than
+
+599
+01:01:31,920 --> 01:01:38,400
+reducing the precision after training. Now some of the key innovations of this paper
+
+600
+01:01:38,400 --> 01:01:47,280
+are quantization-aware training. So these models perform well even when their weights are limited
+
+601
+01:01:47,280 --> 01:01:53,120
+to one-bit representation. And in contrast to other models where they quantize models
+
+602
+01:01:53,120 --> 01:01:58,240
+after training, so they are quantizing during training. So the training happens with those
+
+603
+01:01:58,240 --> 01:02:05,520
+one-bit representation of the weights during runtime. So they're also deploying different
+
+604
+01:02:05,520 --> 01:02:10,800
+optimization techniques such as model parallelism with high precision for optimizer states and
+
+605
+01:02:10,800 --> 01:02:17,360
+gradients and employing large learning rates to handle the challenges with training low precision
+
+606
+01:02:17,360 --> 01:02:27,120
+weights. Now this is an architecture diagram. This is the detail of the BitLinear layer.
+
+607
+01:02:27,120 --> 01:02:33,120
+And this is the overall architecture. They will basically replace the linear layers with BitLinear
+
+608
+01:02:33,120 --> 01:02:40,880
+layers. The input comes in, a layer normalization is performed, and then absmax quantization is
+
+609
+01:02:40,880 --> 01:02:46,400
+performed to convert the weights into one-bits. And then that is decontized and the output is
+
+610
+01:02:46,400 --> 01:02:53,440
+produced. And each of the, there are, there's like two blocks of the BitLinear layer in every
+
+611
+01:02:53,520 --> 01:03:02,080
+feed-forward network. And they are followed by a Gal U. And the BitLinear, like in every,
+
+612
+01:03:02,080 --> 01:03:06,080
+in the attention projection layers, in the attention layers, in the feed-forward layers,
+
+613
+01:03:06,800 --> 01:03:13,680
+BitLinear is applied to convert the weights into one-bit. So the novelty of BitLinear basically
+
+614
+01:03:13,680 --> 01:03:20,400
+lies in its ability to maintain the training stability and model accuracy even with the
+
+615
+01:03:20,400 --> 01:03:26,320
+extreme quantization of weights to one-bit. So which is obviously not commonly found in other methods.
+
+616
+01:03:31,280 --> 01:03:38,240
+Now, the weights are basically binarized using a sine function, which assigns minus one or one
+
+617
+01:03:38,240 --> 01:03:43,120
+based on the weight sign. So if a weight is greater than zero, it's given a value of one. And if
+
+618
+01:03:43,120 --> 01:03:49,600
+it's less than zero, then it's assigned a value of minus one. So a scaling factor is computed to
+
+619
+01:03:49,600 --> 01:03:55,280
+minimize the difference between the binarized weights and the original weights. So the weights
+
+620
+01:03:55,280 --> 01:03:59,760
+during computation, they are minus one and one. And then a scaling factor is computed for during
+
+621
+01:03:59,760 --> 01:04:04,640
+the decontization procedure to minimize the difference between the binarized weights and
+
+622
+01:04:04,640 --> 01:04:10,880
+the original weights. The activation functions are quantized to 8-bit precision for the tensor
+
+623
+01:04:10,880 --> 01:04:17,600
+during training and per token during inference for efficiency and stability. So weights are quantized
+
+624
+01:04:17,600 --> 01:04:25,040
+to one-bit and activation functions are quantized to 8-bit during training. And during inference,
+
+625
+01:04:25,040 --> 01:04:32,640
+it's quantized per token. Now, these BitLinear weights, they are binarized and then they are
+
+626
+01:04:32,640 --> 01:04:42,240
+centralized to have zero mean. So basically, once we get a weight, we first centralize that to have
+
+627
+01:04:42,240 --> 01:04:49,760
+a zero mean. And then we will get its sign plus one or minus one. And then a post and then a scaling
+
+628
+01:04:49,760 --> 01:04:54,320
+factor is applied post binarization to align with the original weight distribution.
+
+629
+01:04:58,880 --> 01:05:07,040
+The activation functions in BitLinear are quantized to B-bit precision. In these experiments,
+
+630
+01:05:07,120 --> 01:05:13,440
+they have been quantized to 8-bit precision abs max while ensuring the outputs variance is
+
+631
+01:05:13,440 --> 01:05:20,880
+maintained for stability. This is done by scaling to the range and performing layer norm.
+
+632
+01:05:22,320 --> 01:05:29,040
+And activations before non-linear functions are scaled into the range zero and Q8 by subtracting
+
+633
+01:05:29,040 --> 01:05:32,240
+the minimum of the inputs that all values are non-negative.
+
+634
+01:05:33,040 --> 01:05:41,840
+For the full precision computation, the variance of the output
+
+635
+01:05:42,800 --> 01:05:47,840
+the variance of the output is at the scale of one with standard initialization methods,
+
+636
+01:05:47,840 --> 01:05:53,360
+sample climbing or heavier initialization, which has a great benefit to the training stability.
+
+637
+01:05:53,360 --> 01:06:01,120
+So to preserve the variance after quantization, they introduce a layer norm function before the
+
+638
+01:06:01,680 --> 01:06:07,200
+activation quantization. So in this way, the variance of the output y is estimated as
+
+639
+01:06:08,240 --> 01:06:19,200
+just the expected value of the ln function, expected value of the ln function,
+
+640
+01:06:23,120 --> 01:06:29,520
+which is equal to one. So BitLinear uses this variance for its layer norm calculations.
+
+641
+01:06:31,440 --> 01:06:42,080
+They also perform model parallelism using group quantization and normalization. So they partition
+
+642
+01:06:42,080 --> 01:06:49,360
+the matrix multiplication on multiple devices and that's how they do the model parallelism.
+
+643
+01:06:49,360 --> 01:06:54,960
+But there is a problem with that. All of the parameters which we discussed over here and
+
+644
+01:06:54,960 --> 01:07:00,960
+for our matrix multiplications, alpha, beta and all, they are calculated from the whole tensors.
+
+645
+01:07:01,520 --> 01:07:07,840
+And so these tensors are not independent along the partition dimension. So what they do is they
+
+646
+01:07:07,840 --> 01:07:14,240
+divide the weights and activations into groups and then independently estimate each group's parameters.
+
+647
+01:07:16,560 --> 01:07:22,080
+So for a weight matrix w, we will divide it into g groups along the partition dimension
+
+648
+01:07:22,080 --> 01:07:25,600
+and we then estimate the parameters for each group independently.
+
+649
+01:07:26,160 --> 01:07:33,760
+And this formula is indicating that for each group g, that for each group g of
+
+650
+01:07:33,760 --> 01:07:42,240
+weights in the matrix w, we calculate the scaling factor and normalization factors
+
+651
+01:07:42,240 --> 01:07:48,160
+based on the values within that specific group. So this allows for localized calculations within
+
+652
+01:07:48,160 --> 01:07:53,920
+each group, facilitating model parallelism without the need for extensive synchronization
+
+653
+01:07:53,920 --> 01:07:59,600
+across different parts of the network. So this reduces network IO while performing model parallelism.
+
+654
+01:08:00,720 --> 01:08:06,960
+So during training, they use a straight-through estimator, mixed precision training and a large
+
+655
+01:08:06,960 --> 01:08:13,680
+learning rate. So what a straight-through estimator does is it uses a method that bypasses
+
+656
+01:08:14,320 --> 01:08:19,760
+this non-differentiable functions to approximate the gradients during back propagation. So
+
+657
+01:08:19,760 --> 01:08:27,040
+basically, since we know that our weights are just one bit, if we allow that to pass through our
+
+658
+01:08:27,040 --> 01:08:42,320
+back propagation, that is going to reduce our weights. So that's going to mess up our upgrade
+
+659
+01:08:42,320 --> 01:08:47,760
+basically. So straight-through estimator, it estimates the gradients of a function.
+
+660
+01:08:47,760 --> 01:08:52,880
+As specifically, it ignores the derivative of the threshold function and passes on the incoming
+
+661
+01:08:52,880 --> 01:08:58,320
+gradient as if the function was an identity function. So basically, when we binarize the
+
+662
+01:08:58,320 --> 01:09:02,960
+weights, their gradient becomes zero. So during back propagation, we just bypass the
+
+663
+01:09:02,960 --> 01:09:06,880
+binarization function and directly pass the incoming gradient to the next layer.
+
+664
+01:09:08,640 --> 01:09:13,360
+So one challenge for the optimization is that a small update on the latent weights
+
+665
+01:09:13,360 --> 01:09:17,840
+often makes no difference in the one-bit weights. So this results in a biased gradient,
+
+666
+01:09:17,840 --> 01:09:23,600
+an update, which are estimated based on the one-bit weights, especially at the beginning
+
+667
+01:09:23,600 --> 01:09:28,400
+of the training. So a straight-through estimator ignores those threshold layer and just passes
+
+668
+01:09:28,400 --> 01:09:34,880
+directly on the next layer. They also deploy mixed precision training. So they use both low
+
+669
+01:09:34,880 --> 01:09:40,160
+precision quantization for weights and high precision storage for optimizer states and
+
+670
+01:09:40,160 --> 01:09:46,240
+gradients to maintain training stability and accuracy. They also employ a large learning
+
+671
+01:09:46,240 --> 01:09:51,520
+rate to overcome the insensitivity to one-bit weights to small updates, which helps in achieving
+
+672
+01:09:51,520 --> 01:09:59,200
+faster convergence and compensates for achieving faster, compensates for initial training phase
+
+673
+01:09:59,200 --> 01:10:05,120
+challenges. Now, discussing the energy consumption of BitNet, there's a huge
+
+674
+01:10:06,000 --> 01:10:11,120
+bump in the energy consumption. As you can see, matrix multiplication, but let's say
+
+675
+01:10:11,120 --> 01:10:16,480
+m multiplied by n and n multiplied by b. These are two matrices, vanilla transformers. The
+
+676
+01:10:18,560 --> 01:10:26,000
+expected energy consumption will be the product of these dimensions, while BitNet
+
+677
+01:10:26,000 --> 01:10:33,200
+uses a sum of these products. So this is like a big bump. So this BitNet chains one-bit
+
+678
+01:10:33,200 --> 01:10:37,920
+transformers from scratch. So it obtains competitive results in an energy-efficient way.
+
+679
+01:10:38,560 --> 01:10:46,000
+So in the next slide, we can see some of these results. So BitNet significantly
+
+680
+01:10:46,880 --> 01:10:52,240
+outperforms state-of-the-art quantization methods. And as the model size scales up,
+
+681
+01:10:53,200 --> 01:10:58,880
+the cost of savings becomes more significant. The difference becomes more significant
+
+682
+01:10:58,880 --> 01:11:04,480
+while achieving competitive performance with the models trained with floating point 16. So
+
+683
+01:11:05,840 --> 01:11:13,760
+as you can see over here, let's compare our 30 billion parameter model and the energy difference
+
+684
+01:11:13,760 --> 01:11:22,720
+is just huge for between 32-bit and even 16-bit. So BitNet uses only a small fraction of the
+
+685
+01:11:23,280 --> 01:11:27,120
+energy that other quantization methods and regular methods use.
+
+686
+01:11:30,320 --> 01:11:33,600
+Now, these are some zero-shot results.
+
+687
+01:11:37,680 --> 01:11:42,960
+They are comparing the inference energy consumption with the accuracy. And as we can see,
+
+688
+01:11:42,960 --> 01:11:54,960
+BitNet is outperforming the FP16 transformer significantly. The accuracy is comparable or
+
+689
+01:11:54,960 --> 01:12:00,080
+actually even slightly greater, while the energy consumption is much less.
+
+690
+01:12:00,560 --> 01:12:13,920
+Now, this is some comparison with FP16 transformers. And they are comparing the loss this time. So as we
+
+691
+01:12:13,920 --> 01:12:21,360
+can see, BitNet achieves a significantly better loss. And while the inference cost is much smaller,
+
+692
+01:12:21,360 --> 01:12:24,480
+to get the same performance as the FP16 transformers.
+
+693
+01:12:25,120 --> 01:12:37,600
+These are also some results. As we can see, if we actually try to perform quantization to just
+
+694
+01:12:38,320 --> 01:12:51,280
+one bit, BitNet has, it's the only one that's using training bits for the weights,
+
+695
+01:12:51,840 --> 01:13:00,880
+just one bit for training weights, for training as well as inference. And we can see the, if we
+
+696
+01:13:00,880 --> 01:13:08,960
+compare the accuracy of, if we just interpolate one bit weights and we interpolate the accuracy,
+
+697
+01:13:08,960 --> 01:13:15,360
+then BitNet is really, really, it's actually performing as good as, almost as good as 8-bit
+
+698
+01:13:15,360 --> 01:13:25,840
+weights. And as the model size increases, the energy cost reduction ratio increases by 38.8x
+
+699
+01:13:25,840 --> 01:13:30,320
+for 30 million parameter model. So in this table, I think we've already discussed.
+
+700
+01:13:32,240 --> 01:13:40,640
+Moving on, so with some more downstream tasks, with the, it's, BitNet is more stable than FP16
+
+701
+01:13:40,640 --> 01:13:46,560
+transformer with the same learning rate. We can see we employ a very large learning rate for
+
+702
+01:13:46,560 --> 01:13:56,080
+BitNet to account for the small, the really small weights. So if, if comparing it to an FP16
+
+703
+01:13:56,080 --> 01:14:02,640
+transformer, it's, it's like the FP16 transformer can even perform at all at this learning rate.
+
+704
+01:14:03,920 --> 01:14:09,040
+And these are also some different, different learning rates deployed and the perplexity
+
+705
+01:14:09,040 --> 01:14:16,960
+is compared. So this learning rate actually performs best with the lowest perplexity.
+
+706
+01:14:16,960 --> 01:14:22,080
+So this means that a large learning rate results in better convergence.
+
+707
+01:14:25,360 --> 01:14:30,160
+Now, this is some comparison with post-training quantization. And as we can see, BitNet
+
+708
+01:14:31,600 --> 01:14:35,600
+outperforms all of these post-training quantization methods.
+
+709
+01:14:36,000 --> 01:14:42,320
+While, and it's, it's actually the one that's closest to the regular transformer,
+
+710
+01:14:42,320 --> 01:14:48,160
+transformer with 16-bit weights and 16-bit activations. So, and as compared to that,
+
+711
+01:14:48,160 --> 01:14:53,360
+BitNet only has one bit weights and eight bit activations. These are some zero short and few
+
+712
+01:14:53,360 --> 01:14:58,960
+short results. And as we can see, BitNet performs best among all of these.
+
+713
+01:14:58,960 --> 01:15:09,520
+And these are also some more results with different data sets. And as we can see,
+
+714
+01:15:09,520 --> 01:15:16,240
+BitNet performs best in all of these tables. And they also have,
+
+715
+01:15:18,000 --> 01:15:23,280
+yeah, it's, it has the highest or pretty comparable accuracy among all data sets.
+
+716
+01:15:23,280 --> 01:15:33,200
+Now, so the key takeaways from this paper is that BitNet achieves competitive performance
+
+717
+01:15:33,200 --> 01:15:39,040
+and task outcomes while greatly reducing the memory and energy demands compared to traditional
+
+718
+01:15:39,040 --> 01:15:44,640
+models. It follows a similar scaling law as full precision models. So this indicates strong
+
+719
+01:15:44,640 --> 01:15:49,040
+potential for scaling up further in size. So fusion plans for this paper include
+
+720
+01:15:49,040 --> 01:15:54,480
+including the size and training steps of BitNet and exploring its application and other architectures.
+
+721
+01:15:55,760 --> 01:16:01,840
+This is a comparison chart that I've made discussing the four quantization procedures
+
+722
+01:16:01,840 --> 01:16:07,040
+that we, I have discussed. So as we can see, as far as precision is concerned,
+
+723
+01:16:07,040 --> 01:16:12,720
+LLM is 8-bit quantization, 8-bit optimizers are 8-bit quantization as well.
+
+724
+01:16:12,720 --> 01:16:18,800
+Chlora is 4-bit and then BitNet is 1-bit bits while we had 8-bit activations.
+
+725
+01:16:19,520 --> 01:16:23,120
+The techniques to use are vector-wise and mixed precision decomposition.
+
+726
+01:16:23,840 --> 01:16:31,200
+8-bit optimizers use block-wise quantization and dynamic double quantization of a double quantization
+
+727
+01:16:31,200 --> 01:16:37,440
+and also quantization of optimizer states. Chlora uses double, sorry, 8-bit optimizers use
+
+728
+01:16:37,440 --> 01:16:42,960
+dynamic quantization of optimizer states and Chlora uses double quantization and
+
+729
+01:16:42,960 --> 01:16:51,600
+based optimizers as well as the normal flow, the new data type. And BitNet uses a bit linear layer
+
+730
+01:16:51,600 --> 01:16:57,440
+and group quantization. The key innovation for LLMinted is that it maintains full precision
+
+731
+01:16:57,520 --> 01:17:03,840
+performance with 8-bit bits. 8-bit optimizers preserve optimizer performance
+
+732
+01:17:06,240 --> 01:17:12,240
+and Chlora enables large, large model fine tuning on the standard hardware and GPU
+
+733
+01:17:12,240 --> 01:17:19,200
+and BitNet skills transformers with just one bit precision. LLMinted experiments were done up to
+
+734
+01:17:19,200 --> 01:17:25,760
+175 billion parameters. Chlora used up to 65 billion parameters and BitNet just used general
+
+735
+01:17:26,400 --> 01:17:30,960
+large language models but they've added in the future work to use larger models.
+
+736
+01:17:32,080 --> 01:17:38,720
+LLMinted has no degradation. 8-bit optimizers are very comparable to 32-bit optimizers and
+
+737
+01:17:38,720 --> 01:17:44,160
+Chlora is also very close to state-of-the-art models and BitNet is competitive and comparable
+
+738
+01:17:44,160 --> 01:17:51,600
+to full precision transformers. LLMinted efficiency is that it reduces memory footprint by 50%.
+
+739
+01:17:51,840 --> 01:17:58,160
+8-bit optimizers also do significant memory savings and Chlora does efficient fine
+
+740
+01:17:58,160 --> 01:18:04,640
+tuning on limited resources and limited GPUs and BitNet reduces memory and energy consumption
+
+741
+01:18:04,640 --> 01:18:12,160
+by a big margin. The applications of LLMinted just include general large-scale LLMs
+
+742
+01:18:12,160 --> 01:18:17,040
+and 8-bit optimizers are optimizers for various tasks, not just large language models or
+
+743
+01:18:17,040 --> 01:18:23,040
+transformers and Chlora does fine tuning of large language models and BitNet is for training
+
+744
+01:18:23,040 --> 01:18:29,840
+large language models with using only a fraction of the memory and energy. So yeah, this is the
+
+745
+01:18:29,840 --> 01:18:31,520
+end of my presentation.
+

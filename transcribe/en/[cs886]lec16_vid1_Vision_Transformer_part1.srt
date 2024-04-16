@@ -1,0 +1,1756 @@
+1
+00:00:00,000 --> 00:00:06,760
+Hi everyone, my name is Nusia and I'm presenting Vision Transformer Part 1.
+
+2
+00:00:06,760 --> 00:00:12,200
+In this presentation, first I'll give a review of Transformer just to remember the architecture,
+
+3
+00:00:12,200 --> 00:00:18,180
+then I'll go through a series of methods that utilize Transformer in vision domain.
+
+4
+00:00:18,180 --> 00:00:23,600
+The papers that I'm going to talk about is image GPT, now Vision Transformer, DIT and
+
+5
+00:00:23,600 --> 00:00:24,600
+Swin Transformer.
+
+6
+00:00:24,600 --> 00:00:31,320
+I've tried to organize these papers based on the year that they were published, so
+
+7
+00:00:31,320 --> 00:00:37,560
+each model would be related to the one before that.
+
+8
+00:00:37,560 --> 00:00:42,000
+We saw Transformer architecture many times in this course before.
+
+9
+00:00:42,000 --> 00:00:44,440
+It contains an encoder and a decoder.
+
+10
+00:00:44,440 --> 00:00:50,760
+Each of these components can be repeated in times.
+
+11
+00:00:50,760 --> 00:00:55,720
+The most important component in this whole architecture is multihed attention, also known
+
+12
+00:00:55,720 --> 00:00:56,720
+as MSA.
+
+13
+00:00:56,720 --> 00:01:08,080
+MSA works with three vectors of values, keys and queries, and that's how it will calculate
+
+14
+00:01:08,080 --> 00:01:13,800
+the attention based on these three vectors and the input.
+
+15
+00:01:13,800 --> 00:01:18,520
+The mechanism of this architecture is completely discussed in this course before, so I'm not
+
+16
+00:01:18,520 --> 00:01:22,480
+going to go into more details, I'm just going to move on.
+
+17
+00:01:22,480 --> 00:01:30,840
+I just want to mention that for Vision Transformer, we're only going to use the encoder.
+
+18
+00:01:30,840 --> 00:01:31,960
+We don't need the decoder.
+
+19
+00:01:31,960 --> 00:01:38,240
+For example, in NLP domain, when we want to translate a sentence, we pass, for example,
+
+20
+00:01:38,240 --> 00:01:42,320
+an English sentence to the encoder, we get the embedding, and then we pass the embedding
+
+21
+00:01:42,320 --> 00:01:46,280
+to the decoder, and then translate it to another sentence.
+
+22
+00:01:46,280 --> 00:01:51,400
+But in Vision Domain, we just want to get the embedding from the images, and then we
+
+23
+00:01:51,400 --> 00:02:00,280
+can use these embeddings for downstream tasks like classification.
+
+24
+00:02:00,280 --> 00:02:06,000
+Transformers are very successful in NLP domain, and that's what inspired people to use the
+
+25
+00:02:06,000 --> 00:02:09,120
+idea of transformers in Vision Domain.
+
+26
+00:02:09,120 --> 00:02:17,800
+Image GPT was one of the first papers suggested by OpenAI that utilized the architecture of
+
+27
+00:02:17,800 --> 00:02:24,440
+Transformer for images, and shortly after that, Vision Transformer was suggested by
+
+28
+00:02:24,440 --> 00:02:25,440
+Google.
+
+29
+00:02:25,440 --> 00:02:31,160
+This approach was really successful, and also it increased a lot of interest in using Transformer
+
+30
+00:02:31,160 --> 00:02:32,440
+in Vision.
+
+31
+00:02:33,200 --> 00:02:40,480
+Actually, the other papers that I'm going to talk about were inspired by this VIT, or
+
+32
+00:02:40,480 --> 00:02:41,960
+Vision Transformer.
+
+33
+00:02:41,960 --> 00:02:49,360
+Now, as you can imagine, one of the fundamental challenges of using Transformers in Vision
+
+34
+00:02:49,360 --> 00:02:54,520
+Domain is to how to create a sequence from an image.
+
+35
+00:02:54,520 --> 00:03:00,280
+We know that Transformers cannot take an image as an input, which means that we have to turn
+
+36
+00:03:00,280 --> 00:03:03,120
+an image into a sequence.
+
+37
+00:03:03,120 --> 00:03:07,440
+Each of the papers that I'm going to talk about will overcome this challenge in their
+
+38
+00:03:07,440 --> 00:03:08,440
+own ways.
+
+39
+00:03:11,440 --> 00:03:22,320
+Like I said, one of the first papers in utilizing Transformer in Vision is generative proof
+
+40
+00:03:22,320 --> 00:03:26,920
+training from pixels, also known as Image GPT.
+
+41
+00:03:26,920 --> 00:03:30,480
+This architecture, as you can see, it contains three components.
+
+42
+00:03:30,480 --> 00:03:37,280
+The first component is the pre-processing, which will transfer an image into a sequence.
+
+43
+00:03:37,280 --> 00:03:43,480
+The second component is pre-training, which train two models.
+
+44
+00:03:43,480 --> 00:03:49,520
+The backbone of these models are GPT2, and they're the same, but these two models are
+
+45
+00:03:49,520 --> 00:03:53,760
+just trained with two different objectives.
+
+46
+00:03:53,760 --> 00:04:00,280
+The third component, which is also the last one, will evaluate these models.
+
+47
+00:04:00,280 --> 00:04:06,120
+I will explain each of these components in more details.
+
+48
+00:04:06,120 --> 00:04:11,960
+The first component, which is the pre-processing, it will convert an image into a sequence by
+
+49
+00:04:11,960 --> 00:04:14,960
+reordering the pixels.
+
+50
+00:04:14,960 --> 00:04:25,360
+Now an image from ImageNet Dataset has a dimension of 224 by 224 by 3, which is like the number
+
+51
+00:04:25,360 --> 00:04:30,520
+of channels, which is more than 150,000 pixels.
+
+52
+00:04:30,520 --> 00:04:32,440
+This is a huge sequence.
+
+53
+00:04:32,440 --> 00:04:38,520
+If we want to reorder the image to create a sequence, that will be a really long sequence.
+
+54
+00:04:38,520 --> 00:04:44,960
+That's why ImageGPT use ContextReduction, which has two steps.
+
+55
+00:04:44,960 --> 00:04:48,240
+The first step resizes the image into a lower resolution.
+
+56
+00:04:48,240 --> 00:04:55,760
+It will turn it in 32 by 32 by 3, and then there is another step, which they use a customized
+
+57
+00:04:55,760 --> 00:04:58,880
+color palette to change the RGB.
+
+58
+00:04:58,880 --> 00:05:07,600
+They change the number of channels of 3 to 1, and now they have reduced the dimension
+
+59
+00:05:07,600 --> 00:05:17,120
+from 150,000 pixels, more than 150,000 pixels, to 1,000 pixels.
+
+60
+00:05:17,120 --> 00:05:21,200
+Just to look how it works, this is an image from ImageNet.
+
+61
+00:05:21,200 --> 00:05:28,720
+They make the resolution lower, and then they change the RGB, as you can see here, and then
+
+62
+00:05:28,720 --> 00:05:34,000
+they reorder these pixels in the way that these arrows show.
+
+63
+00:05:34,000 --> 00:05:41,760
+They put them together and create a sequence.
+
+64
+00:05:41,760 --> 00:05:46,200
+After creating the sequence, there is a component for pre-training.
+
+65
+00:05:46,200 --> 00:05:51,720
+Again, they are using GPT tube architecture with one of the two objectives.
+
+66
+00:05:51,720 --> 00:05:58,480
+The first objective is autoregressive, which is also known as next pixel prediction, and
+
+67
+00:05:58,480 --> 00:06:05,720
+the other one is BERT, which is mask pixel prediction.
+
+68
+00:06:05,720 --> 00:06:09,560
+Let's talk about autoregressive first.
+
+69
+00:06:09,560 --> 00:06:10,560
+This is how it works.
+
+70
+00:06:10,560 --> 00:06:17,320
+Imagine you have a data set, which here will be a data set of images.
+
+71
+00:06:17,320 --> 00:06:22,000
+Consider a data from this data set, which will be a sample of image.
+
+72
+00:06:22,000 --> 00:06:29,640
+This image, which we're going to know it as X, will contain a sequence of pixels.
+
+73
+00:06:29,640 --> 00:06:36,800
+The probability of this image, or this sample, will be based on the probabilities of the
+
+74
+00:06:36,800 --> 00:06:40,080
+pixels that created this sample.
+
+75
+00:06:40,080 --> 00:06:51,800
+The probability of each pixel will be based on the given or the observed pixels.
+
+76
+00:06:51,800 --> 00:06:59,080
+This GPT used identity permutation, which means they didn't reorder the observed pixels.
+
+77
+00:06:59,080 --> 00:07:09,120
+In other words, the probability of pixel i will be based on the probability of pixel
+
+78
+00:07:09,120 --> 00:07:17,680
+1 to i minus 1, or the observed pixels for this pixel will be 1 to i minus 1.
+
+79
+00:07:17,680 --> 00:07:20,360
+It's like no reordering here.
+
+80
+00:07:20,360 --> 00:07:23,400
+Autoregressive and NLP can use reordering.
+
+81
+00:07:23,400 --> 00:07:30,880
+It's just in image GPT, it doesn't use any reordering.
+
+82
+00:07:30,880 --> 00:07:34,480
+Now we know how to calculate the probability.
+
+83
+00:07:34,480 --> 00:07:39,800
+We can train the model by minimizing the negative likelihood.
+
+84
+00:07:39,800 --> 00:07:46,840
+Looking at this loss, you can see that the model is trying to make sure that the probability
+
+85
+00:07:46,840 --> 00:07:55,840
+of the image sample will be as high as possible, so the loss will be near zero.
+
+86
+00:07:55,840 --> 00:08:00,760
+The other objective is BERT, which is Masked Pixel Prediction.
+
+87
+00:08:00,760 --> 00:08:06,920
+For BERT, first we consider a sub-sequence from all pixels, which we're going to call
+
+88
+00:08:06,920 --> 00:08:16,480
+it M. The probability of each pixel appear in M will be 0.15, and the pixels that will
+
+89
+00:08:16,560 --> 00:08:20,840
+appear in M will be Masked during the training.
+
+90
+00:08:20,840 --> 00:08:24,360
+That's why we call M the BERT Mask.
+
+91
+00:08:24,360 --> 00:08:35,720
+During the training process, we will try to minimize this loss, which is this loss function,
+
+92
+00:08:35,720 --> 00:08:42,680
+is predicting mask elements based on the unmasked ones.
+
+93
+00:08:42,720 --> 00:08:51,480
+To sum it up and visualize both of these objectives, for ultra-regressive, for example, this is
+
+94
+00:08:51,480 --> 00:08:58,720
+the input, we want to predict this pixel in the sequence, and these are the observed
+
+95
+00:08:58,720 --> 00:09:00,720
+sequence.
+
+96
+00:09:00,720 --> 00:09:08,200
+In each step, each pixel will be predicted based on the previous observed pixels.
+
+97
+00:09:08,200 --> 00:09:10,280
+For example, look at this blue one.
+
+98
+00:09:10,280 --> 00:09:16,840
+You can see that it is based on the previous observed ones, or this red one is based on
+
+99
+00:09:16,840 --> 00:09:20,600
+the previous observed ones, and so on.
+
+100
+00:09:20,600 --> 00:09:31,920
+At the end, the pixel will be predicted using all these other observed pixels.
+
+101
+00:09:31,920 --> 00:09:35,680
+This is how ultra-regressive predicted pixel.
+
+102
+00:09:35,680 --> 00:09:42,400
+The probability of this pixel, the last one that we predicted now, will be dependent on
+
+103
+00:09:42,400 --> 00:09:46,000
+all the other observed ones.
+
+104
+00:09:46,000 --> 00:09:50,240
+For BERT, this is the input sequence.
+
+105
+00:09:50,240 --> 00:09:53,440
+Imagine two pixels are masked.
+
+106
+00:09:53,440 --> 00:09:58,760
+Now they're going to be predicted based on all the other observed ones.
+
+107
+00:09:58,760 --> 00:10:02,400
+So look at this blue one here.
+
+108
+00:10:02,400 --> 00:10:08,600
+This blue one, the probability of this, will be calculated based on all the other observed
+
+109
+00:10:08,600 --> 00:10:09,600
+pixels.
+
+110
+00:10:09,600 --> 00:10:20,080
+So you see, it's like everybody, not just the one before that pixel, and so on.
+
+111
+00:10:20,080 --> 00:10:29,240
+So as the red one here, and these two pixels will be created.
+
+112
+00:10:29,240 --> 00:10:38,640
+So the probability of these two pixels will be calculated independent from each other.
+
+113
+00:10:38,640 --> 00:10:43,920
+While you saw that in ultra-regressive process, each pixel was predicted actually based on
+
+114
+00:10:43,920 --> 00:10:46,920
+the previous ones.
+
+115
+00:10:46,920 --> 00:10:54,240
+Okay, so for evaluation, they either do fine-tuning or linear prob.
+
+116
+00:10:54,240 --> 00:11:03,120
+For fine-tuning, they add a classification head at the end of the representation at the
+
+117
+00:11:03,120 --> 00:11:05,320
+last layer.
+
+118
+00:11:05,320 --> 00:11:08,600
+It will be here in this image.
+
+119
+00:11:08,600 --> 00:11:13,400
+And then they will train both the transformer and the classifier together.
+
+120
+00:11:13,400 --> 00:11:19,400
+So the loss will be based on the loss of classifier and the loss of the model, which can be either
+
+121
+00:11:19,400 --> 00:11:23,040
+ultra-regressive or BERT.
+
+122
+00:11:23,040 --> 00:11:30,160
+For linear prob, they do add the classifier to the representation, but they only train
+
+123
+00:11:30,160 --> 00:11:33,200
+the classifier and freeze the transformer model.
+
+124
+00:11:33,200 --> 00:11:38,720
+So this will be only trained based on the loss of classifier.
+
+125
+00:11:38,720 --> 00:11:43,600
+Now, for this process, since they don't want to train the transformer, they can add the
+
+126
+00:11:43,600 --> 00:11:45,920
+classifier to each layer that they want.
+
+127
+00:11:45,920 --> 00:11:55,560
+They can add it to the last layer or in the intermediate layers or to the first ones.
+
+128
+00:11:55,560 --> 00:12:01,200
+And for the result, that's exactly what they did.
+
+129
+00:12:01,200 --> 00:12:04,960
+For ultra-regressive, that is pre-trained on ImageNet.
+
+130
+00:12:04,960 --> 00:12:11,600
+They applied linear prob or they applied the classifier to different layers and they report
+
+131
+00:12:11,600 --> 00:12:17,600
+the accuracy.
+
+132
+00:12:17,600 --> 00:12:22,960
+So you can see that it's amazing that the result for the intermediate layer is actually better
+
+133
+00:12:22,960 --> 00:12:26,960
+than the last layer.
+
+134
+00:12:26,960 --> 00:12:33,520
+The reason is that in a transformer, the first layers will not contain a lot of information
+
+135
+00:12:33,520 --> 00:12:39,760
+and the last layers will be so specific to that pixel that the model is trying to predict.
+
+136
+00:12:39,760 --> 00:12:46,640
+That's why the intermediate layer may contain global, more global information and the result
+
+137
+00:12:46,640 --> 00:12:52,840
+will be better in, for example, classification in these layers.
+
+138
+00:12:52,840 --> 00:12:59,320
+For fine-tuning evaluation, you can see that the accuracy is relatively good for C410 and
+
+139
+00:12:59,320 --> 00:13:07,040
+also C4100, but for example, in C4100, if you see EfficientNet, which is a CNN-based
+
+140
+00:13:07,040 --> 00:13:12,480
+model, actually performs better.
+
+141
+00:13:12,480 --> 00:13:19,520
+This is also a general result on two objectives and for two datasets.
+
+142
+00:13:19,520 --> 00:13:23,440
+So this is BERT and auto-aggressive for C410.
+
+143
+00:13:23,440 --> 00:13:28,600
+These models were pre-trained on ImageNet and these are the results for ImageNet and
+
+144
+00:13:28,600 --> 00:13:32,160
+they were pre-trained on Solvep images.
+
+145
+00:13:32,160 --> 00:13:37,240
+So until here, they're both pre-trained.
+
+146
+00:13:37,240 --> 00:13:41,960
+Here for example, in this picture, they are pre-trained on ImageNet.
+
+147
+00:13:41,960 --> 00:13:50,240
+Then they apply linear prop to increase the accuracy and then after that they apply fine-tuning
+
+148
+00:13:50,240 --> 00:13:57,120
+to again increase the accuracy more.
+
+149
+00:13:57,120 --> 00:14:04,680
+And you can see for C410, they reach 99%, but for ImageNet, the best they can do is
+
+150
+00:14:04,680 --> 00:14:09,640
+like near 68%.
+
+151
+00:14:09,640 --> 00:14:17,360
+And this dark part that you see on BERT, it's like they apply an assembling process just
+
+152
+00:14:17,360 --> 00:14:30,320
+to further improve the accuracy as well.
+
+153
+00:14:30,320 --> 00:14:36,240
+Here are some visual results for ImageGPT and I think they're very interesting.
+
+154
+00:14:36,240 --> 00:14:44,120
+The last column here, it's like the real input, the target one.
+
+155
+00:14:44,120 --> 00:14:49,960
+And the first one here is like the masked pictures and for example, look at this first
+
+156
+00:14:49,960 --> 00:14:53,640
+one which is an image of a cat.
+
+157
+00:14:53,640 --> 00:15:00,120
+Half of this picture is masked, but still these intermediate pictures that you can see,
+
+158
+00:15:00,120 --> 00:15:04,960
+there are the ones that the model predicted.
+
+159
+00:15:04,960 --> 00:15:10,960
+They're quite well and I mean, look at this one, it's kind of funny.
+
+160
+00:15:10,960 --> 00:15:17,920
+For example, these BERTs, you can see how the model actually formed.
+
+161
+00:15:17,920 --> 00:15:25,560
+So it's quite impressive how this model actually works very good.
+
+162
+00:15:25,560 --> 00:15:35,320
+Okay, so we saw how ImageGPT works and there is a main problem with this model.
+
+163
+00:15:35,320 --> 00:15:42,600
+They resize the images to 32 by 32, so they lose many details from the information.
+
+164
+00:15:42,600 --> 00:15:50,520
+They're just making a huge image with a lot of details into a very small, low-resolution
+
+165
+00:15:50,520 --> 00:15:51,520
+image.
+
+166
+00:15:51,520 --> 00:15:58,080
+VIT solved this problem by creating sequence from patches instead of the whole picture.
+
+167
+00:15:58,840 --> 00:16:07,840
+Again, this paper was very successful and many other paper used this idea in their research.
+
+168
+00:16:09,840 --> 00:16:13,440
+Here's the overall architecture of VIT.
+
+169
+00:16:13,440 --> 00:16:20,080
+The main idea is using patches instead of large images.
+
+170
+00:16:20,080 --> 00:16:22,400
+I will explain the process.
+
+171
+00:16:23,400 --> 00:16:30,400
+I will explain the pre-process here, but in this slide, I just want to mention that
+
+172
+00:16:30,400 --> 00:16:33,720
+the Transformer encoder is the same as Transformer.
+
+173
+00:16:33,720 --> 00:16:37,560
+It just didn't make any changes to the architecture.
+
+174
+00:16:37,560 --> 00:16:45,560
+They just add an MLP head here for classification just to find the class of the image.
+
+175
+00:16:45,560 --> 00:16:52,120
+Okay, this is how the VIT works.
+
+176
+00:16:52,120 --> 00:16:57,960
+First, they split an image into patches, so imagine we have this image.
+
+177
+00:16:57,960 --> 00:17:06,560
+They split this into patches, P by P by 3 because of the number of channels.
+
+178
+00:17:06,560 --> 00:17:11,880
+They mentioned that the size of the patches that they usually use is 16.
+
+179
+00:17:11,880 --> 00:17:16,080
+Then they put these patches next to each other.
+
+180
+00:17:16,080 --> 00:17:24,400
+You see it would look like this, and then they put the position of these patches beside
+
+181
+00:17:24,400 --> 00:17:25,400
+them as well.
+
+182
+00:17:25,400 --> 00:17:32,440
+This is patch 1, 2, 3, 4, 5, 6, and so on.
+
+183
+00:17:32,440 --> 00:17:38,280
+Each of these patches will be turned into a sequence based on their pixel.
+
+184
+00:17:38,280 --> 00:17:43,600
+The length of this sequence will be P by P by 3.
+
+185
+00:17:43,600 --> 00:17:48,520
+Then this sequence goes through a linear projection.
+
+186
+00:17:48,520 --> 00:18:00,160
+This linear projection only changes the dimension from this P by P by C to D.
+
+187
+00:18:00,160 --> 00:18:05,440
+On the other hand, there is a position embedding.
+
+188
+00:18:05,440 --> 00:18:12,360
+This position of the patches goes through position embedding.
+
+189
+00:18:12,360 --> 00:18:17,280
+This will convert the integer into a D dimension vector.
+
+190
+00:18:17,280 --> 00:18:25,400
+These two vectors will be added together and they will create the pre-process step for
+
+191
+00:18:25,400 --> 00:18:26,960
+this patch.
+
+192
+00:18:26,960 --> 00:18:32,480
+This process will go on for all the patches.
+
+193
+00:18:32,480 --> 00:18:40,160
+From passing this to the transformer, they add a trainable vector at the beginning of
+
+194
+00:18:40,160 --> 00:18:41,160
+this sequence.
+
+195
+00:18:41,160 --> 00:18:43,560
+They call this CLS token.
+
+196
+00:18:43,560 --> 00:18:49,240
+CLS token, this pink one that you see here is a trainable vector.
+
+197
+00:18:49,240 --> 00:18:55,800
+This purple one is actually position embedding for 0 because patches started from 1 and this
+
+198
+00:18:55,800 --> 00:18:58,320
+is the position 0.
+
+199
+00:18:58,320 --> 00:19:02,440
+This whole sequence will go through the transformer.
+
+200
+00:19:03,440 --> 00:19:09,600
+This is the input of the CLS token, the patches that went through linear projection and then
+
+201
+00:19:09,600 --> 00:19:13,480
+they were added with the positions.
+
+202
+00:19:13,480 --> 00:19:23,240
+The transformer contains layers and then the output, the last output of the transformer.
+
+203
+00:19:23,240 --> 00:19:29,040
+The part of this output that it is related to the CLS token, which we're going to call
+
+204
+00:19:29,120 --> 00:19:37,520
+it Z0L, will go through this MLB head and then label will be created.
+
+205
+00:19:41,520 --> 00:19:44,200
+Okay, so here are some results.
+
+206
+00:19:44,200 --> 00:19:49,280
+VIT actually outperforms CNN-based models.
+
+207
+00:19:49,280 --> 00:19:56,480
+Here you can see that they train their model actually on a dataset which is called GFD.
+
+208
+00:19:56,480 --> 00:20:02,560
+This dataset contains 300 million data for training and it's not publicly available.
+
+209
+00:20:02,560 --> 00:20:06,640
+It's like Google's private dataset.
+
+210
+00:20:06,640 --> 00:20:09,440
+They train their model on that.
+
+211
+00:20:09,440 --> 00:20:15,840
+This is like training with patch of 14, patch of 16 and this is like training on another
+
+212
+00:20:15,840 --> 00:20:18,760
+dataset.
+
+213
+00:20:18,760 --> 00:20:24,560
+So compared to CNN-based models like ResNet and EfficientNet, you can see that the accuracy
+
+214
+00:20:24,560 --> 00:20:26,720
+is better.
+
+215
+00:20:26,720 --> 00:20:36,320
+On the other hand, VIT is much faster than CNN-based models you can see here.
+
+216
+00:20:36,320 --> 00:20:43,080
+This is also another result that you can see.
+
+217
+00:20:43,080 --> 00:20:45,760
+There is a dataset called VTAB.
+
+218
+00:20:45,760 --> 00:20:48,040
+It has different tasks.
+
+219
+00:20:48,040 --> 00:20:54,320
+So based on this picture, you can see that VIT actually outperforms other state-of-the-art
+
+220
+00:20:54,320 --> 00:21:01,000
+models on each of these tasks.
+
+221
+00:21:01,000 --> 00:21:04,240
+Here are also some visualized results.
+
+222
+00:21:04,240 --> 00:21:08,360
+We can see the power of VIT with these pictures.
+
+223
+00:21:08,360 --> 00:21:13,200
+So the first picture here applied PCA to the output of linear projections.
+
+224
+00:21:13,200 --> 00:21:21,320
+So they changed the dimension from D to 28 and then they showed these results in 28 pictures.
+
+225
+00:21:22,320 --> 00:21:24,400
+Images here.
+
+226
+00:21:24,400 --> 00:21:32,160
+So these pictures are very similar to the feature extraction pictures that are created
+
+227
+00:21:32,160 --> 00:21:36,360
+by CNN models.
+
+228
+00:21:36,360 --> 00:21:43,240
+The second picture here shows the performance of the position embedding.
+
+229
+00:21:43,240 --> 00:21:49,960
+So they actually calculate the cosine similarity between each position embedding and the rest
+
+230
+00:21:49,960 --> 00:21:51,360
+of the position.
+
+231
+00:21:51,360 --> 00:21:58,360
+You can see that the similarity is higher in the same row and column for each position.
+
+232
+00:21:58,360 --> 00:22:06,120
+And the last picture here actually shows the mean attention distance for each attention
+
+233
+00:22:06,120 --> 00:22:08,120
+head in each layer.
+
+234
+00:22:08,120 --> 00:22:17,680
+So each of these points shows the mean attention distance or ahead.
+
+235
+00:22:17,680 --> 00:22:19,200
+Now these are the layers.
+
+236
+00:22:19,200 --> 00:22:28,400
+This picture shows us that as we go towards the layer, this distance increases among
+
+237
+00:22:28,400 --> 00:22:37,760
+all of the heads, which it means that the more global feature is extracted by the last
+
+238
+00:22:37,760 --> 00:22:44,120
+layers.
+
+239
+00:22:44,120 --> 00:22:47,560
+So the next paper is DIT.
+
+240
+00:22:47,560 --> 00:22:53,960
+VIT performs very well, but it has a huge problem.
+
+241
+00:22:53,960 --> 00:22:59,280
+The data set that they use to train this model is not publicly available.
+
+242
+00:22:59,280 --> 00:23:00,480
+Also it's a huge data set.
+
+243
+00:23:00,480 --> 00:23:07,160
+It contains 300 million data for training, which is something that Google can train in
+
+244
+00:23:07,160 --> 00:23:09,160
+their GPUs.
+
+245
+00:23:09,160 --> 00:23:17,600
+DIT, which is suggested by Facebook, uses the distillation process to actually solve
+
+246
+00:23:17,600 --> 00:23:20,040
+this problem.
+
+247
+00:23:20,040 --> 00:23:24,280
+And they use ImageNet, which is 10 times the smaller.
+
+248
+00:23:24,280 --> 00:23:33,680
+Okay, so before we understand the architecture of DIT, let's just go through the idea of
+
+249
+00:23:33,680 --> 00:23:36,120
+knowledge distillation.
+
+250
+00:23:36,120 --> 00:23:40,680
+So in knowledge distillation, there is a pre-trained teacher network, and then there's
+
+251
+00:23:40,680 --> 00:23:46,400
+a student network, which is usually smaller than the teacher, and it tries to mimic the
+
+252
+00:23:46,400 --> 00:23:48,640
+behavior of the teacher network.
+
+253
+00:23:48,640 --> 00:23:55,080
+In other words, in the training, we will try to distill the knowledge of the teacher to
+
+254
+00:23:55,080 --> 00:23:58,560
+the student.
+
+255
+00:23:58,560 --> 00:24:05,080
+This distillation can be done in two ways, soft distillation and hard distillation, or
+
+256
+00:24:05,080 --> 00:24:11,480
+soft distillation, the student tries to recreate the distribution predicted by the teacher,
+
+257
+00:24:11,480 --> 00:24:19,480
+but for hard distillation, the student tries to recreate the labels predicted by the teacher.
+
+258
+00:24:19,480 --> 00:24:27,120
+So looking at this soft distillation here, the first term is cross entropy based on the
+
+259
+00:24:27,120 --> 00:24:33,360
+student prediction and the true labels.
+
+260
+00:24:33,360 --> 00:24:40,360
+The second term here is KL divergence between the prediction of the student and the teacher
+
+261
+00:24:40,360 --> 00:24:44,920
+so that it will increase the similarity between these two networks.
+
+262
+00:24:44,920 --> 00:24:54,960
+Or in other words, it will try to make sure that the student will behave similar as teacher.
+
+263
+00:24:54,960 --> 00:25:03,600
+For hard distillation, the first term is like the same based on the true label, like the
+
+264
+00:25:03,600 --> 00:25:06,600
+output of the student network and the true label.
+
+265
+00:25:06,600 --> 00:25:12,440
+The second term here is the output of the student network and the teacher label, which
+
+266
+00:25:12,440 --> 00:25:23,720
+like I said, the student will try to recreate the labels that the teacher predicted.
+
+267
+00:25:23,720 --> 00:25:32,400
+So for understanding the EIT, let's just say that it's very similar to the EIT.
+
+268
+00:25:32,400 --> 00:25:36,680
+So you remember the EIT architecture, it's the same process.
+
+269
+00:25:36,680 --> 00:25:39,880
+So we'll turn an image into patches.
+
+270
+00:25:39,880 --> 00:25:42,320
+These patches go through a linear projection.
+
+271
+00:25:42,320 --> 00:25:50,720
+There's an also in position embedding layer that will embed these position of these patches.
+
+272
+00:25:50,720 --> 00:25:53,680
+And this sequence will be created the same.
+
+273
+00:25:53,680 --> 00:25:55,560
+The CLS token is the same.
+
+274
+00:25:55,560 --> 00:25:57,920
+This will be added at the beginning.
+
+275
+00:25:57,920 --> 00:26:01,360
+Now here's the first difference.
+
+276
+00:26:01,360 --> 00:26:06,840
+The EIT also has another token, which is called distillation token.
+
+277
+00:26:06,840 --> 00:26:11,600
+It will be added at the end of the sequence, but it is same as CLS.
+
+278
+00:26:11,600 --> 00:26:14,120
+It's a trainable token.
+
+279
+00:26:14,120 --> 00:26:15,640
+It's a trainable vector.
+
+280
+00:26:15,640 --> 00:26:22,600
+Okay, so these sequence goes through the transformer encoder and then there will be two MLP heads.
+
+281
+00:26:22,600 --> 00:26:26,440
+The first one is the same as the one in the EIT.
+
+282
+00:26:26,440 --> 00:26:28,960
+It takes the CLS token and the true label.
+
+283
+00:26:28,960 --> 00:26:32,800
+It calculate the cross entropy loss.
+
+284
+00:26:32,800 --> 00:26:40,720
+The other MLP actually create another loss and this transformer model will be trained
+
+285
+00:26:40,720 --> 00:26:42,920
+based on both of these losses.
+
+286
+00:26:42,920 --> 00:26:47,840
+Okay, so there is a teacher model here.
+
+287
+00:26:47,840 --> 00:26:51,520
+The teacher model that they use is CNN based model.
+
+288
+00:26:51,520 --> 00:26:58,120
+So this picture will go through this CNN based model as a whole.
+
+289
+00:26:58,120 --> 00:27:01,480
+They don't need this sequence.
+
+290
+00:27:01,480 --> 00:27:05,920
+This will go through this teacher and teacher will give a prediction.
+
+291
+00:27:05,920 --> 00:27:12,880
+Now this MLP will use the distillation token as the input and also the prediction of the
+
+292
+00:27:12,880 --> 00:27:18,560
+teacher or that will consider the distribution of the teacher and then calculate the loss
+
+293
+00:27:18,560 --> 00:27:20,040
+of teacher.
+
+294
+00:27:20,040 --> 00:27:25,600
+So this transformer, which is a student network in this scenario, will be trained based on
+
+295
+00:27:25,600 --> 00:27:30,760
+these two losses.
+
+296
+00:27:30,760 --> 00:27:39,040
+For training, they use data augmentation such as RAND augmentation and COD mites.
+
+297
+00:27:39,040 --> 00:27:42,160
+There are other augmentations as well.
+
+298
+00:27:42,160 --> 00:27:44,520
+These are just two examples.
+
+299
+00:27:44,520 --> 00:27:51,600
+RAND augmentation is like changing the contrast or rotate the picture or change the brightness.
+
+300
+00:27:51,600 --> 00:27:55,920
+For COD mites, it's like you have a picture of a dog and then a picture of a cat and
+
+301
+00:27:55,920 --> 00:27:59,120
+then you combine them together.
+
+302
+00:27:59,120 --> 00:28:05,040
+They also introduce variant architecture based on the number of heads and the number
+
+303
+00:28:05,040 --> 00:28:10,440
+of layers and their embedding dimensions is different.
+
+304
+00:28:10,440 --> 00:28:20,240
+VIT-B, the one that you see here, is the architecture of this one is similar to VIT.
+
+305
+00:28:20,240 --> 00:28:26,560
+They also mentioned that in some results that we'll see, they fine-tune the model on the
+
+306
+00:28:26,560 --> 00:28:34,440
+same dataset but they changed the resolution of the pictures to 384.
+
+307
+00:28:34,440 --> 00:28:38,400
+So for teacher network, they use different models.
+
+308
+00:28:38,400 --> 00:28:40,600
+All of these models are CNN based model.
+
+309
+00:28:40,600 --> 00:28:45,080
+The bigger CNN model actually performs better.
+
+310
+00:28:45,080 --> 00:28:49,120
+This one, this is the accuracy of the model.
+
+311
+00:28:49,120 --> 00:28:55,880
+This is the accuracy of the student network that it is pre-trained and this is the accuracy
+
+312
+00:28:55,880 --> 00:29:06,000
+after applying fine-tuning with those pictures, which I mentioned.
+
+313
+00:29:06,000 --> 00:29:10,640
+They reported the result for different distillation strategies.
+
+314
+00:29:10,640 --> 00:29:18,080
+So this symbol that you see here, it means that the IT used two losses, the cross-entropy
+
+315
+00:29:18,080 --> 00:29:20,920
+loss and the teacher loss.
+
+316
+00:29:20,920 --> 00:29:27,480
+But here, this one here, it means that it will only use one loss and not the distillation
+
+317
+00:29:27,480 --> 00:29:29,000
+token.
+
+318
+00:29:29,000 --> 00:29:34,640
+So the first one is trained based on true labels without any distillation.
+
+319
+00:29:34,640 --> 00:29:41,400
+For the second one, it's like trained CLS based on self-distillation.
+
+320
+00:29:41,400 --> 00:29:46,600
+The third one is trained CLS based on hard distillation.
+
+321
+00:29:46,600 --> 00:29:55,800
+Now these three consider the distillation token as well as the CLS token.
+
+322
+00:29:55,800 --> 00:30:05,080
+But for the first row, you see that they pass CLS token to both MLP heads.
+
+323
+00:30:05,080 --> 00:30:12,520
+For the second row, they pass the distillation token to both MLP heads and the last one
+
+324
+00:30:12,520 --> 00:30:15,080
+is the same as we discussed.
+
+325
+00:30:15,080 --> 00:30:20,840
+It's like the CLS token goes through one MLP and the distillation token goes through another
+
+326
+00:30:20,840 --> 00:30:22,360
+MLP head.
+
+327
+00:30:22,360 --> 00:30:25,600
+It's like the original idea.
+
+328
+00:30:25,600 --> 00:30:31,760
+And you see that this one outperforms everyone.
+
+329
+00:30:31,760 --> 00:30:38,240
+Also you can see from here that using distillation performs actually better than using just the
+
+330
+00:30:38,240 --> 00:30:44,880
+true labels.
+
+331
+00:30:44,880 --> 00:30:50,800
+This is the final result of comparing with CNN models, ResNet and EfficientNet.
+
+332
+00:30:50,800 --> 00:31:00,800
+This table shows that you see with the same number of parameter between DIT and a CNN
+
+333
+00:31:00,800 --> 00:31:06,400
+base model, DIT performs much faster.
+
+334
+00:31:06,400 --> 00:31:18,400
+You can see that the throughput is 85.8, but for CNN base is like 25.2, while the accuracy
+
+335
+00:31:18,400 --> 00:31:25,800
+is same.
+
+336
+00:31:25,800 --> 00:31:31,400
+And here's the final comparison of DIT with EfficientNet and VIT.
+
+337
+00:31:31,400 --> 00:31:39,120
+So you can see here that VIT is slow and it has low accuracy compared to the other models.
+
+338
+00:31:39,120 --> 00:31:46,520
+DIT is same as VIT is just trained on a data starving regime, but you can see that it is
+
+339
+00:31:46,520 --> 00:31:51,320
+better than VIT, but not better than EfficientNet.
+
+340
+00:31:51,320 --> 00:31:59,200
+DIT with distillation actually outperforms the CNN base model.
+
+341
+00:31:59,200 --> 00:32:04,960
+Also for example, consider this image per second.
+
+342
+00:32:04,960 --> 00:32:14,600
+You can see that in this point with the same speed, DIT actually performs better than the
+
+343
+00:32:14,600 --> 00:32:15,600
+rest.
+
+344
+00:32:15,600 --> 00:32:28,200
+The last paper that I'm going to talk about is NIN Transformer, suggested by Microsoft.
+
+345
+00:32:28,200 --> 00:32:34,720
+The actual name of this paper is Hierarchical Vision Transformer using Shifted Windows.
+
+346
+00:32:34,720 --> 00:32:37,480
+That's where SWIN comes from.
+
+347
+00:32:38,480 --> 00:32:47,720
+Well, VIT's computational complexity is quadratic to the image size.
+
+348
+00:32:47,720 --> 00:32:53,720
+And SWIN Transformer tries to address this issue by introducing two blocks, Patch Merging
+
+349
+00:32:53,720 --> 00:32:56,960
+and SWIN Transformer.
+
+350
+00:32:56,960 --> 00:33:01,880
+This is the overall architecture and these are the components I will go through each of
+
+351
+00:33:01,880 --> 00:33:02,880
+them.
+
+352
+00:33:02,880 --> 00:33:09,200
+Now, this is an image, H by W by 3, 3 channels.
+
+353
+00:33:09,200 --> 00:33:14,640
+The first component that this image goes through is Patch Partition.
+
+354
+00:33:14,640 --> 00:33:22,120
+As you can imagine, this component will only make patches.
+
+355
+00:33:22,120 --> 00:33:31,360
+So each of these patches will be 4 by 4 by 3, so the dimension of this patch is 48, and
+
+356
+00:33:31,360 --> 00:33:38,120
+the number of patches will be H divided by 4, W divided by 4.
+
+357
+00:33:38,120 --> 00:33:41,720
+Now the next component is Linear Embedding.
+
+358
+00:33:41,720 --> 00:33:49,440
+This image with these patches goes through this linear embedding layer, and this linear
+
+359
+00:33:49,440 --> 00:33:58,520
+embedding will change the dimension of these patches from 48 to C. So that's the only change
+
+360
+00:33:58,520 --> 00:34:05,880
+that linear embedding makes, and the number of patches will be the same.
+
+361
+00:34:05,880 --> 00:34:14,680
+Okay, so now we move to the SWIN Transformer block here.
+
+362
+00:34:14,680 --> 00:34:17,680
+SWIN Transformer contains two subunits.
+
+363
+00:34:17,680 --> 00:34:22,440
+Each unit is identical to Transformer architecture.
+
+364
+00:34:22,440 --> 00:34:31,920
+They just replace the MSA in the first unit with Window MSA and in the second subunit
+
+365
+00:34:31,920 --> 00:34:35,560
+with Shifted Window MSA.
+
+366
+00:34:35,560 --> 00:34:40,480
+Let's talk about Window MSA first.
+
+367
+00:34:40,480 --> 00:34:46,720
+So this is just like the Window MSA works exactly like MSA.
+
+368
+00:34:46,720 --> 00:34:55,200
+It just consider Windows, for example, Windows of size 4 by 4, and then it calculates the
+
+369
+00:34:55,200 --> 00:35:00,000
+attention within these Windows.
+
+370
+00:35:00,000 --> 00:35:09,520
+So that's the change that Window MSA makes, and since now Window size is fixed, the complexity
+
+371
+00:35:09,520 --> 00:35:15,400
+is linear with respect to the number of patches.
+
+372
+00:35:15,400 --> 00:35:19,600
+Now there is an obvious problem with this method.
+
+373
+00:35:19,600 --> 00:35:30,200
+As you can imagine, for example, there is a dot here in the middle of this picture.
+
+374
+00:35:30,200 --> 00:35:37,680
+Now while Window MSA is calculating attention, there will be no attention between different
+
+375
+00:35:37,680 --> 00:35:38,680
+Windows.
+
+376
+00:35:38,680 --> 00:35:46,360
+So we know that this pixel is related to this one, but while calculating Window MSA, there
+
+377
+00:35:46,360 --> 00:35:49,040
+will be no attention between them.
+
+378
+00:35:49,040 --> 00:35:53,480
+So this is the problem, lack of attention between different Windows, and that's why
+
+379
+00:35:53,480 --> 00:35:57,920
+they introduced the second subunit.
+
+380
+00:35:57,920 --> 00:36:03,360
+Before saying how Shifted Window MSA works, let's try this.
+
+381
+00:36:03,360 --> 00:36:09,600
+To solve this limitation, we will Shift the Windows by half of the size of this window.
+
+382
+00:36:09,600 --> 00:36:19,120
+So we move this window by 2 by 2 here, and then here, and then here, and then here.
+
+383
+00:36:19,120 --> 00:36:27,040
+Now the problem is solved if the dot is in the middle of the picture, or anything that
+
+384
+00:36:27,040 --> 00:36:30,680
+it is in the middle of the picture will be reserved.
+
+385
+00:36:30,800 --> 00:36:34,000
+Here's a new problem.
+
+386
+00:36:34,000 --> 00:36:43,040
+Instead of calculating the attention in four Windows, now we have to calculate the attention
+
+387
+00:36:43,040 --> 00:36:44,280
+in nine Windows.
+
+388
+00:36:44,280 --> 00:36:52,080
+So we wanted to reduce the computational complexity, but we accidentally add some Windows.
+
+389
+00:36:52,080 --> 00:36:55,760
+Also here's another problem.
+
+390
+00:36:55,760 --> 00:36:58,160
+What do we do with this white space?
+
+391
+00:36:58,160 --> 00:37:02,680
+Do we add padding?
+
+392
+00:37:02,680 --> 00:37:08,160
+So this is the idea of Shifted Window MSA.
+
+393
+00:37:08,160 --> 00:37:11,800
+They shift the window in one direction.
+
+394
+00:37:11,800 --> 00:37:15,240
+Now this green part here moves here.
+
+395
+00:37:15,240 --> 00:37:21,400
+This pink one moves here, and this yellow part moves here.
+
+396
+00:37:21,400 --> 00:37:29,560
+So this will be like a reordered image, and then they calculate MSA for the Windows in
+
+397
+00:37:29,560 --> 00:37:32,080
+this new image.
+
+398
+00:37:32,080 --> 00:37:36,640
+But here's something that we should consider.
+
+399
+00:37:36,640 --> 00:37:42,320
+By reordering this image, we created some relation between pixels that they originally
+
+400
+00:37:42,320 --> 00:37:46,120
+did not exist in the original image.
+
+401
+00:37:46,120 --> 00:37:53,000
+So for calculating the attention, they consider Mask MSA, and then at the end they use reverse
+
+402
+00:37:53,000 --> 00:38:01,320
+cycle Shift just to reorder the image as it was.
+
+403
+00:38:01,320 --> 00:38:06,440
+So this will be the two-stop unit of Swarm Transformer.
+
+404
+00:38:06,440 --> 00:38:10,000
+After that, this output goes through Patch Merging.
+
+405
+00:38:10,000 --> 00:38:20,360
+So the input for Patch Merging will be h divided by 4 by w divided by 4 by c, because this
+
+406
+00:38:20,360 --> 00:38:21,640
+is what it was before.
+
+407
+00:38:21,640 --> 00:38:29,400
+And we know that Swim Transformer, which is like Transformer, does not change the dimensions.
+
+408
+00:38:29,400 --> 00:38:34,480
+Now Patch Merging, again, will define Windows.
+
+409
+00:38:34,480 --> 00:38:39,720
+Now we will consider Windows, for example, 2 by 2.
+
+410
+00:38:39,720 --> 00:38:43,120
+It will concatenate the pixels within the Windows.
+
+411
+00:38:43,120 --> 00:38:55,120
+So within each window, they put the pixels together like this.
+
+412
+00:38:55,120 --> 00:39:05,680
+So after this process, the output will be h divided by 8, w divided by 8 by 4 c, because
+
+413
+00:39:05,680 --> 00:39:09,840
+the dimension of each of them were c.
+
+414
+00:39:09,840 --> 00:39:13,000
+Now this is 4c.
+
+415
+00:39:13,000 --> 00:39:16,720
+This goes through a linear embedding layer.
+
+416
+00:39:16,720 --> 00:39:25,400
+This linear embedding will change the dimension from 4c to 2c.
+
+417
+00:39:25,400 --> 00:39:32,440
+And that will be the input of the second Swim Transformer block, and so on.
+
+418
+00:39:32,440 --> 00:39:40,800
+So this process goes on until like for four stages that you see here.
+
+419
+00:39:40,800 --> 00:39:47,640
+Now we can use the output of this model for different tasks.
+
+420
+00:39:47,640 --> 00:39:51,720
+For image classification, we can use the last output.
+
+421
+00:39:51,720 --> 00:39:57,880
+And for object detection and image segmentation, we can use the output of all these stages.
+
+422
+00:39:57,880 --> 00:40:04,560
+Also, you may see some numbers here.
+
+423
+00:40:04,560 --> 00:40:11,320
+These shows the Swim Variance, so there will be some different Swins.
+
+424
+00:40:11,320 --> 00:40:19,280
+The difference between them is based on the number of these layers, like, for example,
+
+425
+00:40:19,280 --> 00:40:27,160
+Swim T will be 2, 2, 6, 2, but Swim L will be 2, 2, 18, 2.
+
+426
+00:40:27,160 --> 00:40:35,840
+Also another difference between these variants is the dimension of c.
+
+427
+00:40:35,840 --> 00:40:52,280
+This last one, Swim L, as you can see here, compared to VIT and another Transformer architecture,
+
+428
+00:40:52,280 --> 00:41:01,800
+is less flops, and it is faster, look at it, compared to VIT, it's faster, and its accuracy
+
+429
+00:41:01,800 --> 00:41:05,960
+is better.
+
+430
+00:41:05,960 --> 00:41:10,120
+This shows the same result with just more models.
+
+431
+00:41:10,120 --> 00:41:18,560
+Now let's compare Swim with, let's compare these four red blocks.
+
+432
+00:41:18,560 --> 00:41:27,360
+So the image size for these blocks is the same, or similar to each other.
+
+433
+00:41:27,360 --> 00:41:36,840
+You see that compared to other Transformer models, Swim use less flops, although it's
+
+434
+00:41:36,840 --> 00:41:41,480
+bigger compared to EfficientNet.
+
+435
+00:41:41,480 --> 00:41:50,800
+It's faster than other Transformer models, but again, it is not, it's slower than EfficientNet
+
+436
+00:41:50,800 --> 00:42:00,240
+or CNN-based model, but the accuracy of Swim is better than CNN-based models.
+
+437
+00:42:00,240 --> 00:42:08,280
+It's better than EfficientNet, and also it is also better than other Transformer, and
+
+438
+00:42:08,280 --> 00:42:14,960
+this shows the power of Swim Transformer, it uses less flops, compared to other Transformers
+
+439
+00:42:14,960 --> 00:42:22,480
+actually, it uses less flops, it's faster, and it also has a better accuracy.
+

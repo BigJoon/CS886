@@ -1,0 +1,3104 @@
+1
+00:00:00,000 --> 00:00:06,000
+Hello everyone. Today our topic is large language model prompting. So let's get started.
+
+2
+00:00:10,000 --> 00:00:16,000
+So what is large language prompting? So it's basically the same thing as prompting engineering.
+
+3
+00:00:16,000 --> 00:00:24,000
+And then it is significant in communicating effectively with large language models and it's all about designing.
+
+4
+00:00:24,000 --> 00:00:31,000
+And then how people come up with proper questions to get answers that you are looking for from the large language models.
+
+5
+00:00:31,000 --> 00:00:36,000
+And in today's presentation, we're going to discuss some practical prompt engineering techniques.
+
+6
+00:00:36,000 --> 00:00:40,000
+Okay, so let's dive us right into it.
+
+7
+00:00:40,000 --> 00:00:45,000
+So let's talk about train of thought prompting first.
+
+8
+00:00:45,000 --> 00:00:51,000
+The train of thought prompting is the most commonly used and important prompting method.
+
+9
+00:00:51,000 --> 00:00:58,000
+And all the subsequent prompting method that we've covered today is actually based on the train of thought prompting.
+
+10
+00:00:58,000 --> 00:01:01,000
+So what is train of thought prompting?
+
+11
+00:01:01,000 --> 00:01:11,000
+It's an approach to improve the resonability of language models in arithmetic reasoning, common sense reasoning, and symbolic reasoning.
+
+12
+00:01:11,000 --> 00:01:19,000
+So the train of thought prompting will give you a very structured answer and actually stepwise answer.
+
+13
+00:01:19,000 --> 00:01:26,000
+And you will find it's very easy to follow and understand all of these train of thought prompting.
+
+14
+00:01:26,000 --> 00:01:31,000
+From the human perspective, this is very intuitive as it is how the human actually think.
+
+15
+00:01:31,000 --> 00:01:39,000
+So when you are giving a question, you can never reach the final answer directly from the beginning, right?
+
+16
+00:01:39,000 --> 00:01:52,000
+So instead, what the human really do is that we iterate through our thinking procedure and break down one major problem into some sub problems and solve them one by one.
+
+17
+00:01:52,000 --> 00:01:59,000
+So here you can see, here is the traditional standard of prompting.
+
+18
+00:01:59,000 --> 00:02:06,000
+In the traditional prompting, the examplers here, you can see the examplers here, only contain it.
+
+19
+00:02:06,000 --> 00:02:13,000
+They just contain the final answer. You have one question here and the final answer goes here.
+
+20
+00:02:13,000 --> 00:02:20,000
+Well, they perform poorly on tasks that require reasoning abilities like this one.
+
+21
+00:02:20,000 --> 00:02:26,000
+It's just giving the wrong answer, just out of some random number here.
+
+22
+00:02:26,000 --> 00:02:33,000
+Or you can see here that as in the train of thought prompting, it contains the examplers itself, contains some intermediate steps.
+
+23
+00:02:33,000 --> 00:02:42,000
+You first solve the sub problems and you combine the sub problems, then you get the correct answer, right?
+
+24
+00:02:42,000 --> 00:02:54,000
+You can see it actually, the problem solves pretty decent ways, it's the correct one, it's the correct answer.
+
+25
+00:02:54,000 --> 00:03:00,000
+So here I will give you some principle of train of thought prompting.
+
+26
+00:03:00,000 --> 00:03:04,000
+The train of thought does not fit into every problem you have.
+
+27
+00:03:04,000 --> 00:03:11,000
+It's more likely to work on problems with the kind of step-by-step thinking.
+
+28
+00:03:11,000 --> 00:03:16,000
+I think you can easily identify them when you see them.
+
+29
+00:03:16,000 --> 00:03:21,000
+The strategy of train of thought is just simple, divide and concure.
+
+30
+00:03:21,000 --> 00:03:28,000
+You split a big task into many sub tasks and you complete them one by one.
+
+31
+00:03:28,000 --> 00:03:38,000
+Here are some train of thought prompting principles or techniques that you can use when you communicate with chatGBT or cloud language model like that.
+
+32
+00:03:38,000 --> 00:03:43,000
+So here is a very simple prompt. Let's do it step by step.
+
+33
+00:03:43,000 --> 00:03:47,000
+So you just concatenate this string at the end of your question.
+
+34
+00:03:47,000 --> 00:03:53,000
+And this sentence will force your language model to solve the problem step by step.
+
+35
+00:03:53,000 --> 00:03:57,000
+And the second one is explicit reasoning trains.
+
+36
+00:03:57,000 --> 00:04:09,000
+So let's say consider the danger of lightning and then next evaluate the safety of being outdoor via indoors.
+
+37
+00:04:09,000 --> 00:04:13,000
+Conclude with the safest option.
+
+38
+00:04:13,000 --> 00:04:26,000
+You contain this explicit reasoning chain in your example and it will help the language model to improve its reasoning ability.
+
+39
+00:04:26,000 --> 00:04:29,000
+And you can also use some examples here.
+
+40
+00:04:29,000 --> 00:04:36,000
+Let's say we are trying to use the transitivity law in the inequality.
+
+41
+00:04:36,000 --> 00:04:41,000
+You have three variables A, B and C. They represent different numbers.
+
+42
+00:04:41,000 --> 00:04:44,000
+You have A is the biggest.
+
+43
+00:04:44,000 --> 00:04:49,000
+You have a compare A is basically bigger than B and B is bigger than C.
+
+44
+00:04:49,000 --> 00:04:51,000
+So by transitivity law is the biggest.
+
+45
+00:04:51,000 --> 00:04:53,000
+So you have this kind of example.
+
+46
+00:04:53,000 --> 00:04:57,000
+Or you can use iterative refinement here.
+
+47
+00:04:57,000 --> 00:05:00,000
+The task is also to compare three different variables.
+
+48
+00:05:00,000 --> 00:05:06,000
+But you force the language model to compare them pairwise.
+
+49
+00:05:06,000 --> 00:05:10,000
+A and B you compare A and C and B and C one by one.
+
+50
+00:05:10,000 --> 00:05:18,000
+And then you can get the final relationship between these three variables.
+
+51
+00:05:18,000 --> 00:05:22,000
+So here are some really attractive properties of train of thought.
+
+52
+00:05:22,000 --> 00:05:26,000
+And some reasons why people like using it.
+
+53
+00:05:26,000 --> 00:05:32,000
+The first one is it will decompose hard problems into a simpler one.
+
+54
+00:05:32,000 --> 00:05:37,000
+And these simpler questions tend to be more intuitive.
+
+55
+00:05:37,000 --> 00:05:40,000
+Subproblems are just easy to solve.
+
+56
+00:05:40,000 --> 00:05:51,000
+Second, the train of thought actually provides some level of interpretation to the language model reasoning path.
+
+57
+00:05:51,000 --> 00:06:02,000
+It will just derive how the answer was asked and how the intermediate step was derived.
+
+58
+00:06:02,000 --> 00:06:06,000
+And it is also easy to debug when the reasoning path went wrong.
+
+59
+00:06:06,000 --> 00:06:15,000
+You can clearly see which is the very beginning first reasoning step that the thing went wrong.
+
+60
+00:06:15,000 --> 00:06:21,000
+And thirdly, it is very broadly applicable across diverse reasoning tasks.
+
+61
+00:06:21,000 --> 00:06:27,000
+So theoretically, we can apply it to any language solve problems.
+
+62
+00:06:27,000 --> 00:06:30,000
+The last reason is it is very simple and off the shelf.
+
+63
+00:06:30,000 --> 00:06:34,000
+It does not require any additional training or fine tuning.
+
+64
+00:06:34,000 --> 00:06:45,000
+You can apply the train of thought techniques with just a bunch of prompt in your in-gauge, in your GPT session.
+
+65
+00:06:45,000 --> 00:06:52,000
+So as we discussed before, the train of thought approach mainly focuses on improving the reasoning ability of three areas.
+
+66
+00:06:52,000 --> 00:06:56,000
+The arithmetic reasoning, common sense reasoning, and the symbolic reasoning.
+
+67
+00:06:57,000 --> 00:07:06,000
+So in the evaluation section, we will discuss the improvement brought by a kind of thought in all these three areas one by one.
+
+68
+00:07:06,000 --> 00:07:08,000
+So the first one is arithmetic reasoning.
+
+69
+00:07:08,000 --> 00:07:16,000
+The baseline authors they are using is the standard prompt with some in-context examples here.
+
+70
+00:07:16,000 --> 00:07:22,000
+While the train of thought approach augments each input with eight view shot examples.
+
+71
+00:07:22,000 --> 00:07:28,000
+And just like we see them here, this is just one example.
+
+72
+00:07:28,000 --> 00:07:31,000
+In the paper, the authors are using eight examples.
+
+73
+00:07:31,000 --> 00:07:39,000
+And the benchmark we are using is five math problems, GSM 8K, VA, MP, and etc.
+
+74
+00:07:39,000 --> 00:07:43,000
+So here is one example in the GSM 8K dataset.
+
+75
+00:07:44,000 --> 00:07:51,000
+I won't read this, but you will need to solve a mathematical problem.
+
+76
+00:07:51,000 --> 00:08:02,000
+And the language model we are using here is these five models, GPT-3, lambda, palm, UL220 billion, and codex.
+
+77
+00:08:02,000 --> 00:08:06,000
+So here is the, you can see the evaluation result here.
+
+78
+00:08:06,000 --> 00:08:13,000
+The y-axis represents the problem solverate, and the x-axis represents the model scale.
+
+79
+00:08:13,000 --> 00:08:16,000
+So first, we have some conclusions here.
+
+80
+00:08:16,000 --> 00:08:21,000
+But first, the train of thought prompting does not increase the performance for small models.
+
+81
+00:08:21,000 --> 00:08:27,000
+As you can see here, the gap between the blue line and the black line is quite small.
+
+82
+00:08:28,000 --> 00:08:34,000
+The train of thought only yield performance gain when used on a larger than 100 billion parameters.
+
+83
+00:08:34,000 --> 00:08:40,000
+You can see it starts from this level, this level, the gap is larger.
+
+84
+00:08:40,000 --> 00:08:45,000
+So notice for improvement compared to the baseline model, which is just standard prompting.
+
+85
+00:08:45,000 --> 00:08:53,000
+And second, the train of thought prompt has larger performance gain for more complicated problems.
+
+86
+00:08:53,000 --> 00:09:01,000
+What do I mean by complicated problems is that GSM 8K, this is the hardest dataset among all the benchmarks.
+
+87
+00:09:01,000 --> 00:09:08,000
+So you can see the gap between the standard input and the train of thought prompting is quite large, right?
+
+88
+00:09:08,000 --> 00:09:17,000
+Also randomly examined the 50 examples for which the model gave the wrong answer.
+
+89
+00:09:17,000 --> 00:09:28,000
+So they are performing error analysis, and 46% of them were minor errors such as calculator error, symbolic mapping errors, or one reasoning step missing.
+
+90
+00:09:28,000 --> 00:09:31,000
+They are just minor errors, right?
+
+91
+00:09:31,000 --> 00:09:38,000
+And the 54% errors are major errors, they are semantic and misunderstanding.
+
+92
+00:09:38,000 --> 00:09:50,000
+So when we scale in the POM model from 62 billion to 540 billion, a large portion of the semantic understanding errors are fixed.
+
+93
+00:09:50,000 --> 00:09:59,000
+As we discussed before, this 54% semantic mis-answered standing error, they are major errors, they are bigger mistakes.
+
+94
+00:09:59,000 --> 00:10:14,000
+And as you can see from the POM model, once you increase the model scale from 62 billion to 540 billion, it's actually solved the problem.
+
+95
+00:10:14,000 --> 00:10:21,000
+The performance is quite well comparable to prior supervised best.
+
+96
+00:10:21,000 --> 00:10:25,000
+The common sense reasoning is the second task.
+
+97
+00:10:25,000 --> 00:10:32,000
+We are using five common sense reasoning dataset, all of them contain the question like this, yes or no, with a pair of sink and a water.
+
+98
+00:10:32,000 --> 00:10:34,000
+This is just an example.
+
+99
+00:10:34,000 --> 00:10:41,000
+We are using the train of thought prompting same as in the arithmetic reasoning evaluation.
+
+100
+00:10:41,000 --> 00:10:53,000
+We prompt the input question with some intermediate steps, we force the language model to give explicit reasoning steps.
+
+101
+00:10:53,000 --> 00:11:02,000
+The density of a pair is about what and which is less than water, so a pair would float, so the answer is yes.
+
+102
+00:11:02,000 --> 00:11:18,000
+As you can see from the result, the train of thought prompting, with the train of thought prompting, the performance of POM is even better than the previous supervised state-of-the-art.
+
+103
+00:11:18,000 --> 00:11:28,000
+So we also evaluate the performance of the train of thought on symbolic reasoning tasks.
+
+104
+00:11:28,000 --> 00:11:30,000
+In here we have two kinds of tasks.
+
+105
+00:11:30,000 --> 00:11:33,000
+The first one is the last letter concatenation.
+
+106
+00:11:33,000 --> 00:11:43,000
+Let's say you're given a string, Amy Brown, and then you want to, the task is to concatenate the last letters of each word.
+
+107
+00:11:43,000 --> 00:11:46,000
+So the output is y and you combine this.
+
+108
+00:11:46,000 --> 00:11:49,000
+And the second task is cone flip.
+
+109
+00:11:49,000 --> 00:11:57,000
+You have a cone that has up, one person flipped the cone, the other does not flip the cone, is the cone still has up?
+
+110
+00:11:57,000 --> 00:11:59,000
+That's a question like this.
+
+111
+00:11:59,000 --> 00:12:11,000
+So we prompt the language model the same as in common sense as in arithmetic reasoning when we're using a train of thought prompting.
+
+112
+00:12:11,000 --> 00:12:15,000
+So we just append the thinking process.
+
+113
+00:12:15,000 --> 00:12:24,000
+We explicit mention what is the last letter of a word, we come back, we concatenate them to, and we feed that prompt into the language model.
+
+114
+00:12:24,000 --> 00:12:32,000
+So in the symbolic reasoning evaluation, we have two kind of evaluation tasks.
+
+115
+00:12:32,000 --> 00:12:35,000
+The one is in-domain test.
+
+116
+00:12:35,000 --> 00:12:39,000
+And the second one is out-of-domain, out-of-distribution tasks.
+
+117
+00:12:39,000 --> 00:12:50,000
+The in-domain tasks are just, the example in the in-domain tasks has the same number of steps as the training and the future learning.
+
+118
+00:12:50,000 --> 00:12:56,000
+So in-domain evaluation are just high, high tasks with high examples.
+
+119
+00:12:56,000 --> 00:13:03,000
+All the model has to do is just repeat the same steps with the same new symbols in the test time example.
+
+120
+00:13:03,000 --> 00:13:09,000
+So we just, let's say you are given a mathematical formula and some numbers.
+
+121
+00:13:09,000 --> 00:13:13,000
+You just plug in the numbers into the formula and you solve the equation.
+
+122
+00:13:13,000 --> 00:13:17,000
+That's as simple as that.
+
+123
+00:13:17,000 --> 00:13:21,000
+So the right figure shows the result for palm.
+
+124
+00:13:21,000 --> 00:13:35,000
+And you can see here, you can see here, the palm with a 540 billion parameter almost 100% correct solved in-domain question.
+
+125
+00:13:35,000 --> 00:13:43,000
+However, even this, even with the in-domain test, this is a toy example with toy model, standard prompting still performed poorly.
+
+126
+00:13:43,000 --> 00:13:49,000
+You can see here the performance line is quite close to x axis.
+
+127
+00:13:49,000 --> 00:13:57,000
+So with the out-of-distribution, the evaluation example has more steps than those in-examples.
+
+128
+00:13:57,000 --> 00:14:07,000
+Let's say with the coin flip example, the in-domain test is just two people flip to the same coin, right?
+
+129
+00:14:07,000 --> 00:14:20,000
+With the out-of-distribution evaluation, probably we will have three, four or five more people to flip the coin, play around with it and get the final answer.
+
+130
+00:14:20,000 --> 00:14:26,000
+Intuitively, the out-of-distribution tasks are harder compared to in-domain test.
+
+131
+00:14:26,000 --> 00:14:38,000
+So we can see the performance decrease a little bit, but it's still astonishing larger compared to the standard prompting matter here.
+
+132
+00:14:38,000 --> 00:14:42,000
+However, there are some limitations of train of thought.
+
+133
+00:14:42,000 --> 00:14:51,000
+Although the train of thought emulates the thought process of human reasoners, this does not answer the question whether the neural network is actually reasoning, right?
+
+134
+00:14:51,000 --> 00:14:57,000
+And the second limitation is that although the cost of manually augmenting exemplars with train of thought is minimal,
+
+135
+00:14:57,000 --> 00:15:07,000
+in the future of settings, like we are communicating with LGBT, such annotation costs could cause big problems when we are performing fine tuning.
+
+136
+00:15:07,000 --> 00:15:18,000
+And third drawback, so a third limitation is that the emergence of train of thought reasoning capability only appear at a large length model, large model scale,
+
+137
+00:15:18,000 --> 00:15:26,000
+with larger than 100 billion parameters, but it is not working in small models.
+
+138
+00:15:26,000 --> 00:15:32,000
+So some of the future work could be how to adapt it to smaller models like that.
+
+139
+00:15:32,000 --> 00:15:40,000
+And the fourth weakness is there's no guarantee of a correct reasoning pass, right?
+
+140
+00:15:40,000 --> 00:15:54,000
+Even though the reasoning seems reasonable, but there is absolutely no guarantee you will get the correct answer as we see the previous examples.
+
+141
+00:15:54,000 --> 00:16:05,000
+Thus, based on the fourth limitation, we invented the self-consistency version of the train of thought language models.
+
+142
+00:16:05,000 --> 00:16:10,000
+The motivation is that the self-consistency analog to the human way of thinking.
+
+143
+00:16:10,000 --> 00:16:18,000
+So if multiple different ways of thinking can lead to the same answer, maybe one had great confidence that the final answer is correct.
+
+144
+00:16:18,000 --> 00:16:25,000
+Also, complex reasoning texts typically automate multiple reasoning paths that reach a correct answer.
+
+145
+00:16:25,000 --> 00:16:30,000
+Let's say you are proving a mathematical concept, a theory or something like that.
+
+146
+00:16:30,000 --> 00:16:45,000
+Probably you are able to use several different proving methods to reach the final destination correct statement as long as the theory is correct.
+
+147
+00:16:45,000 --> 00:16:50,000
+As long as you are not trying to prove something is wrong, right?
+
+148
+00:16:50,000 --> 00:16:59,000
+So here is the comparison between traditional prompting and train of thought prompting with self-consistency prompting.
+
+149
+00:16:59,000 --> 00:17:03,000
+You can see here that traditional prompting just contains input and output.
+
+150
+00:17:03,000 --> 00:17:08,000
+In train of thought prompting, we split the intermediate steps into different nodes.
+
+151
+00:17:08,000 --> 00:17:14,000
+You can actually think the train of thought prompting as a linked list, right?
+
+152
+00:17:14,000 --> 00:17:21,000
+You have a starting point of a node in the linked list and the tail of the linked list.
+
+153
+00:17:21,000 --> 00:17:28,000
+In the self-consistency version of the train of thought, you can think this as a parallel linked list.
+
+154
+00:17:28,000 --> 00:17:33,000
+You have a many linked list. You have many answers here.
+
+155
+00:17:33,000 --> 00:17:45,000
+At the end, let's say you have a three parallel linked list and you use majority voting to vote them, to aggregate them, to get the correct answer.
+
+156
+00:17:45,000 --> 00:17:55,000
+Not necessarily correct, but in this case, we agree what most people agree.
+
+157
+00:17:55,000 --> 00:18:01,000
+We agree what the reasoning path agrees.
+
+158
+00:18:01,000 --> 00:18:05,000
+So we have two correct answers and one wrong answer.
+
+159
+00:18:05,000 --> 00:18:11,000
+And finally, after aggregation, we have the correct answer as output.
+
+160
+00:18:11,000 --> 00:18:18,000
+So here is how we construct a self-consistency version of a train of thought.
+
+161
+00:18:18,000 --> 00:18:21,000
+First, we prompt the language model with train of thought.
+
+162
+00:18:21,000 --> 00:18:27,000
+Then, second step, we sample from the language model decoder to get diverse reasoning path.
+
+163
+00:18:27,000 --> 00:18:33,000
+And the last one is selected the most consistency answer, which is just majority voting in this case.
+
+164
+00:18:33,000 --> 00:18:42,000
+But here, as you can see here, we're just gridly decode from language model if we are using purely naive train of thought prompting.
+
+165
+00:18:42,000 --> 00:18:55,000
+So if we are adding some self-consistency component into the train of thought, maybe we can sample three diverse reasoning paths along the language model.
+
+166
+00:18:55,000 --> 00:19:00,000
+And then we can aggregate them using majority voting as we can see.
+
+167
+00:19:00,000 --> 00:19:04,000
+Two of them has the correct answer and one of them has the wrong answer.
+
+168
+00:19:04,000 --> 00:19:12,000
+And we marginalize out the reasoning path to aggregate one final correct answer, which is 18. This is right.
+
+169
+00:19:12,000 --> 00:19:15,000
+Here is also an example of a question.
+
+170
+00:19:15,000 --> 00:19:20,000
+You have a gridly decode with wrong answer and you have a simple path, one simple path to you.
+
+171
+00:19:20,000 --> 00:19:27,000
+This is the train of thought with self-consistency version.
+
+172
+00:19:27,000 --> 00:19:34,000
+In most cases, we are using all the number of sample paths as we don't want to hide.
+
+173
+00:19:34,000 --> 00:19:39,000
+Let's say you have one correct answer, one wrong answer, and you don't know how to aggregate them.
+
+174
+00:19:39,000 --> 00:19:47,000
+So we are using three reasoning paths. I just list two of them here.
+
+175
+00:19:47,000 --> 00:19:53,000
+So that's understanding the mechanism of self-consistency.
+
+176
+00:19:53,000 --> 00:19:58,000
+So we need to decompose the decoder output into two parts.
+
+177
+00:19:58,000 --> 00:20:05,000
+The first part with reasoning paths R1 and the final answer with A1.
+
+178
+00:20:05,000 --> 00:20:09,000
+So we have R1 lead to A1.
+
+179
+00:20:09,000 --> 00:20:15,000
+So the next question is how to parse the answer once we have the decoder output.
+
+180
+00:20:15,000 --> 00:20:21,000
+The parser is task-dependent.
+
+181
+00:20:21,000 --> 00:20:28,000
+So for arithmetic reasoning, we parse the first numerical part as the final answer after the model generates.
+
+182
+00:20:28,000 --> 00:20:30,000
+The answer is blah, blah, blah.
+
+183
+00:20:30,000 --> 00:20:36,000
+And for the common sense reasoning, we parse the full string as the final answer after the model generates.
+
+184
+00:20:36,000 --> 00:20:39,000
+The answer is what? Something.
+
+185
+00:20:39,000 --> 00:20:46,000
+You can see here, we have a question, we have a reasoning path, we have an answer.
+
+186
+00:20:46,000 --> 00:20:54,000
+They all follow the same structure. The answer is what? In all these two examples.
+
+187
+00:20:54,000 --> 00:21:04,000
+So in a brief word, most generated output have a consistent format of reasoning paths.
+
+188
+00:21:04,000 --> 00:21:14,000
+And the answer is what? If we prompt the language model in this format.
+
+189
+00:21:14,000 --> 00:21:21,000
+So there are two aggregation approaches. The first approach is modality voting.
+
+190
+00:21:21,000 --> 00:21:26,000
+We just take whatever the modality class is.
+
+191
+00:21:26,000 --> 00:21:31,000
+And we also have weighted the probability of each reasoning and answer path.
+
+192
+00:21:31,000 --> 00:21:35,000
+We have an unnormalized probability, which is conditioned on the prompt and the question.
+
+193
+00:21:35,000 --> 00:21:40,000
+And we also have the normalized version of conditional probability by output length.
+
+194
+00:21:40,000 --> 00:21:44,000
+So here is the comparison between different aggregation approaches.
+
+195
+00:21:44,000 --> 00:21:48,000
+Despite the fancy formula here, we have many fancy mathematical formulas.
+
+196
+00:21:48,000 --> 00:21:55,000
+The modality voting achieved the best performance among all models we can see here from a squat high.
+
+197
+00:21:55,000 --> 00:22:04,000
+So the author decided to keep using the modality voting in the later sections.
+
+198
+00:22:04,000 --> 00:22:08,000
+Here are some properties of self-consistency and why people should use them.
+
+199
+00:22:08,000 --> 00:22:13,000
+The first one is there's no additional training, no additional human annotating.
+
+200
+00:22:13,000 --> 00:22:17,000
+There's no auxiliary models, no funtioning, no nothing.
+
+201
+00:22:17,000 --> 00:22:22,000
+It's also an off-the-shelf algorithm.
+
+202
+00:22:22,000 --> 00:22:30,000
+And as of today, when you are communicating, when you're using the LGBT,
+
+203
+00:22:30,000 --> 00:22:36,000
+you can actually try this out, try the self-consistency version of a train of thought.
+
+204
+00:22:36,000 --> 00:22:48,000
+You can just keep generating some response based on your single input.
+
+205
+00:22:48,000 --> 00:22:55,000
+And once you click restart or regenerate, it will give you a new reasoning path.
+
+206
+00:22:55,000 --> 00:23:00,000
+And you can manually aggregate them with your own expertise.
+
+207
+00:23:00,000 --> 00:23:07,000
+It also has the advantage of its robust to sampling strategy and imperfect prompt.
+
+208
+00:23:07,000 --> 00:23:16,000
+Sometimes the train of thought hurts performance while the consistency version of it does not.
+
+209
+00:23:16,000 --> 00:23:25,000
+So for evaluation part, this paper uses the same three benchmarks used in the previous train of thought paper with some minor changes.
+
+210
+00:23:25,000 --> 00:23:32,000
+They introduced the AI to reasoning challenges and removed codecs from the language model test candidate list.
+
+211
+00:23:32,000 --> 00:23:38,000
+So the result is that self-consistency improved all three kind of reasoning performance over four language models.
+
+212
+00:23:38,000 --> 00:23:46,000
+This significantly increased over the train of thought prompting.
+
+213
+00:23:46,000 --> 00:23:56,000
+So as we discussed before, one previous study showed that the naive train of thought could potentially hurt the performance compared to standard prompting.
+
+214
+00:23:56,000 --> 00:24:02,000
+But the self-consistency can robustly boost the performance compared to standard prompting.
+
+215
+00:24:02,000 --> 00:24:10,000
+In this study, the author also reported that human annotators sometimes make minor mistakes when creating the prompt.
+
+216
+00:24:10,000 --> 00:24:18,000
+Self-consistency can help to improve the language model robustness to imperfect prompt.
+
+217
+00:24:18,000 --> 00:24:24,000
+So another finding is that the more reasoning path, the better.
+
+218
+00:24:24,000 --> 00:24:34,000
+If we sample more reasoning paths, we will have a larger curious in terms of problem solving rate.
+
+219
+00:24:34,000 --> 00:24:36,000
+So here's the second paper.
+
+220
+00:24:36,000 --> 00:24:42,000
+The third paper that I'm going to talk about is the train of thought prompting.
+
+221
+00:24:42,000 --> 00:24:57,000
+Let's take this analogy after you learn the linked list, maybe in your data structure one-on-one course, what you learn next, the next topic.
+
+222
+00:24:57,000 --> 00:25:07,000
+I think most people will respond that they learn tree structure after they learn linked list, right?
+
+223
+00:25:07,000 --> 00:25:09,000
+So imagine that you are solving a puzzle.
+
+224
+00:25:09,000 --> 00:25:12,000
+You are not always thinking in a straightforward manner.
+
+225
+00:25:12,000 --> 00:25:23,000
+You go one step further, you go two step backward, you try to figure out what is the best approach to solve a problem.
+
+226
+00:25:23,000 --> 00:25:28,000
+You are not just thinking from the bottom to top.
+
+227
+00:25:28,000 --> 00:25:34,000
+And then you find out, no, this is not the way I'm going to do it, and you start again, start over.
+
+228
+00:25:34,000 --> 00:25:36,000
+No, this is not the way.
+
+229
+00:25:36,000 --> 00:25:39,000
+So thinking is not always linear.
+
+230
+00:25:39,000 --> 00:25:44,000
+The train of thought is a token level left to right decision making tool.
+
+231
+00:25:44,000 --> 00:25:49,000
+It can only take the input from the left to right in a linear typology.
+
+232
+00:25:49,000 --> 00:25:53,000
+It does not allow any backtracking capability, right?
+
+233
+00:25:53,000 --> 00:26:04,000
+So the objective of the tree of thought is it enhance the language model for complex problem solving beyond token level decisions.
+
+234
+00:26:04,000 --> 00:26:12,000
+And it elaborates that they start making multiple reasoning paths and the strategic backtracking.
+
+235
+00:26:12,000 --> 00:26:17,000
+So here's the comparison between all these four prompting methods.
+
+236
+00:26:18,000 --> 00:26:28,000
+As we discussed before in the previous paper, we take an analogy that the self-consistency version of train of thought are some of parallel linked list.
+
+237
+00:26:28,000 --> 00:26:36,000
+You aggregate them at the final output stage and you take whatever is the majority class.
+
+238
+00:26:36,000 --> 00:26:38,000
+It does not allow for any backtracking.
+
+239
+00:26:38,000 --> 00:26:42,000
+Let's say you are at the intermediate step here.
+
+240
+00:26:42,000 --> 00:26:49,000
+The structure does not allow you to go back and revisit some previous node.
+
+241
+00:26:49,000 --> 00:26:55,000
+Probably the error just occur at the second step, but it does not allow you to go back.
+
+242
+00:26:55,000 --> 00:26:59,000
+So in the train of thought prompting, we have this analogy.
+
+243
+00:26:59,000 --> 00:27:08,000
+All the reasoning paths are assorted in a way that you can go from a top to down in the tree level.
+
+244
+00:27:08,000 --> 00:27:20,000
+Once you reach the bottom level of the tree, you are getting a correct reasoning path and the output, right?
+
+245
+00:27:20,000 --> 00:27:25,000
+So here are a few things that we need to consider in order to build a train of thought.
+
+246
+00:27:25,000 --> 00:27:31,000
+The first one is how to decompose the intermediate steps into thought process.
+
+247
+00:27:31,000 --> 00:27:40,000
+How do you separate a complex problem into layers, into different nodes? How do you decide that?
+
+248
+00:27:40,000 --> 00:27:43,000
+How to generate potential thought from each state?
+
+249
+00:27:43,000 --> 00:27:50,000
+If you are here, how to generate all these four different candidates as the successors?
+
+250
+00:27:50,000 --> 00:27:53,000
+How to generate all these potential thoughts from each state?
+
+251
+00:27:53,000 --> 00:27:56,000
+How to heuristically evaluate each state?
+
+252
+00:27:56,000 --> 00:28:03,000
+Sometimes we need to go one step forward because we think a current node is promising,
+
+253
+00:28:03,000 --> 00:28:10,000
+but maybe in the next step we think, no, this is not working, so we need to go maybe two steps, three steps backward.
+
+254
+00:28:10,000 --> 00:28:19,000
+So how to heuristically evaluate each state in order to decide we keep moving on or go to a previous state?
+
+255
+00:28:19,000 --> 00:28:25,000
+So what is the best search algorithm to use when we navigate through the train of thought?
+
+256
+00:28:25,000 --> 00:28:32,000
+And the final question is what tasks to evaluate our method to evaluate the train of thought?
+
+257
+00:28:32,000 --> 00:28:38,000
+Well, the author of this paper proposed three new tasks to evaluate the approach.
+
+258
+00:28:38,000 --> 00:28:40,000
+The first one is the game of 24.
+
+259
+00:28:40,000 --> 00:28:49,000
+You can see we are giving four numbers and we need to use the arithmetic operation to achieve 24.
+
+260
+00:28:49,000 --> 00:28:58,000
+The second task is creative writing, where our goal is to generate original narrative or poems.
+
+261
+00:28:58,000 --> 00:29:03,000
+The third problem, the third task is the crossword.
+
+262
+00:29:03,000 --> 00:29:10,000
+We need to feel a grid with words based on clues.
+
+263
+00:29:10,000 --> 00:29:15,000
+So let's talk about all these details one by one.
+
+264
+00:29:15,000 --> 00:29:26,000
+So there are actually two approaches when generating candidates for the next thought process.
+
+265
+00:29:26,000 --> 00:29:29,000
+The first one is called sample approach.
+
+266
+00:29:29,000 --> 00:29:31,000
+The second one is called the propose.
+
+267
+00:29:31,000 --> 00:29:37,000
+The sample is to sample IID through the train of thought prompt.
+
+268
+00:29:37,000 --> 00:29:46,000
+Sample works better when people are working with larger thought space and the space is innumerable, such as creative writing.
+
+269
+00:29:46,000 --> 00:29:51,000
+So the IID sampling can increase the thought space diversity.
+
+270
+00:29:51,000 --> 00:30:05,000
+We need to enrich the thought space diversity because we want to get the more better successors.
+
+271
+00:30:05,000 --> 00:30:11,000
+The propose works better when the thought space is limited.
+
+272
+00:30:11,000 --> 00:30:16,000
+In this case, let's say we only have a few options to choose from each step.
+
+273
+00:30:16,000 --> 00:30:20,000
+Proposing different thoughts in the same context can avoid duplicate.
+
+274
+00:30:20,000 --> 00:30:27,000
+Like in the game of 24, you just have a limited operation to choose for the next step.
+
+275
+00:30:27,000 --> 00:30:34,000
+And there's another question about how do we break down problems in your thoughts steps.
+
+276
+00:30:34,000 --> 00:30:38,000
+A step cannot be too big or too small.
+
+277
+00:30:38,000 --> 00:30:42,000
+Either too big, neither too big or too small is good.
+
+278
+00:30:42,000 --> 00:30:55,000
+So let's say if we are solving a game of 24, a line of equation probably could be a good candidate for intermediate thought step.
+
+279
+00:30:55,000 --> 00:31:02,000
+And when we are heuristically evaluate the state or want to know there are two approaches.
+
+280
+00:31:02,000 --> 00:31:06,000
+The first one is value each state independently.
+
+281
+00:31:06,000 --> 00:31:16,000
+The first state is to each state independently.
+
+282
+00:31:16,000 --> 00:31:26,000
+This approach is used to quickly assess the viability of individual steps without considering the broader context of other possible steps.
+
+283
+00:31:26,000 --> 00:31:38,000
+Let's say we are solving the game of 24 and the left two numbers are 3 and 4 and our current result is 12.
+
+284
+00:31:38,000 --> 00:31:46,000
+This is likely because 12 is halfway to 24 and the remaining number can potentially multiply by 2 to reach 24.
+
+285
+00:31:46,000 --> 00:31:48,000
+Although this is not actually correct.
+
+286
+00:31:48,000 --> 00:31:55,000
+And the second state is our current result is 10 and the left two digits are 7 and 3.
+
+287
+00:31:55,000 --> 00:32:04,000
+The evaluation result given by the state estimator is unlikely because 10 is less ideal as a starting point.
+
+288
+00:32:04,000 --> 00:32:09,000
+And it is harder to incorporate the remaining numbers to reach 24.
+
+289
+00:32:09,000 --> 00:32:20,000
+There is another voting approach which involves voting across the states, different states.
+
+290
+00:32:20,000 --> 00:32:24,000
+Imagine that we are solving a crossword problem.
+
+291
+00:32:24,000 --> 00:32:38,000
+We are using this when decision to be made between closely competitive options, especially when direct evaluation might not be very clear for one option over the others.
+
+292
+00:32:38,000 --> 00:32:47,000
+So let's say we are filling Apple in the horizontal space and the votes is 3 votes.
+
+293
+00:32:47,000 --> 00:32:51,000
+The second state is filling apricot, the same space.
+
+294
+00:32:51,000 --> 00:33:01,000
+We only have two votes because it fits, but less common, make the adjoining a vertical feeling harder.
+
+295
+00:33:01,000 --> 00:33:05,000
+We make this feel harder.
+
+296
+00:33:05,000 --> 00:33:12,000
+The author presented two main approaches to navigate through the thinking tree.
+
+297
+00:33:12,000 --> 00:33:15,000
+The first one is BFS and the second one is DFS.
+
+298
+00:33:15,000 --> 00:33:20,000
+All of these are standard BFS, DFS algorithm and nothing fancy.
+
+299
+00:33:20,000 --> 00:33:34,000
+However, the author also proposed that maybe some heuristic search like A star search could be potentially investigated in future research.
+
+300
+00:33:35,000 --> 00:33:48,000
+You can see here we have three intermediate equations for the game of 24 and maybe a short writing plan as a thought process, a thought step in the creative writing.
+
+301
+00:33:48,000 --> 00:33:52,000
+And we have some words to fill in for close.
+
+302
+00:33:52,000 --> 00:33:59,000
+There are some backup plans, some candidates that we can choose from.
+
+303
+00:33:59,000 --> 00:34:03,000
+So let's talk about the evaluation part.
+
+304
+00:34:03,000 --> 00:34:07,000
+We are using three evaluation texts and we'll go through them one by one.
+
+305
+00:34:07,000 --> 00:34:12,000
+The first one is where we are using the trial thought to solve the game of 24.
+
+306
+00:34:12,000 --> 00:34:19,000
+It's quite natural to decompose the thought into three steps, each as an intermediate equation.
+
+307
+00:34:19,000 --> 00:34:28,000
+Since in the last step, one digit will be used in the calculation, so it's very commonly to separate into two phases.
+
+308
+00:34:28,000 --> 00:34:37,000
+You have four digits, you use one digit in one step, so you have four steps.
+
+309
+00:34:37,000 --> 00:34:42,000
+In this case, we will use one independent state estimator.
+
+310
+00:34:42,000 --> 00:34:52,000
+We prompt the language model to evaluate each thought candidate as sure, maybe, or example, or impossible with regard to reaching 24.
+
+311
+00:34:52,000 --> 00:35:01,000
+So here is the main result evaluation, evaluation result table.
+
+312
+00:35:01,000 --> 00:35:13,000
+Neither standard input output is prompting, or trial thought prompting, or self-consistency prompting, all of them perform badly on a task.
+
+313
+00:35:13,000 --> 00:35:30,000
+In contrast, trial thought was a breadth of b equals to 1 already achieved a success rate of 45%, while if we expand the tree to a wider range with b equals to 5, we achieve a 74% of success rate.
+
+314
+00:35:31,000 --> 00:35:44,000
+The author also compared the best of K candidate in the trial thought and in the standard input and output prompting to ensure the fairness to mimic the trial thought can visit the multiple candidate in each step.
+
+315
+00:35:44,000 --> 00:36:00,000
+But you can see as we are, although we are selecting 10 best or 100 best, the performance is relatively low compared to what we achieve in trial thought.
+
+316
+00:36:00,000 --> 00:36:05,000
+So here is the other evaluation for crossword.
+
+317
+00:36:05,000 --> 00:36:18,000
+The setup is that we can decompose the thought into at most 10 steps and we use the proposal prompting voting across state and we chose DFS as the navigation algorithm, as a searching algorithm.
+
+318
+00:36:18,000 --> 00:36:27,000
+As you also can see here, the trial thought achieved the best success rate in this game.
+
+319
+00:36:27,000 --> 00:36:31,000
+The same thing happens for creative writing.
+
+320
+00:36:35,000 --> 00:36:40,000
+So let's talk about the program of thought prompting.
+
+321
+00:36:40,000 --> 00:36:46,000
+The motivation for program of thought prompting is quite intuitive. It's quite simple.
+
+322
+00:36:47,000 --> 00:36:53,000
+Just why we are using a language model to do the math if we have a calculator, right?
+
+323
+00:36:53,000 --> 00:37:05,000
+Why we let the language model execute the program if we have an interpreter, Python interpreter, while we are doing this, they are not designed to such specific purpose, right?
+
+324
+00:37:05,000 --> 00:37:16,000
+We can use our advanced tools as part of the reasoning process to increase its ability.
+
+325
+00:37:16,000 --> 00:37:28,000
+So we delegate the complex computation to program interpreter and we are decoupling complex computation from reasoning and language understanding.
+
+326
+00:37:28,000 --> 00:37:34,000
+Here are some examples about why language models are not ideal for solving expressions.
+
+327
+00:37:34,000 --> 00:37:41,000
+First one, the language model often makes errors in arithmetic calculations, particularly with large numbers.
+
+328
+00:37:41,000 --> 00:37:48,000
+Second, they struggle to solve complex mathematical problems like polynomial or differential equations.
+
+329
+00:37:48,000 --> 00:37:58,000
+And lastly, large language models are inefficient at handling iterative processes, especially with a high number of iterations.
+
+330
+00:37:58,000 --> 00:38:09,000
+The trial of thought, self-consistency, all of them are using language models for both reasoning and computation.
+
+331
+00:38:09,000 --> 00:38:13,000
+The program of thought uses code interpreter for external computation.
+
+332
+00:38:13,000 --> 00:38:23,000
+It breaks down complex equations into multi-step thought processes and it will assign semantic meaning to variables.
+
+333
+00:38:24,000 --> 00:38:30,000
+That is what makes it send out from all the previous work.
+
+334
+00:38:30,000 --> 00:38:32,000
+It has two paradigms.
+
+335
+00:38:32,000 --> 00:38:37,000
+The first one is few-shot prompting and second one is zero-shot prompting.
+
+336
+00:38:37,000 --> 00:38:45,000
+In the few-shot prompting, as we are doing in the trial of thought, we have some exemplars with question and thought.
+
+337
+00:38:45,000 --> 00:38:56,000
+And in the zero-shot, we just input the question there and let the language model to output executable program.
+
+338
+00:39:00,000 --> 00:39:06,000
+So we can also use the program of thought as an intermediate step.
+
+339
+00:39:06,000 --> 00:39:14,000
+For certain, there are some problems that require both textual reasoning and computational part.
+
+340
+00:39:14,000 --> 00:39:18,000
+So we can separate the program of thought.
+
+341
+00:39:18,000 --> 00:39:21,000
+We can use it as an intermediate step.
+
+342
+00:39:21,000 --> 00:39:28,000
+You can see here we input the question in the program of thought framework and it will generate the program.
+
+343
+00:39:28,000 --> 00:39:33,000
+The program will be executed by an external interpreter and we will get the result.
+
+344
+00:39:33,000 --> 00:39:38,000
+The result will be keep prompted to the trial of thought.
+
+345
+00:39:38,000 --> 00:39:50,000
+We can either use the trial of thought to prompt the result getting from the interpreter or we can stop there, end of question and get the answer directly.
+
+346
+00:39:50,000 --> 00:39:56,000
+Here is an example in which language model is asked to compute the terminology number.
+
+347
+00:39:56,000 --> 00:39:59,000
+On the left, we are using a trial of thought.
+
+348
+00:39:59,000 --> 00:40:01,000
+Obviously, this is not correct.
+
+349
+00:40:01,000 --> 00:40:04,000
+Just output some random numbers.
+
+350
+00:40:04,000 --> 00:40:06,000
+It's just guessing.
+
+351
+00:40:06,000 --> 00:40:10,000
+There is no logic behind how it generates this answer.
+
+352
+00:40:10,000 --> 00:40:19,000
+However, in the program of thought, it will generate a executable very nicely wrote program.
+
+353
+00:40:19,000 --> 00:40:26,000
+And we use simply to execute the program with Python interpreter to get the final answer.
+
+354
+00:40:26,000 --> 00:40:29,000
+This is quite nice.
+
+355
+00:40:29,000 --> 00:40:41,000
+For the evaluation part, we are using five math problem dataset as performed similar to the previous works.
+
+356
+00:40:41,000 --> 00:40:53,000
+Additionally, they introduced three financial dataset.
+
+357
+00:40:53,000 --> 00:40:58,000
+Here are some implementation details about this paper.
+
+358
+00:40:58,000 --> 00:41:04,000
+They mainly used codecs with codec002 but also used 3.0 and lambda.
+
+359
+00:41:04,000 --> 00:41:14,000
+They used four to eight shots for all the dataset based on their level of difficulty.
+
+360
+00:41:14,000 --> 00:41:25,000
+And the baseline we are comparing with is primarily a trial of thought with the self-consistency version, which is with majority voting aggregation model.
+
+361
+00:41:25,000 --> 00:41:29,000
+Here are the results of the trial of thought.
+
+362
+00:41:29,000 --> 00:41:38,000
+Under few short learning, we achieve 8% gain on math dataset compared to the self-consistency version of trial of thought.
+
+363
+00:41:38,000 --> 00:41:42,000
+And we achieve 50% gain on the financial dataset.
+
+364
+00:41:42,000 --> 00:41:47,000
+Under zero short settings, we achieve 12% gain on the math dataset.
+
+365
+00:41:47,000 --> 00:42:01,000
+So on average, the performance of a program of thought with self-consistency was 10% better compared to the naive self-consistency trial of thought.
+
+366
+00:42:01,000 --> 00:42:05,000
+And here are some evaluation metrics.
+
+367
+00:42:05,000 --> 00:42:17,000
+So in the zero shot setting, as you can see, this paper achieved the state of the art compared to the previous work, like zero shot,
+
+368
+00:42:17,000 --> 00:42:21,000
+maybe three or zero shot with trial of thought.
+
+369
+00:42:21,000 --> 00:42:27,000
+There is a much higher, there is a very high gap between these two.
+
+370
+00:42:27,000 --> 00:42:29,000
+It's quite large.
+
+371
+00:42:29,000 --> 00:42:34,000
+And the same thing happens in the few shot configuration.
+
+372
+00:42:34,000 --> 00:42:44,000
+As you can see, all the bold text represents the state of the art represents the best performance among all the models.
+
+373
+00:42:44,000 --> 00:42:55,000
+So now the paper we're going to talk about is least to most prompting enables complex reasoning in large language models.
+
+374
+00:42:55,000 --> 00:42:58,000
+So I will start with our problem statement.
+
+375
+00:42:58,000 --> 00:43:14,000
+Because all the following models I now will introduce are based on the chain of thoughts models and chain of thoughts here are we know and we know that chain of thoughts are struggles with tasks that require first understanding
+
+376
+00:43:14,000 --> 00:43:20,000
+then generalizing knowledge from easy to more complex problems.
+
+377
+00:43:20,000 --> 00:43:30,000
+So basically what I mean is chain of thoughts performs poorly when the examples in provided prompts are much easier than the test cases.
+
+378
+00:43:30,000 --> 00:43:41,000
+And some typical generalization tasks include symbolic manipulation, compositional generalization, and numerical reasoning.
+
+379
+00:43:41,000 --> 00:43:51,000
+So to improve the performance of language model on generalization tasks, the author proposed the idea of least to most prompting.
+
+380
+00:43:51,000 --> 00:43:58,000
+And this idea is quite intuitive, and I will now dive into more details of this.
+
+381
+00:43:58,000 --> 00:44:09,000
+So these two most prompting have two types of prompts, because they basically have two steps, I will walk through each of the steps right now.
+
+382
+00:44:09,000 --> 00:44:17,000
+So what they do is say we're trying to solve this math problem in stage one.
+
+383
+00:44:17,000 --> 00:44:26,000
+So it's a new question, and the authors gave examples on how questions are reduced here.
+
+384
+00:44:26,000 --> 00:44:37,000
+So here we can see the question. The initial question is how many times can Amy slide before the slides closes.
+
+385
+00:44:37,000 --> 00:44:44,000
+And then we input this into the large language model.
+
+386
+00:44:44,000 --> 00:44:53,000
+And the model first decomposes this question into two sub questions.
+
+387
+00:44:53,000 --> 00:45:06,000
+And then here are the steps of thinking. So to solve how many times can she slide before it closes, we need to first solve how long does each trip take.
+
+388
+00:45:06,000 --> 00:45:12,000
+So this is basically the first sub question, sub question one.
+
+389
+00:45:12,000 --> 00:45:19,000
+And the model first takes the sub question one as a new input into the language model.
+
+390
+00:45:19,000 --> 00:45:27,000
+The language model, then process the sub question and provide answers for this sub question specifically.
+
+391
+00:45:27,000 --> 00:45:34,000
+The answer is, it takes me four minutes to climb and one minute to slide down and four plus one equals to five.
+
+392
+00:45:34,000 --> 00:45:38,000
+So each trip takes Amy around five minutes takes Amy five minutes.
+
+393
+00:45:38,000 --> 00:45:56,000
+Okay, so after we have the answers for the sub question one, we now can take both the answers for sub question one, combined with sub question two as new input to the model here.
+
+394
+00:45:56,000 --> 00:46:17,000
+And then, right, so, so now the model can like get like can basically have answers process those as input and get answers for sub question two, which is also the final question, the final answers for our initial question.
+
+395
+00:46:17,000 --> 00:46:24,000
+So each trip takes five minutes, each trip takes five minutes. This is the answer for sub question one.
+
+396
+00:46:24,000 --> 00:46:37,000
+And then Amy. So, the next step for that is Amy can slide 15 divided by five equals to three times before it closes.
+
+397
+00:46:37,000 --> 00:46:44,000
+This is the answer for sub question two, which is also the answers for our initial questions.
+
+398
+00:46:45,000 --> 00:46:54,000
+Yeah, that's basically how the least to most prompting works. And then in this examples, all the prompts are omitted before the sake of the demonstration.
+
+399
+00:46:54,000 --> 00:47:01,000
+And both stages, the prompt for both stages are fuel short prompting.
+
+400
+00:47:01,000 --> 00:47:11,000
+And this method can combine with other prompting techniques, such as chain of thoughts and also self consistency.
+
+401
+00:47:11,000 --> 00:47:16,000
+Okay, so now I will further evaluate the questions.
+
+402
+00:47:16,000 --> 00:47:25,000
+So the author evaluate this model with the typical three generalization tasks that I have mentioned in the problem statement part.
+
+403
+00:47:25,000 --> 00:47:33,000
+The first one here is symbolic manipulation. The task is to like is the last letter concatenation.
+
+404
+00:47:33,000 --> 00:47:48,000
+And then, since this task is already like introducing the previous in our previous in the previous like models earlier, I will not dive into details.
+
+405
+00:47:48,000 --> 00:48:01,000
+And to construct the testing, the testing list is basically randomly select words from wiki dictionary, and the list length varies from four to 12 words.
+
+406
+00:48:01,000 --> 00:48:09,000
+So the test sets, the shortest test set is like four words.
+
+407
+00:48:09,000 --> 00:48:15,000
+And the longest test set construct is constructed by 12 English words.
+
+408
+00:48:15,000 --> 00:48:23,000
+So each testing, each testing list are constructed by 500 examples.
+
+409
+00:48:23,000 --> 00:48:35,000
+But noting that only the Da Vinci 002, like, as you can see line 123455 here.
+
+410
+00:48:35,000 --> 00:48:42,000
+So the testing sets for this are 100 words instead of 500 words for all the other testing sets.
+
+411
+00:48:42,000 --> 00:48:49,000
+And the baseline, the baseline model prompting method is the standard prompting.
+
+412
+00:48:49,000 --> 00:49:01,000
+And some key findings include while text Da Vinci 002 shows similar accuracy to code Da Vinci 002 on small list sizes.
+
+413
+00:49:01,000 --> 00:49:10,000
+The accuracy drops off much faster when moving to large list sizes. And it's basically the same for both chain of thoughts and least to most.
+
+414
+00:49:10,000 --> 00:49:13,000
+So as you can see here.
+
+415
+00:49:13,000 --> 00:49:20,000
+So text text Da Vinci has like both.
+
+416
+00:49:20,000 --> 00:49:27,000
+Ooh.
+
+417
+00:49:27,000 --> 00:49:38,000
+On small list sizes, although like both text Da Vinci and code Da Vinci are like around 91, like 89 ish to 91.
+
+418
+00:49:38,000 --> 00:49:46,000
+And the least to most is like 94, 96. So those are like around 90s, all around 90s.
+
+419
+00:49:46,000 --> 00:49:58,000
+And as the length of the testing sets getting larger, the like the lowest accuracy it gets, it's actually 14.
+
+420
+00:49:59,000 --> 00:50:04,000
+You can see the text those are two examples here.
+
+421
+00:50:04,000 --> 00:50:18,000
+Well, the shortest thing is 87. And the longest thing is 14. So it decreases much faster than the code 002 models, which can see the 14 versus 38.4.
+
+422
+00:50:18,000 --> 00:50:27,000
+Like that the ending points different differentiates a lot, but the starting points are similar. So that means they're decreasing rate is like much faster.
+
+423
+00:50:27,000 --> 00:50:39,000
+And then also down so we can see the code Da Vinci 002 model do has an advantage for questions with iterations and recursions like the last ever concatenation.
+
+424
+00:50:39,000 --> 00:50:45,000
+Okay, so next is the compositional generalization generalization tasks.
+
+425
+00:50:45,000 --> 00:50:59,000
+And the task is to mapping natural language commands to action sequence. And then here in the right of the screen right side of the screen I showcase a small examples.
+
+426
+00:51:00,000 --> 00:51:20,000
+The language command is to turn opposite right, for example, and the resulting answer string is to like turn right times two, but this is actually a Python notations, like for the sake of like clearance and just to make it more concise.
+
+427
+00:51:21,000 --> 00:51:34,000
+If we put a like a full to put it more all in all in natural language, it would be like turn right and followed by turn right instead of like turn right times two.
+
+428
+00:51:34,000 --> 00:51:47,000
+Okay, so the data set used here is the scan data set this is a benchmark data set for this kind of question and the large language model is the code Da Vinci 002 in chat GBT three.
+
+429
+00:51:48,000 --> 00:52:00,000
+So, here's just another example showcase how leads to most prompting engine of thoughts prompting. Ask, like, prompting.
+
+430
+00:52:00,000 --> 00:52:08,000
+How, how those two like prompting method works with course modding answers. Okay.
+
+431
+00:52:08,000 --> 00:52:29,000
+And then the last. Oh, so the result for it is like, pretty obvious you can see on the screen the result for least to the correct the accuracies for least to most prompting method is much higher than both the standard prompting engine of thoughts.
+
+432
+00:52:29,000 --> 00:52:42,000
+You can see that even the lowest is like the lowest accuracy for least to most is around 60.7 but even the highest of amount is to prompting methods are even lower than 17.
+
+433
+00:52:42,000 --> 00:52:50,000
+So, can see the, like the, the improvements for least to most is really like astonishing.
+
+434
+00:52:51,000 --> 00:53:09,000
+Oh, and one noting that the results for text that Da Vinci 002 are based on a random subsets of 100 commands because the solving rate basically doesn't change so it doesn't matter if they like use testing on the entire set or just use or just use 100 comments.
+
+435
+00:53:09,000 --> 00:53:22,000
+Okay, so now we enter our last evaluation which is the math reasoning. The task is the task for this evaluation is to ask the model solve different math problems.
+
+436
+00:53:22,000 --> 00:53:37,000
+And the data set using here are GSM AK and drop data set. So these two data sets are also like benchmark data set. If you want, if you want to look more into it, I recommend you to like read the papers.
+
+437
+00:53:37,000 --> 00:53:57,000
+I'm not diving too much details of it. And the language model use here is also the code Da Vinci 002. And on the right side of the screen, it's, it's just a two examples showcase the how least to most prompting engine of thoughts prompting works.
+
+438
+00:53:57,000 --> 00:54:08,000
+And the result again, we can see, Oh, the method, the prompting method use here are Zoro shop prompting standard prompting train of thoughts and least to most prompting.
+
+439
+00:54:09,000 --> 00:54:23,000
+So, as we can see the result here is quite obvious as well. The least to most prompting works the best amount or the method in all data sets.
+
+440
+00:54:24,000 --> 00:54:36,000
+Okay, and some limitation of the least to most prompting methods is are mostly for the for its stage one. So the decomposition stage.
+
+441
+00:54:37,000 --> 00:55:01,000
+In this stage, the prompting typically don't generalize well across different domains. So it's quite like, so if you say if you want to like apply this techniques to other field, you probably want to like think about more specific prompting cases, prompting examples, rather than just use the general, the general ones.
+
+442
+00:55:01,000 --> 00:55:12,000
+And second, this stage one can even be difficult within the same domain. So I think it's a case by case thing, just be more careful when you use this techniques.
+
+443
+00:55:13,000 --> 00:55:23,000
+Okay, and now we will enter in our second paper, which is to, which is measuring and narrowing the compositionality gap in language models.
+
+444
+00:55:24,000 --> 00:55:28,000
+So, excuse me.
+
+445
+00:55:29,000 --> 00:55:52,000
+According to the authors. Well, language models have shown strong question answering performance. However, it still remains unclear how, how much of it's like correct answers is because they have such a huge corpora and it just so the language model just extracts correct answers by searching in there.
+
+446
+00:55:53,000 --> 00:56:08,000
+Like huge internal data set, or they can actually performs reasoning, different, like reasoning techniques, and in deduce the answers from, like, from the huge corpora.
+
+447
+00:56:08,000 --> 00:56:19,000
+So to measure this, they first quantify the compositionality, compositional ability of the language, large language model with multi hop reasoning.
+
+448
+00:56:20,000 --> 00:56:34,000
+And the term is so called term is the compositionality gap. And to do this, they introduce a new data set their own data set, the compositional cell celebrities. So this data set
+
+449
+00:56:35,000 --> 00:56:43,000
+combines free free stated facts in improbable ways. And each fact is likely appeared has many times in the training data set.
+
+450
+00:56:44,000 --> 00:56:58,000
+But it just use a unnatural way to combine the both facts together. So the combination of both facts is sufficiently unnatural that it never likely never appeared in the training set or the internet as well.
+
+451
+00:56:58,000 --> 00:57:13,000
+So here are two examples of the CC data set. The example one is what is the capital of the birthday of the birthplace of Levy, Moana, Wasa.
+
+452
+00:57:14,000 --> 00:57:17,000
+The answer is Lusaka. So basically,
+
+453
+00:57:18,000 --> 00:57:20,000
+so what is the
+
+454
+00:57:23,000 --> 00:57:37,000
+so if you just ask, what, what is the birthplace of Levy, Moana, Wasa, you can get this like search this question online and the like the internet will give you the correct answer.
+
+455
+00:57:37,000 --> 00:58:00,000
+And if you just search like what is the capital for that places, the internet will also give you an answer. But the way of combining this two parts together as is quite unnatural that the internet if you just like put this terms on the internet, it's unlikely to get a correct answer from the internet, which will then show in the later stage of this presentation.
+
+456
+00:58:01,000 --> 00:58:20,000
+And, oh, yeah, the company here is the equation for the compositionality gap. And this term basically like measures how often, while a model can generate correct answers to all sub questions. Well, it's still cannot correctly answers to overall, the overall question.
+
+457
+00:58:21,000 --> 00:58:24,000
+Okay, so now I will briefly like,
+
+458
+00:58:25,000 --> 00:58:39,000
+like, go through how the author of this paper evaluate composition now compositional ability of GP GPT three on their own data set.
+
+459
+00:58:39,000 --> 00:58:50,000
+So as you can see on the screen, there is a blue square, and there's a green triangle, and then like greenish things.
+
+460
+00:58:50,000 --> 00:59:12,000
+So the blueish represents the, the compositional questions, and the green question the green marks are representing the two sub questions, the two, the two, the two sub questions for the blueish questions.
+
+461
+00:59:12,000 --> 00:59:28,000
+So, and basically the gap, meaning like the link, the gap between the blueish things and the greenish things is the composition out the company, the compositionality gap.
+
+462
+00:59:29,000 --> 00:59:56,000
+So, while the parameters are like increasing, increasing here, the gap between like the gap between the, the blueish things and greenish things are like increasing so it actually shows the compositionality gap doesn't shrink while we increase the model sizes.
+
+463
+00:59:56,000 --> 01:00:15,000
+So, basically, it shows that even if the model know the world more by its like larger model sizes and it doesn't mean that they are increasing their ability to compose and process those knowledge.
+
+464
+01:00:16,000 --> 01:00:29,000
+So to solve this, so here's a, like a problem here, and to solve this problem, like to further like quantify the problem, they also construct this graph.
+
+465
+01:00:29,000 --> 01:00:42,000
+So basically they ask, how can the authors determines which facts that GPT three will and will not be able to compose.
+
+466
+01:00:42,000 --> 01:00:50,000
+Oh, yeah, so what I mean by GPT three is the Da Vinci 002 models, they're actually like, so yeah.
+
+467
+01:00:50,000 --> 01:01:02,000
+So here is in this graph, each bar represents a different sets of questions, and in each set, the GPT three models correctly answer both parts of the questions.
+
+468
+01:01:02,000 --> 01:01:09,000
+So the y-axis are representing the accuracy of like, of answering the question, right?
+
+469
+01:01:09,000 --> 01:01:15,000
+And in x-axis, it's the maximal sub question perplexity.
+
+470
+01:01:15,000 --> 01:01:27,000
+So those sets are arranged from least to most challenging, like questions based on the model's maximal perplexity level of each question.
+
+471
+01:01:27,000 --> 01:01:35,000
+So it basically, the higher perplexity level are associated with the model's like confusion level.
+
+472
+01:01:35,000 --> 01:01:42,000
+So it basically means that the model itself is also not sure, is not also not sure about what the correct answer is.
+
+473
+01:01:42,000 --> 01:01:49,000
+And each bar here are corresponding to 10% of this type of question, type of questions.
+
+474
+01:01:49,000 --> 01:02:06,000
+So even like if the, so we can see the, like the bar on the further right represents like the model's views quite unsure about what the correct answer is.
+
+475
+01:02:06,000 --> 01:02:14,000
+And then versus on the further left, the model is pretty sure about what the like correct answer is.
+
+476
+01:02:14,000 --> 01:02:20,000
+The accuracy are pretty like distinct between this, like two stages.
+
+477
+01:02:20,000 --> 01:02:31,000
+So we can see as the model becomes more confident about the correct answer, it's more likely for the models like to answer the questions correctly.
+
+478
+01:02:31,000 --> 01:02:45,000
+So based on this inspiration, they, they proposed the idea of elicited prompting by other means, it's also called self-ask prompt.
+
+479
+01:02:45,000 --> 01:02:51,000
+So this prompt can effectively, effectively narrow the compositionality gap.
+
+480
+01:02:51,000 --> 01:02:57,000
+And then I will show like how this prompt works very quick.
+
+481
+01:02:57,000 --> 01:03:10,000
+So here the graph on the left demonstrates a composition between comparison, excuse me, comparison between direct prompting, chain of thoughts, and also self-ask on the question from Bamboogle.
+
+482
+01:03:10,000 --> 01:03:17,000
+So this Bamboogle is a, is another data set the author creates by their own.
+
+483
+01:03:17,000 --> 01:03:23,000
+So I will introduce this data set in the latest in a bit.
+
+484
+01:03:23,000 --> 01:03:32,000
+So here the text with a wide background is the prompt and the text with a green background is the large, is the output of the large language model.
+
+485
+01:03:32,000 --> 01:03:36,000
+And the underlying text here is the question.
+
+486
+01:03:36,000 --> 01:03:42,000
+So the prompt is a, is actually a shortened examples for the sake of demonstration.
+
+487
+01:03:42,000 --> 01:03:50,000
+The author actually uses a four short, a four short, four short prompt for this data set.
+
+488
+01:03:50,000 --> 01:04:00,000
+So in this example, the prompt question is who live longer, the th or hvw.
+
+489
+01:04:00,000 --> 01:04:09,000
+So the authors use the same setup for asking and answering questions in all three like metrics.
+
+490
+01:04:09,000 --> 01:04:15,000
+And the only thing that changes is how the authors like put together the process of answering questions.
+
+491
+01:04:15,000 --> 01:04:23,000
+And the model here generates the question and answers them based on, based on it's all based on its internal knowledge.
+
+492
+01:04:23,000 --> 01:04:31,000
+So, but this is like limited to the data model that, that the model was trained on.
+
+493
+01:04:31,000 --> 01:04:36,000
+And also it's ability to like infer new information for, for that data.
+
+494
+01:04:36,000 --> 01:04:49,000
+So, as you can see the question, like to answer this question, this self asked model first, like, ask itself, our follow up questions needed here.
+
+495
+01:04:49,000 --> 01:04:51,000
+And the answer is yes.
+
+496
+01:04:51,000 --> 01:05:04,000
+So the first follow up question for the question for the initial question that generated by the model is how old was th when he died.
+
+497
+01:05:04,000 --> 01:05:15,000
+And then to answer, and then the model generates an immediate answer, like for the follow up question. So, saying th was 65 years old when he died.
+
+498
+01:05:15,000 --> 01:05:26,000
+And then the model generates another like follow up questions like how old was hv, hvw when he died.
+
+499
+01:05:26,000 --> 01:05:33,000
+The intermediate answer is like this person was 69 years old when he died.
+
+500
+01:05:33,000 --> 01:05:45,000
+And so now we have like the age of both people when, like when they, when, when, when they died.
+
+501
+01:05:45,000 --> 01:05:55,000
+And we can compare like their dying age to know which one lives longer when like which one lives longer.
+
+502
+01:05:55,000 --> 01:06:14,000
+So, so now the, all the, like, all the evidence are like enough to support the final answers that like 65 versus versus 69 that her hvw is the one that lives longer.
+
+503
+01:06:14,000 --> 01:06:16,000
+So the final question is hvw.
+
+504
+01:06:16,000 --> 01:06:36,000
+So basically, what it did, what the model did is to like, simulate, simulate this, simulate this process by iteratively asking follow up questions until the, until the model reaches a stage that's sufficient,
+
+505
+01:06:36,000 --> 01:06:45,000
+that sufficiently gather all the information required or needed for to generate the final answers.
+
+506
+01:06:46,000 --> 01:06:52,000
+And, oh, by using the phrase our follow up questions needed here.
+
+507
+01:06:52,000 --> 01:07:05,000
+So if it is needed, then the, then the model will like iteratively generate like different follow up questions to the very, to the last step.
+
+508
+01:07:05,000 --> 01:07:14,000
+If it is not, then it will basically just like spit the, the final answers out.
+
+509
+01:07:14,000 --> 01:07:20,000
+So this phrase actually also slightly improved the, improved the results.
+
+510
+01:07:20,000 --> 01:07:31,000
+So I, the author doesn't mention why the author mentions they also don't know why, but their results shows that this is quite effective as well.
+
+511
+01:07:31,000 --> 01:07:34,000
+And the entire process is completely automatic.
+
+512
+01:07:34,000 --> 01:07:39,000
+There is no any like of the human in the loop thing.
+
+513
+01:07:39,000 --> 01:07:49,000
+Okay, so as I just mentioned before, all their like tasks are based on all their knowledge are based on their internal database.
+
+514
+01:07:49,000 --> 01:08:00,000
+So to further improve this model, they combine the self ask prompting method with, with the external search engine.
+
+515
+01:08:00,000 --> 01:08:14,000
+So, so this extends the process by like allowing the large language model to like leverage an eternal external search engine for information beyond its own training data.
+
+516
+01:08:14,000 --> 01:08:25,000
+So it means when the model encounters a gap in its knowledge, when, or when the model needs a more up to date information.
+
+517
+01:08:26,000 --> 01:08:32,000
+It can basically go online and search internet for the latest data statistics or effects.
+
+518
+01:08:32,000 --> 01:08:42,000
+And then this is just a simple example that basically showing the process of feeding each sub question into the, into the search engine.
+
+519
+01:08:42,000 --> 01:08:48,000
+And then added answers to the following prompts in the sequence, in sequence.
+
+520
+01:08:48,000 --> 01:08:54,000
+Okay, so now I will briefly go through the its evaluation and the new bamboo good data set.
+
+521
+01:08:54,000 --> 01:09:06,000
+So this data set is also with the two hop questions written by the authors, where all questions are sufficiently difficult to be answered by a popular internet search engine.
+
+522
+01:09:06,000 --> 01:09:13,000
+But noting that like all supporting pieces of evidence can be finding Wikipedia separately.
+
+523
+01:09:13,000 --> 01:09:24,000
+So it's construction ideas is actually pretty similar to the CC data set, but just a different like a different set of questions, I would say.
+
+524
+01:09:24,000 --> 01:09:37,000
+Okay, and the authors, the baseline models are direct prompting chain of thoughts searching engine itself, like searching engine and searching engine with large language model post processing.
+
+525
+01:09:37,000 --> 01:09:53,000
+And what do I mean by the searching engine with language model post processing as like the, the authors basically use, use like search, use just go online and search for answers.
+
+526
+01:09:53,000 --> 01:10:04,000
+Then after they got the answers they use that eventually 002 to extract the final answers from like the answers they got from the search engine.
+
+527
+01:10:05,000 --> 01:10:09,000
+Okay, so let's dive into the results.
+
+528
+01:10:09,000 --> 01:10:21,000
+Here, table one uses DaVinci 002 accuracy on bamboo to wiki and Maorae Maorae.
+
+529
+01:10:21,000 --> 01:10:24,000
+Maorae, how cute.
+
+530
+01:10:24,000 --> 01:10:53,000
+Musque Musque data set. And for bamboo go that accuracy is manually judged by the authors. And from the other data set the metric is they, they, they judge the accuracy is to like come compare is to like see if the provided answers has an exact match with the answer with the answer sheet in for those two data set.
+
+531
+01:10:53,000 --> 01:11:08,000
+And appendix table four has more results on the same data set using other metrics. So if you guys are interested in this like methods, you can like go into their appendix and taking, take a deeper loop.
+
+532
+01:11:08,000 --> 01:11:30,000
+So here we can see that self the, the self ask method actually improves over chain of thoughts by a smaller amount on to wiki and musk. It's basically like the chain of thoughts has 29.8% of the accuracy, but self ask only achieved 30.0.
+
+533
+01:11:30,000 --> 01:11:48,000
+So it's actually pretty similar. And here is 12.6 versus 13.8. But in the bamboo go data set, it's like 46.4 versus 57.6. So it's 11% increase. So it's pretty like a large amount.
+
+534
+01:11:48,000 --> 01:12:01,000
+And then the self ask plus search even reaches a higher state of art. So it's, it has better and basically has better answers for all three data set.
+
+535
+01:12:02,000 --> 01:12:12,000
+Yeah, so, actually, so this updated version actually actually like works quite well. And in table two.
+
+536
+01:12:13,000 --> 01:12:21,000
+It shows that DaVinci zero the accuracy of their inch is over two.
+
+537
+01:12:21,000 --> 01:12:30,000
+Well, excuse me, while the self ask achieves a like similar or better performance.
+
+538
+01:12:30,000 --> 01:12:45,000
+On the accuracy, it running, it runs like more, more than 30% faster than least to most. So which is the, the prompting method I just introduced before.
+
+539
+01:12:46,000 --> 01:13:03,000
+So on, as you can see on the two wiki data set, the least to most achieves like the accuracy for least to most is 29, but that for self ask is 35.5. So it's a quite a little bit increase.
+
+540
+01:13:03,000 --> 01:13:20,000
+But the number of tokens generated to like to for the answers are like are decreasing are like six, 100.
+
+541
+01:13:20,000 --> 01:13:35,000
+Sorry, my brain can't, can't function like around 250 ish less than the tokens generated in the least to most prompting. And then also in this music data set the accuracies are quite similar.
+
+542
+01:13:35,000 --> 01:13:53,000
+So 166 all are like around 16, but the number of tokens are like, really, the number of tokens generated in by the self ask model is almost half of the number of tokens generated in the least to most methods.
+
+543
+01:13:53,000 --> 01:14:15,000
+So it's quite effective as well. Okay, and then now we'll dive into the limitations of this approach. The author of this paper didn't experiment with models that large that's larger than 175 billion parameters so they actually don't know how the model will like performs in like such a large models.
+
+544
+01:14:15,000 --> 01:14:38,000
+So, and another limitations. So is the models may behave differently in a more through empirical evaluation. So, because they because they basically didn't like test it through. So that's one direction of the future works.
+
+545
+01:14:38,000 --> 01:14:52,000
+They mentioned, okay, so now I will enter, we can enter our third paper the react.
+
+546
+01:14:52,000 --> 01:15:13,000
+So it basically stands for a synergizing reasoning and acting in the language models. Okay, so while large language models have demonstrated the ability to execute a sequence of reasoning traces, so that they can like, deduce answers for verbal reasoning questions.
+
+547
+01:15:14,000 --> 01:15:28,000
+Still, like chain of thoughts, it's, it's still a static black box, and meaning that this model uses its own internal representation, and it's not grounded in the external world.
+
+548
+01:15:28,000 --> 01:15:56,000
+So it will lead to hallucination and also error propagates over the reasoning process. And also a pre train model, recent studies have looked into how the pre train language models can be used to plan and take actions in interactive environments, mainly by like predicting actions via language priors, or so called we so called prompts.
+
+549
+01:15:56,000 --> 01:16:16,000
+So taking these two ideas in mind, the authors proposed the idea of react. This is basically a general paradigm that combines reasoning and acting with language models that aims to solve diverse tasks, tasks on language reasoning and decision making.
+
+550
+01:16:17,000 --> 01:16:36,000
+And let's jump in and take a look on what they did and was what those things are actually are. So first off, the idea of just reasoning. This came with the chain of thoughts we just talked about. So you just take a large language model and bring the reasoning up front.
+
+551
+01:16:37,000 --> 01:17:02,000
+Then you can increase the performance of a model so it's quite straightforward. And then, now, let's think about if you just ask the language model to answer a question, they will likely to give you an answer, and everything comes after that answer they provided will just be justification for that answer, which may lead to hallucination problems.
+
+552
+01:17:03,000 --> 01:17:14,000
+So if we think the other way around, then the reasoning primes, the reasoning traces, like, or progress actually primes what is going on to be needed in the answer.
+
+553
+01:17:14,000 --> 01:17:23,000
+What is going to be needed in the answer. So that answer itself will end up being a better answer.
+
+554
+01:17:23,000 --> 01:17:42,000
+And besides this, there is another paradigm of thinking of that. So if you can actually get the models to do something in an environment, for example, like taking an action, and then use that as an observation, as an observations from the environment, and then you can feed the
+
+555
+01:17:42,000 --> 01:18:07,000
+observations back to language models to like further like to like do iterative actions and observations to let the, to allow the models generate the answer for you. So, and then here, there are a bunch of ideas that were going on, like going around about using actions over the environment to help the language
+
+556
+01:18:08,000 --> 01:18:17,000
+to help the language models. But I will not dive into too much details about it. If you are interested in, please refer back to the paper.
+
+557
+01:18:18,000 --> 01:18:38,000
+And basically react is like combines the reasons only and acting and acting only is like this two ideas are together. So we can see we have this like reasoning up from, then we've got to like, taking some that kind of actions.
+
+558
+01:18:38,000 --> 01:18:55,000
+And then based on like how those actions perform on the environment, we're able to like get some of the observations back into the language model. And this can be better like use, use back for refining the reason here.
+
+559
+01:18:55,000 --> 01:19:10,000
+So you're actually getting a modest stop ways of thinking, not just in one shot, but multiple shot over, like over the entire process. So if it's actually able to like increase the performance, the overall performance of the model.
+
+560
+01:19:10,000 --> 01:19:32,000
+Okay, so now I will talk it through with the questions and then how different models are answering these questions. Okay, so the question is, aside from the Apple remote, what other devices can control the program Apple remote was originally designed to interact with.
+
+561
+01:19:33,000 --> 01:19:41,000
+First, the author gives an examples by off standard prompting. So ask the question straight up.
+
+562
+01:19:41,000 --> 01:19:48,000
+And obviously the answer generated is incorrect. And the second one is chain of thoughts.
+
+563
+01:19:48,000 --> 01:20:05,000
+Although the models like provide some reasoning traces, like of how they generate the answers, their reason their traces is basically wrong. So the answers they provided are inherently wrong. And verse one see the action only.
+
+564
+01:20:05,000 --> 01:20:28,000
+So basically, this approach is like telling the model to do a search for this, and bring back the observation, and it comes to the answers, and then just basically repeat the repeat the overall steps until it reaches the final answer, which is further like from the correct answers than the previous two.
+
+565
+01:20:28,000 --> 01:20:33,000
+So here is, here is how reacts comes in.
+
+566
+01:20:33,000 --> 01:20:37,000
+In this way. So first of all, it will have a thought.
+
+567
+01:20:37,000 --> 01:20:42,000
+The model will generate a thoughts based on the questions.
+
+568
+01:20:42,000 --> 01:20:49,000
+Here the thought is, I need to like search Apple remote and find the program. It was originally designed to interact with.
+
+569
+01:20:49,000 --> 01:20:58,000
+Okay, so based on the thoughts, this, the model generate and a corresponding action which is to search with keyword Apple remote.
+
+570
+01:20:58,000 --> 01:21:11,000
+And so by doing this actions, the, the model gets on an observations from the external like environment, which so called the search engine.
+
+571
+01:21:11,000 --> 01:21:24,000
+And their observation is that the Apple remote is a remote control introduced in October 2025 by Apple, and it's originally designed to control the front row media center program.
+
+572
+01:21:24,000 --> 01:21:30,000
+So, and then so we have the like another thoughts.
+
+573
+01:21:30,000 --> 01:21:41,000
+And now, with all that using all has been already created, the model then comes up with the next logical step or thought.
+
+574
+01:21:41,000 --> 01:21:50,000
+In this case, they think that since Apple remote was originally designed to control the front row media center program.
+
+575
+01:21:50,000 --> 01:21:57,000
+So then, so I, the next step, the next thing I need to search is the front row.
+
+576
+01:21:57,000 --> 01:22:02,000
+Next, and then find what other devices can control it.
+
+577
+01:22:02,000 --> 01:22:08,000
+And they basically performs the second search actions and get the second observations for it.
+
+578
+01:22:08,000 --> 01:22:27,000
+Okay, so basically repeats this like thoughts actions observations iteratively until reaches the final answers, which we can say it's a correct answer over all the overall the examples.
+
+579
+01:22:27,000 --> 01:22:38,000
+Okay. And then here are just some notations that basically except explain the same idea I just, I just like went through.
+
+580
+01:22:38,000 --> 01:22:45,000
+So L represents the language space, which is what we refer to as a thought.
+
+581
+01:22:45,000 --> 01:22:51,000
+And the capital is the action space and capital with had is the agents action space.
+
+582
+01:22:51,000 --> 01:23:04,000
+And all the agent action spaces in, in the, in, in this paper are limited to three, which I will introduce in in a bit.
+
+583
+01:23:04,000 --> 01:23:11,000
+So one difficulties here is that the language space is actually unlimited.
+
+584
+01:23:11,000 --> 01:23:23,000
+So it actually like learns in this augmented action space learning this augmented action space is excuse me, it's quite difficult.
+
+585
+01:23:23,000 --> 01:23:28,000
+How do I go back to the last page?
+
+586
+01:23:28,000 --> 01:23:29,000
+Okay, very well.
+
+587
+01:23:29,000 --> 01:23:33,000
+It's difficult and then it requires a strong language prayers.
+
+588
+01:23:33,000 --> 01:23:58,000
+So the solutions proposed like to for for the difficulties in the scope of this paper is to use a frozen large language model, the poem 540 B, and also use a few shot prompting in context examples, few shot in context examples as prompting.
+
+589
+01:23:58,000 --> 01:24:07,000
+Okay, so now I will introduce the evaluation method of this in this paper.
+
+590
+01:24:07,000 --> 01:24:20,000
+So the author basically has like designs for tasks to evaluate this model, and the, and then separate those four tasks into four into two groups.
+
+591
+01:24:20,000 --> 01:24:28,000
+The first group is the knowledge intensive reasoning tasks and the data set using here.
+
+592
+01:24:28,000 --> 01:24:41,000
+Oh, and tasks and the tasks are model hop question answering and fact verification for model hop question answering the you the the author uses hop up QA.
+
+593
+01:24:41,000 --> 01:24:51,000
+So this is a benchmark for model hop question and fever. This is another benchmark for fact for the fact verification tasks.
+
+594
+01:24:51,000 --> 01:25:08,000
+So, and it be the corresponding action spaces for these two tasks, these two tasks are search, look up and finish if reaches the like current tax with with like reaches the answer.
+
+595
+01:25:08,000 --> 01:25:20,000
+So the author like propose their own self made Wikipedia web API with the corresponding with the following three actions I just mentioned.
+
+596
+01:25:20,000 --> 01:25:37,000
+And then here are for the prompting methods for pumping methods they use to compare with the first one react prompting the baseline he used here are standard prompting chain of thoughts prompting
+
+597
+01:25:37,000 --> 01:25:50,000
+not with self consistent self consistency with decoding temperature 0.7 and action acting only prompt.
+
+598
+01:25:50,000 --> 01:26:10,000
+To like one step further, they also trying to like updates like in further improve the performance of this method by combines combines internal knowledge by an external database altogether.
+
+599
+01:26:10,000 --> 01:26:20,000
+So to use this they prop they uses like react, then transit into a chain of thoughts with self consistency.
+
+600
+01:26:20,000 --> 01:26:41,000
+Or chain of thoughts of self consistency transition transits back to react when the majority answers amount up and question and chain of thoughts self consistency self consistency samples occurs less than like half of half of the times.
+
+601
+01:26:41,000 --> 01:27:01,000
+And they also performs a fine tunings for all the all the prompting methods mentioned before. So this is a bootstrapping approach similar to some previous works, and then basically using 3000 trajectories with correct answers generated by react.
+
+602
+01:27:01,000 --> 01:27:16,000
+And to fine tune a smaller language models and to decode trajectories condition on input questions. So more details are in the appendix. If you're interested, please refer to the details.
+
+603
+01:27:16,000 --> 01:27:30,000
+Okay, so the decoding temperature is a primary used in natural language processing that controls the tradeoff between the deterministic and randomness randomness of the output from the model.
+
+604
+01:27:30,000 --> 01:27:41,000
+And the time there are like three stages of the temperature value. So when the temperature equals to one, this is the natural stage, no preference between the deterministic or randomness.
+
+605
+01:27:41,000 --> 01:27:58,000
+When it's larger to one, the, the, the, the method will more like prompting to create answers in a more creative manner. So it will increase the diversity and a creative creativity of the model.
+
+606
+01:27:59,000 --> 01:28:20,000
+The model now will like, basically generates more creative ideas. But a tradeoff for it is that it may have like less coherent generate less coherent stories or accuracy and vice versa, when temperature is less than one, it's less novel.
+
+607
+01:28:20,000 --> 01:28:32,000
+But the answers are more like coherence or has like, has like better readability.
+
+608
+01:28:32,000 --> 01:28:40,000
+Okay, so here are some results and observations and in
+
+609
+01:28:41,000 --> 01:28:47,000
+I will first go through table one and then figure two and following by figure two and figure three.
+
+610
+01:28:47,000 --> 01:29:02,000
+So in table one, we can see the best prompting matches on hop up QN and fever are react to chain of thoughts, self consistency, and also chain of thoughts, self consistency back to react, respectively.
+
+611
+01:29:02,000 --> 01:29:16,000
+Okay, so yep. So the bold letters are like them basically demonstrating the one with highest performance, which is this two method.
+
+612
+01:29:16,000 --> 01:29:26,000
+And furthermore, figure two shows how different methods performance with respect to the number of chain of thoughts, self consistency samples used.
+
+613
+01:29:26,000 --> 01:29:41,000
+And here we can see like the, it's also the chain of thoughts self consistency transfer back to react has in the fever data set achieves the highest accuracy and versus the react.
+
+614
+01:29:41,000 --> 01:29:51,000
+So basically the two transitional prompting methods achieves the highest two accuracies in the fever data set.
+
+615
+01:29:52,000 --> 01:30:09,000
+And then both the chain of thoughts self consistency and react reaches like roughly equivalent accuracy when when it has more training trials.
+
+616
+01:30:09,000 --> 01:30:15,000
+And the basically the same stories here.
+
+617
+01:30:15,000 --> 01:30:24,000
+The both like the, the two transitional data set the tree, the two transitional method reaches the highest performance.
+
+618
+01:30:24,000 --> 01:30:41,000
+But actually here this the chain of thoughts self consistency outperforms the react data set in even like as the number of like training, the number of trials increases.
+
+619
+01:30:41,000 --> 01:30:45,000
+Okay, and then we're going to figure two.
+
+620
+01:30:45,000 --> 01:30:52,000
+It shows us how different methods performs with respect to the number of chain of thoughts samples used.
+
+621
+01:30:52,000 --> 01:31:05,000
+So, here, we can see it's also a similar story, like a react.
+
+622
+01:31:06,000 --> 01:31:23,000
+So it's basically showing the results like showcase that demonstrates the fine tune that react is actually it's quite adaptive to fine tune models.
+
+623
+01:31:24,000 --> 01:31:47,000
+So in, in the before fine tune cases to react cannot outperforms cannot outperforms all the other, all the other methods.
+
+624
+01:31:47,000 --> 01:31:53,000
+But after a fine tune the accuracy in increases.
+
+625
+01:31:53,000 --> 01:32:04,000
+Oh, the accuracy for like the small, small model sizes increases quite significantly.
+
+626
+01:32:04,000 --> 01:32:08,000
+So here is like from 15 to like over 30.
+
+627
+01:32:08,000 --> 01:32:14,000
+So it's quite impressive.
+
+628
+01:32:14,000 --> 01:32:23,000
+And here are some other results and observations for the react prompting versus chain of thought prompting.
+
+629
+01:32:23,000 --> 01:32:37,000
+So on looking at table two, we can see hallucination is really a serious problem for chain of thoughts, because they result in a much higher false positive rates than react.
+
+630
+01:32:37,000 --> 01:32:47,000
+So we can see here it's the 14% versus 66% in success mode and make up its major like failure mode.
+
+631
+01:32:47,000 --> 01:32:53,000
+So it's the like the 56% versus 0%.
+
+632
+01:32:53,000 --> 01:33:06,000
+So react actually like did a pretty good job in in like figuring out the in avoiding the hallucination problems.
+
+633
+01:33:06,000 --> 01:33:10,000
+But this kind of setup.
+
+634
+01:33:10,000 --> 01:33:22,000
+And then also, when we the mix up when we mix up the thinking doing and watching steps, it actually helps react quite a lot to be like more down to the earth and reliable.
+
+635
+01:33:22,000 --> 01:33:30,000
+But this kind of setup also make it harder for to flexibly think through the problems.
+
+636
+01:33:30,000 --> 01:33:37,000
+So it means it might like messed up. It's reasoning a bit more, more often than chain of thought method.
+
+637
+01:33:37,000 --> 01:33:42,000
+So it's actually another point that we need to like pay attention to.
+
+638
+01:33:43,000 --> 01:34:03,000
+So and then also for react like a successively retrieving information informative knowledge is via search is critical because all it's like subsequent answers are all based on its previous answers.
+
+639
+01:34:03,000 --> 01:34:17,000
+So if the like the starting first answers are incorrect or first thought directions and action directions are incorrect, then all the subsequent answers and thoughts are incorrect.
+
+640
+01:34:17,000 --> 01:34:23,000
+So the quality of that is quite quite important.
+
+641
+01:34:23,000 --> 01:34:43,000
+Okay, so here are the the other two groups of like tasks, which we referred as the decision making tasks. The first task introduced here is a text based game, which so called out of the world.
+
+642
+01:34:43,000 --> 01:34:51,000
+It's a benchmark that has been like used or introduced in some previous papers.
+
+643
+01:34:51,000 --> 01:35:00,000
+And the pumping methods going to get tested here is the react prompt, the inner monologue. So this is the closest prior work introduced by authors.
+
+644
+01:35:00,000 --> 01:35:08,000
+And the baseline for it is the butler that is the butler. It's also a prior work that do similar things.
+
+645
+01:35:08,000 --> 01:35:15,000
+Okay, so here are some results for an observations.
+
+646
+01:35:15,000 --> 01:35:18,000
+So we can see.
+
+647
+01:35:18,000 --> 01:35:34,000
+So here we all the, all the pumping methods are used to like do the off world task. The best react trial achieves the average success rate of 71%.
+
+648
+01:35:34,000 --> 01:35:56,000
+So here is basically averaging all the methods and with averaging all the data set, excuse me, and the worst react trial reaches 48%.
+
+649
+01:35:56,000 --> 01:36:05,000
+Which is all right here.
+
+650
+01:36:05,000 --> 01:36:22,000
+Oh, excuse me, 71%. And this like significantly outperforms all the rest approaches, which is like the 45 and also 37 here.
+
+651
+01:36:23,000 --> 01:36:32,000
+Which like the other methods that also pick the best six results.
+
+652
+01:36:32,000 --> 01:36:40,000
+Okay, and then we can see that react performs quite consistently versus the all the other metrics.
+
+653
+01:36:40,000 --> 01:36:48,000
+And then we compare the author then compares like the react versus the IM method.
+
+654
+01:36:48,000 --> 01:36:54,000
+You can see it's basically the this tool versus this tool.
+
+655
+01:36:54,000 --> 01:37:02,000
+In this four cases, the react substantially outperforms IM style.
+
+656
+01:37:02,000 --> 01:37:12,000
+You can see like 90 to 58, 96, 86 versus like 60 ish and 80 ish and 30 ish.
+
+657
+01:37:12,000 --> 01:37:28,000
+Um, yep. And many like those trajectories are still like struggles to determine where an item will likely to be like within that game environment due to a lack of common sense reasoning.
+
+658
+01:37:29,000 --> 01:37:44,000
+Mentioned by the authors, and this problem is can be solved is already solved by react. So that's why react will like have better results than the IM model.
+
+659
+01:37:44,000 --> 01:37:46,000
+Okay.
+
+660
+01:37:46,000 --> 01:37:56,000
+Then we will enter the decision making another decision making tasks, which is the website navigation named namely web shop.
+
+661
+01:37:56,000 --> 01:38:05,000
+This is an online shopping environment with 1.1 a million real world products plus 12k human instructions.
+
+662
+01:38:05,000 --> 01:38:16,000
+And then the author even evaluated this by the average score and also success rate of tasks on 500 test instructions.
+
+663
+01:38:16,000 --> 01:38:19,000
+So some act promptings.
+
+664
+01:38:19,000 --> 01:38:34,000
+So some actions available here are search, choose product, choose options and buy some prompting methods that going to be like compare with compare our react.
+
+665
+01:38:35,000 --> 01:38:52,000
+I'll train with a train with 10, 10, 12 human annotated trajectories and also imitation plus reinforcement learning train with data sets for.
+
+666
+01:38:52,000 --> 01:39:04,000
+For I'll like this previous data set plus a 10 58 and seven extra training instruction.
+
+667
+01:39:04,000 --> 01:39:11,000
+So the real the result here is quite obvious that react achieves significantly better performance.
+
+668
+01:39:11,000 --> 01:39:25,000
+Like we can see around 10% increases over the previous best success rate on the scores.
+
+669
+01:39:25,000 --> 01:39:49,000
+And then all the existing methods are like still far from the performance of like human expert because you can see that you the scores for human expert are 81.1 but like eight ish but all the models here are the high even the highest are much lower than the what the human expert performs.
+
+670
+01:39:49,000 --> 01:39:51,000
+Okay.
+
+671
+01:39:51,000 --> 01:40:01,000
+And then we can finally enter our last paper, which is self refine iterative refinement with self feedback.
+
+672
+01:40:01,000 --> 01:40:03,000
+The problem statement.
+
+673
+01:40:03,000 --> 01:40:20,000
+Um, like, although large, we know that large language models are good at creating clear text, but off, but they're often struggling with complex tasks, like generate generating conversations or making codes easier to read something like this.
+
+674
+01:40:20,000 --> 01:40:35,000
+Um, that even if like the human do it will like we first write an initial draft then we iteratively refine the draft with like after after in a couple days.
+
+675
+01:40:35,000 --> 01:40:53,000
+So this models can produce a better first. So similar to how human, like do this tasks, the models can also produce produce a basic first draft, but usually like improve this draft with extra rounds of added where each version is better than the last version.
+
+676
+01:40:53,000 --> 01:41:09,000
+So it's like a continuous improving process. And this process is not so known as the iterative refinement process, and it may use special special training or feedback from the experts.
+
+677
+01:41:09,000 --> 01:41:22,000
+But this process will also like may get enough data or time as or the expert time can be hard and expensive.
+
+678
+01:41:22,000 --> 01:41:37,000
+So this highlights the importance in the importance of like finding a way to refine the output effectively across different tasks without needing a lot of supervision.
+
+679
+01:41:37,000 --> 01:41:56,000
+Okay, so I will briefly walk you guys through this model. This, the self refined model improves its output through a process of iterative feedback, where it takes its initial responses and revise them based on evaluations on corrections.
+
+680
+01:41:56,000 --> 01:42:13,000
+And this methods basically involves getting an initial set of answers first as an input, and then selecting one, like the best one to enhance further, rather than like produce mobile answers without like subsequent improvements.
+
+681
+01:42:13,000 --> 01:42:27,000
+So basically, we have an initial input, then the self refined model starts by generating an output and passing it back to the same model and here to get the feedback.
+
+682
+01:42:27,000 --> 01:42:40,000
+The feedback is then passed back to and the same model, which refines the previously generated generated output here.
+
+683
+01:42:40,000 --> 01:42:57,000
+So steps, the feedback, step feedback, and also step refining are like performs iteratively until a stopping a predefined stopping condition is met.
+
+684
+01:42:57,000 --> 01:43:10,000
+This is like an instantiated with a larger language models, for example, GVT 3.5 and this approach does not involve human assistance.
+
+685
+01:43:10,000 --> 01:43:30,000
+One thing to be noted in this entire process, it's because it has like three steps to do. And so we also need to like train three prompts. Oh, we also need to incorporate three prompts for each of the steps.
+
+686
+01:43:30,000 --> 01:43:43,000
+So this is a more down to the ground examples. I will go through the whole optimization ones in the details.
+
+687
+01:43:43,000 --> 01:44:02,000
+So basically, in this examples, the initial questions, or the initial tasks input by the humans is to ask the models to generate the to generate a function that calculates the sum from one to end.
+
+688
+01:44:02,000 --> 01:44:15,000
+And then here is the initial, the blue square represents the initial answers or the initial output by from the language models.
+
+689
+01:44:15,000 --> 01:44:23,000
+And then we feed this language models as this result as a new prompt and ask the large language models to give some feedback.
+
+690
+01:44:23,000 --> 01:44:38,000
+So here is the feedback from the as the second output generated from the language models saying this code is this code is slow because it uses brute force and a better approach to further refines the output.
+
+691
+01:44:38,000 --> 01:44:46,000
+The previous output would be to use the formula and times and plus one divided by two.
+
+692
+01:44:46,000 --> 01:45:12,000
+And we and the model uses this output as the third input with the first output, the output of the first part, altogether as a new input to the, like, and then like send it back to the model again, then the model will like take that as the third input and
+
+693
+01:45:12,000 --> 01:45:17,000
+it's it's final refine our refined output.
+
+694
+01:45:17,000 --> 01:45:39,000
+In this case is the refined version of the sum of the sum function, which is to directly leverage this formula into its calculation process to like first speed up the performance and second to like reduce the
+
+695
+01:45:39,000 --> 01:45:42,000
+space complexity.
+
+696
+01:45:42,000 --> 01:45:57,000
+And then here is basically the algorithmic way of showing the same ideas I just went through so I will not dive into much details about it.
+
+697
+01:45:58,000 --> 01:46:00,000
+Yep.
+
+698
+01:46:00,000 --> 01:46:19,000
+So here, basically the same thing that those are two, just two notations. So the feedback superscript K refers to the actionable needs to be actionable and specific.
+
+699
+01:46:19,000 --> 01:46:22,000
+So the feedback.
+
+700
+01:46:22,000 --> 01:46:38,000
+The superscript K basically means the K iterations in the entire process. So actionable means the act, the feedback needs to contain a concrete action that can possibly increase the output not like some very general feedback.
+
+701
+01:46:38,000 --> 01:46:46,000
+And it needs to be specific. So identify the concrete phrases in the output to change.
+
+702
+01:46:46,000 --> 01:46:59,000
+Basically, in what it means here in this example is the code of my in the code in the feedback provided for the old code optimization examples.
+
+703
+01:46:59,000 --> 01:47:28,000
+First, like explains why I think the previous answer is bad is not good enough. And the further improves this this answers by providing a very concrete way approach of like, which is to use the following formula in the calculation.
+
+704
+01:47:28,000 --> 01:47:44,000
+And the stopping conditions are, oh, it basically has two like criteria for the stopping conditions. So first, it can stop either stops at a specific time step for the time stamp.
+
+705
+01:47:44,000 --> 01:47:57,000
+Here it refers to number of iterations. And then second, it could also like extract the stopping indicator from the feedback by from the feedback by human.
+
+706
+01:47:59,000 --> 01:48:13,000
+Okay. So, yep, so now I will briefly go through the evaluation process. The tasks involved in this process are some standard tasks with two new self defined tasks by the author.
+
+707
+01:48:13,000 --> 01:48:35,000
+The first one is acronym generation. And the second one is constraint generation. So what I mean by the constraint generation is it refers to the process of generating tasks, a text, like stories answers or code under some specific rules on or conditions.
+
+708
+01:48:35,000 --> 01:48:53,000
+So, for example, if you're asking to like play playing a world game, working where you have to like write a story, but you can only start each sentences with a certain letter, or you need to include specific words in your text.
+
+709
+01:48:54,000 --> 01:49:09,000
+So those like start each sentence with certain letters and includes specific words in the text are both like examples for constraints.
+
+710
+01:49:10,000 --> 01:49:22,000
+Okay, and the stopping conditions defined by the authors are like it either reaches for iterations or it reached the it reached the desired output condition.
+
+711
+01:49:22,000 --> 01:49:46,000
+Okay. So here are some comparison comparison methods. The, the large language models are all the same. So the, the base models are all the same. It just like using all the base models with and without the feedback we find iterations.
+
+712
+01:49:47,000 --> 01:50:02,000
+So there, so the baseline models are GBT 3.5 chat GBT and GBT for and also codex, and the author uses greedy decoding with the, like decoding temperature of zero seven.
+
+713
+01:50:03,000 --> 01:50:23,000
+The prompts are also the same thing are also same from previous works, and they added their new created ones. I will not dive into into details for the new created ones, you can refer to the, like, paper, and the matrix they use in the evaluations include tasks specific
+
+714
+01:50:23,000 --> 01:50:44,000
+matrix. So this are automatic metrics from prior works and human pref metrics. So busy in this cases. This is a blind human A and B evaluation on a subset of the output to select the to select the preferred output.
+
+715
+01:50:45,000 --> 01:51:03,000
+So basically it's like a bunch of humans that to select let the a bunch of humans to select which answers they prefer, but to like without letting those people know which is like version a which is version B.
+
+716
+01:51:03,000 --> 01:51:12,000
+Okay, and GBT for preface basically the same thing of the human pref, but instead just let GBT do all the process.
+
+717
+01:51:12,000 --> 01:51:30,000
+Okay, and here are the main results. So quite obviously that self refine consistently improve the performance of each models over the base models across all model sizes, and additionally outperforms the previous state of arts across all the tasks.
+
+718
+01:51:30,000 --> 01:51:52,000
+So here the, like the upper arrow means, like, the rate of like improvements due to use the self refinement, like models. And this improvement is quite consistent because all, all are like upper arrows showing improving performance.
+
+719
+01:51:52,000 --> 01:52:10,000
+The lowest one is like, the, like, the lowest one is their own meaning. It's like either stays consistent stays the same or improve so it's quite, quite, quite such a like a good improvements overall.
+
+720
+01:52:10,000 --> 01:52:25,000
+Okay, and then here is the first cognitive analysis. So here, the author exams, the feedback quality versus like refine models versus iterations so which of the three are the most important.
+
+721
+01:52:25,000 --> 01:52:32,000
+So here in this case, the first exams the feedback quality.
+
+722
+01:52:32,000 --> 01:52:46,000
+So the author concludes a good feedback is better than generic feedback and it's good then, and, and it's better than no feedback. So here, the graph Oh, excuse me, let me go back to the previous slides.
+
+723
+01:52:46,000 --> 01:53:15,000
+So the, the table here actually emphasizes the feedback quality actually plays a very crucial role in self refinement. As you can see, a good feedback, which is the self refine feedback here, achieves the best results among all the threes and versus the no feedback has even have, like, even include two, like one zeros here, which is like pretty bad.
+
+724
+01:53:16,000 --> 01:53:26,000
+So, and then here shows like a general trend, like of improvements when with like increased feedback quality.
+
+725
+01:53:27,000 --> 01:53:48,000
+And the second figure show. So this figure four highlights the diminishing returns in the improvements as number of iterations increases and why zero why one why two why three indicates like the iteration numbers.
+
+726
+01:53:48,000 --> 01:54:07,000
+And, yeah, so as we can see, the, as the, the number of like iterations increases, the changes, the, the, like, the, the amount of changes are also decreasing.
+
+727
+01:54:07,000 --> 01:54:13,000
+So like from 11.3 to 6.4 to just three.
+
+728
+01:54:15,000 --> 01:54:36,000
+Oh, 11.3 in the first iteration, 6.4 in the second iteration, and three in the third iterations. So as the number of iterations increases, the effectiveness of each iterations are decreasing, which we, we referred as the diminishing returns.
+
+729
+01:54:36,000 --> 01:54:52,000
+And then also for tasks with model aspect feedback, the output quality can vary, can vary a lot due during iterations, iteration with improvement in one aspect, but decline in another aspect.
+
+730
+01:54:55,000 --> 01:55:00,000
+So we can see the one versus 1.2 versus 0.7.
+
+731
+01:55:01,000 --> 01:55:17,000
+So the iterations that like the number of iterations iterations actually doesn't work, have a very like apparent effect in improving the quality of, of the final answers and then.
+
+732
+01:55:18,000 --> 01:55:33,000
+Yep. And also, it generates numerical scores for different quality aspects and leading this leads to a balanced evaluation and appropriate output selections.
+
+733
+01:55:34,000 --> 01:55:37,000
+And then here's another quantitative analysis.
+
+734
+01:55:37,000 --> 01:55:47,000
+So the authors here exams how self-refine performs compared to LGBT when LGBT just make four different answers without making them better through feedback.
+
+735
+01:55:48,000 --> 01:55:54,000
+Then the author checked if the output of self-refine can do better than all this four output from LGBT.
+
+736
+01:55:55,000 --> 01:56:20,000
+So, so basically this graph is like examining the quality, like if self-refinement improves the quality of like answers, because they basically have more, more output, or it's because the output quality are like getting better in the through the iterations.
+
+737
+01:56:21,000 --> 01:56:34,000
+So here they basically like compare the performance of the self-refine models against this, like this output, in this case four, in a one versus k evaluation.
+
+738
+01:56:34,000 --> 01:56:47,000
+So it's basically saying the self-refine model need to outperforms all, all k outputs to showcase that.
+
+739
+01:56:48,000 --> 01:56:59,000
+It's, it's because the improvements of self-refine is because the output quality is like improving or it has better output.
+
+740
+01:57:00,000 --> 01:57:09,000
+It's not rather than like, rather than like, like generate more output.
+
+741
+01:57:10,000 --> 01:57:11,000
+Okay.
+
+742
+01:57:12,000 --> 01:57:26,000
+So the results, the, so this, this one like is the preference of output, the preference of the output.
+
+743
+01:57:26,000 --> 01:57:55,000
+So we can see like done by human researchers that you can see the self-refine models achieves a generally better like performance because like more people are prefer still choosing the self-refine as the model they like.
+
+744
+01:57:56,000 --> 01:58:03,000
+This is the chat GPT or multi, multi results, like all of these results.
+
+745
+01:58:03,000 --> 01:58:16,000
+So, and so one question raised or mentioned in this paper is if self-refine also works with the weaker models.
+
+746
+01:58:16,000 --> 01:58:26,000
+So to examine this, the author initiated the self-refine with a smaller model, a less powerful based model.
+
+747
+01:58:26,000 --> 01:58:41,000
+And the result shows the model doesn't fit well with this because it basically was not able to cannot consistently generate the feedback in the required format, in the required format.
+
+748
+01:58:41,000 --> 01:58:51,000
+And even, even if the author like do this process with Oracle or hard-coded feedback.
+
+749
+01:58:51,000 --> 01:58:57,000
+So Oracle is, is a metric introduced by previous, by previous papers.
+
+750
+01:58:57,000 --> 01:58:58,000
+Okay.
+
+751
+01:58:58,000 --> 01:59:03,000
+So it often feels like adhere to the prompts for refinement.
+
+752
+01:59:03,000 --> 01:59:05,000
+So it actually doesn't work well.
+
+753
+01:59:06,000 --> 01:59:21,000
+And this model, it's generated generally repeats the original like output instead of like instead or just do random guessing instead of like really refines the output.
+
+754
+01:59:21,000 --> 01:59:37,000
+So it means the self-refine, how so the performance of self-refine really also depends on like the whether the model are powerful enough.
+
+755
+01:59:37,000 --> 01:59:43,000
+So to read to summary and recap what we learned today.
+
+756
+01:59:43,000 --> 01:59:52,000
+We talked about chain of thought prompting self-consistency with chain of thought, tree of thought prompting and finally program thought prompting.
+
+757
+01:59:52,000 --> 02:00:03,000
+So to summarize, the chain of thought prompting enables language model to articulate the intermediate reasoning steps toward a solving complex tasks, right?
+
+758
+02:00:04,000 --> 02:00:11,000
+It will break one major one huge problem into intermediate steps and solve them one by one.
+
+759
+02:00:11,000 --> 02:00:19,000
+Once we solve all the sub problems, then we have our major problem solved.
+
+760
+02:00:19,000 --> 02:00:29,000
+The self-consistency version of chain of thought improved accuracy by generating multiple reasoning path and selecting the most consistent solution.
+
+761
+02:00:29,000 --> 02:00:35,000
+We are using parallel linked list instead of a single linked list.
+
+762
+02:00:35,000 --> 02:00:54,000
+And we aggregated the financer from all the parallel linked list with the hope that the opinion or the conclusion voted by majority could be the correct one.
+
+763
+02:00:54,000 --> 02:00:57,000
+And we also have a tree of thought prompting.
+
+764
+02:00:57,000 --> 02:01:06,000
+Tree of thought prompting enhances problem solving by organizing reasoning into the tree structure you can see here, tree structure here.
+
+765
+02:01:06,000 --> 02:01:19,000
+This tree structure allows for exploration of multiple solution pathways instead of just token wise left to right exploration.
+
+766
+02:01:19,000 --> 02:01:22,000
+And finally program of thought.
+
+767
+02:01:22,000 --> 02:01:29,000
+Program of thought is something different than the previous three works.
+
+768
+02:01:29,000 --> 02:01:40,000
+It systematically structures reasoning into executable steps and the steps are similar to your program.
+
+769
+02:01:40,000 --> 02:01:50,000
+This separation of logic and computation provide a precise and logical problem resolution.
+
+770
+02:01:50,000 --> 02:02:03,000
+So basically in the four papers that I just mentioned, there is one paper that beverages the reason only prompting, which is the least most prompting.
+
+771
+02:02:03,000 --> 02:02:13,000
+And all the other three are all reasons with actions prompting, excuse me, which is the self-ask prompting, the react and also self-refine.
+
+772
+02:02:13,000 --> 02:02:21,000
+So all this prompting approaches are integrated the reasoning traces with some sort of actions.
+
+773
+02:02:21,000 --> 02:02:42,000
+Like, excuse me, like searching, like, like, like searching on the on some searching engines and then taking the output generated or observations generated by the searching engines and feedback to the language models.
+
+774
+02:02:42,000 --> 02:03:03,000
+And just basically do this, like, iterative step, like, and then combines the output, like, take the advantages of searching on the internet.
+
+775
+02:03:03,000 --> 02:03:16,000
+So it also, like, integrates some external knowledge from the, from, from the outside world, which further improves the performance of the language model.
+
+776
+02:03:16,000 --> 02:03:20,000
+Okay, so that's basically it. Thank you for listening.
+

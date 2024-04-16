@@ -1,0 +1,1904 @@
+1
+00:00:00,000 --> 00:00:03,360
+Hi, I'm Cole Wyatt.
+
+2
+00:00:03,360 --> 00:00:06,560
+And I'm Carter Blair.
+
+3
+00:00:06,560 --> 00:00:13,320
+And we'll be presenting on scaling laws.
+
+4
+00:00:13,320 --> 00:00:19,320
+So we'll begin by giving some information about scaling laws, kind of, we'll go over
+
+5
+00:00:19,320 --> 00:00:24,240
+the paper that introduced it, and then some follow up results.
+
+6
+00:00:24,240 --> 00:00:29,160
+And then we'll talk about immersion abilities, which call into question a little bit, kind
+
+7
+00:00:29,160 --> 00:00:32,760
+of, the idea of smooth scaling laws.
+
+8
+00:00:32,760 --> 00:00:38,840
+And then we'll talk about some other results that also complicate the story about immersion
+
+9
+00:00:38,840 --> 00:00:42,640
+abilities.
+
+10
+00:00:42,640 --> 00:00:46,800
+So there's a few motivations to be interested in this.
+
+11
+00:00:46,800 --> 00:00:51,720
+The first one is the scientific problem, which is actually studying how the model performance
+
+12
+00:00:51,720 --> 00:00:53,360
+changes with increasing scale.
+
+13
+00:00:53,360 --> 00:00:59,160
+So this is something we can address experimentally, and we can try to extract some underlying
+
+14
+00:00:59,160 --> 00:01:04,040
+trends and test hypotheses.
+
+15
+00:01:04,040 --> 00:01:08,640
+Then there's obviously some significant engineering importance.
+
+16
+00:01:08,640 --> 00:01:14,680
+So training frontier models is becoming increasingly expensive, costing sometimes millions of dollars
+
+17
+00:01:14,680 --> 00:01:16,280
+for a single training run.
+
+18
+00:01:16,280 --> 00:01:25,800
+So it's very important to be able to predict the optimal way to set the size and the number
+
+19
+00:01:25,800 --> 00:01:32,800
+of training tokens for your models just to save money for the same performance.
+
+20
+00:01:32,800 --> 00:01:36,680
+And finally, there's some AI safety importance.
+
+21
+00:01:36,680 --> 00:01:43,480
+So, so models have often demonstrated these unexpected emergent abilities.
+
+22
+00:01:44,000 --> 00:01:49,160
+We'd like to have some tools to tell us what level of capability we should expect the next
+
+23
+00:01:49,160 --> 00:01:52,240
+generation of frontier models to be at.
+
+24
+00:01:52,240 --> 00:01:57,000
+And this could give us some, some early warnings about maybe when it's time to slow down or
+
+25
+00:01:57,000 --> 00:02:02,480
+make preparations for certain kinds of risks.
+
+26
+00:02:02,480 --> 00:02:09,960
+Okay, so we'll begin by talking about Kaplan 2020.
+
+27
+00:02:09,960 --> 00:02:14,160
+And this was the paper that kind of introduced scaling laws.
+
+28
+00:02:14,160 --> 00:02:19,960
+And the main question, the main thing they were trying to look at is, is there a relationship
+
+29
+00:02:19,960 --> 00:02:26,520
+between kind of your inputs, so compute data or the number of parameters and the performance
+
+30
+00:02:26,520 --> 00:02:28,560
+of the model.
+
+31
+00:02:28,560 --> 00:02:34,760
+And so the main idea here was that they just train models of vastly different scales in
+
+32
+00:02:34,760 --> 00:02:38,760
+terms of both, in terms of data compute and the number of parameters.
+
+33
+00:02:38,760 --> 00:02:44,480
+And then the, they find that the final loss is predictable.
+
+34
+00:02:44,480 --> 00:02:48,760
+And it's related to the scale of each underlying input.
+
+35
+00:02:48,760 --> 00:02:55,400
+And they offer a predictive framework for predicting the final loss given these inputs.
+
+36
+00:02:55,400 --> 00:03:03,840
+And they make certain practical recommendations about how big your network should be with
+
+37
+00:03:03,840 --> 00:03:05,320
+a certain amount of data.
+
+38
+00:03:05,880 --> 00:03:08,960
+They also find that you shouldn't train to convergence and they find a critical batch
+
+39
+00:03:08,960 --> 00:03:11,800
+size.
+
+40
+00:03:11,800 --> 00:03:16,160
+So their main results are that performance depends strongly on scale and weakly on model
+
+41
+00:03:16,160 --> 00:03:17,160
+shape.
+
+42
+00:03:17,160 --> 00:03:22,120
+I'll go through these quickly and we'll go into more depth later.
+
+43
+00:03:22,120 --> 00:03:27,000
+Performance scales with each of compute data and the number of parameters when not bottlenecked
+
+44
+00:03:27,000 --> 00:03:28,960
+by the other two.
+
+45
+00:03:28,960 --> 00:03:34,200
+Performance improves predictably if we, predictably if we scale the number of parameters and the
+
+46
+00:03:34,200 --> 00:03:35,560
+amount of data in tandem.
+
+47
+00:03:35,560 --> 00:03:44,080
+But if we stop increasing one of those, we're going to get diminishing returns.
+
+48
+00:03:44,080 --> 00:03:45,520
+Also training curves are predictable.
+
+49
+00:03:45,520 --> 00:03:50,200
+So if we see the initial part of a training curve, we can roughly predict what the final
+
+50
+00:03:50,200 --> 00:03:55,080
+loss is going to be, which can be super useful if you want to figure out how much data or
+
+51
+00:03:55,080 --> 00:04:00,840
+how many parameters you want to use to get a certain final amount of loss.
+
+52
+00:04:00,840 --> 00:04:05,920
+So we can predict how well models are going to perform on out of distribution data only
+
+53
+00:04:05,920 --> 00:04:09,240
+by looking at the validation accuracy on the training data.
+
+54
+00:04:09,240 --> 00:04:14,880
+So there's this kind of reliable transfer and large models are more sample efficient
+
+55
+00:04:14,880 --> 00:04:19,000
+than small ones and convergence is super inefficient.
+
+56
+00:04:19,000 --> 00:04:26,960
+They also find this critical batch size and it's roughly a power of only the loss.
+
+57
+00:04:26,960 --> 00:04:30,560
+So to begin model performance depends mostly on scale.
+
+58
+00:04:30,560 --> 00:04:37,120
+So we can see here in the bottom plot that we look at varying kind of different model
+
+59
+00:04:37,120 --> 00:04:44,560
+parameters and then we can see kind of the relationship that has with loss.
+
+60
+00:04:44,560 --> 00:04:50,560
+And overall, like especially for the attention head dimension, it like really doesn't matter.
+
+61
+00:04:50,560 --> 00:04:57,320
+You're going to get about the same amount of loss for any attention head dimension.
+
+62
+00:04:57,320 --> 00:05:02,520
+As for aspect ratio and the feed forward ratio, there's a bit more of a relationship
+
+63
+00:05:02,520 --> 00:05:10,440
+between those and the final loss, but it's still overall quite weak compared to the relationship
+
+64
+00:05:10,440 --> 00:05:13,720
+with scale.
+
+65
+00:05:13,720 --> 00:05:18,640
+So just as a note moving forward, a lot of the graphs look like they have a linear trend,
+
+66
+00:05:18,640 --> 00:05:24,640
+but they just look like that because a power law is going to show up linearly on a log
+
+67
+00:05:24,640 --> 00:05:27,280
+scale graph.
+
+68
+00:05:27,280 --> 00:05:33,640
+So this is kind of one of the main figures and the finding is that loss predictably goes
+
+69
+00:05:33,640 --> 00:05:39,200
+down as you scale compute data set size and the number of parameters.
+
+70
+00:05:39,200 --> 00:05:45,200
+But importantly, these graphs all assume that when you're varying say compute, you're not
+
+71
+00:05:45,200 --> 00:05:48,680
+bottlenecked by the data size or the number of parameters.
+
+72
+00:05:48,680 --> 00:05:59,680
+So these test loss smoothly decreases in terms of one of these factors when not bottlenecked
+
+73
+00:05:59,680 --> 00:06:02,080
+by the other two.
+
+74
+00:06:02,080 --> 00:06:08,440
+So they also find that as you can see, training curves kind of follow these predictable patterns
+
+75
+00:06:08,440 --> 00:06:13,200
+and the parameters are roughly independent of the model size.
+
+76
+00:06:13,200 --> 00:06:20,480
+So for a relatively small model, the first purple line, the shape is roughly similar
+
+77
+00:06:20,480 --> 00:06:26,480
+to that final yellow line, which is a model with a billion parameters.
+
+78
+00:06:26,480 --> 00:06:31,040
+And so by extrapolating that early part of a training curve, we can roughly predict what
+
+79
+00:06:31,040 --> 00:06:35,480
+loss we can achieve by training for much longer.
+
+80
+00:06:35,480 --> 00:06:40,800
+They also found that the transfer of models is quite predictable.
+
+81
+00:06:40,800 --> 00:06:46,160
+So here we see the test loss on the training distribution on the x-axis and the loss on
+
+82
+00:06:46,160 --> 00:06:49,000
+some other distribution on the y-axis.
+
+83
+00:06:49,000 --> 00:06:53,480
+And roughly there's some linear relationship between these.
+
+84
+00:06:53,480 --> 00:07:02,120
+So as you decrease loss on the training distribution, you can expect to decrease loss on other distributions
+
+85
+00:07:02,120 --> 00:07:03,120
+as well.
+
+86
+00:07:03,120 --> 00:07:09,280
+They also found that large models are much more sample efficient than small models.
+
+87
+00:07:09,280 --> 00:07:13,960
+So they can reach the same level of performance with fewer optimization steps.
+
+88
+00:07:13,960 --> 00:07:20,720
+So here we can see if we have some fixed data set size, say a billion tokens in the data
+
+89
+00:07:20,720 --> 00:07:32,640
+set, the larger models achieve significantly lower loss than these smaller models.
+
+90
+00:07:32,960 --> 00:07:36,440
+Yeah.
+
+91
+00:07:36,440 --> 00:07:41,400
+And the reason could be because these large models, while they're taking maybe the same,
+
+92
+00:07:41,400 --> 00:07:45,040
+they're seeing the same amount of tokens, they have many more parameters.
+
+93
+00:07:45,040 --> 00:07:52,200
+So that is in a way costing much more compute to see that same amount of data.
+
+94
+00:07:52,200 --> 00:07:55,640
+And hence, but hence they learn more.
+
+95
+00:07:55,640 --> 00:07:57,920
+They also show that convergence is inefficient.
+
+96
+00:07:57,920 --> 00:08:02,520
+So when working within a fixed compute budget and without any other restrictions on the
+
+97
+00:08:02,520 --> 00:08:06,760
+model size or available data, so you just assume you have like infinite storage and
+
+98
+00:08:06,760 --> 00:08:12,400
+this massive infinite data set, or just big enough that it's not going to bottleneck you
+
+99
+00:08:12,400 --> 00:08:17,640
+at all, that you can attain optimal performance by training very large models and stopping
+
+100
+00:08:17,640 --> 00:08:20,000
+significantly short of convergence.
+
+101
+00:08:20,000 --> 00:08:25,640
+So for example, if we look at this orange line and we say, let's say we have this much
+
+102
+00:08:25,640 --> 00:08:32,320
+compute and the lowest intercept on this line from one of the training curves comes
+
+103
+00:08:32,320 --> 00:08:36,320
+from a model that's very far from convergence.
+
+104
+00:08:36,320 --> 00:08:42,080
+So if we were to train the smallest model to convergence, we might achieve like six
+
+105
+00:08:42,080 --> 00:08:43,080
+loss.
+
+106
+00:08:43,080 --> 00:08:48,120
+Whereas if we train just a huge model or a much bigger model with the same amount of
+
+107
+00:08:48,120 --> 00:08:56,320
+compute, we can achieve somewhere around five units of loss.
+
+108
+00:08:56,320 --> 00:09:02,520
+So they also found that performance improves predictively as long as we scale up the number
+
+109
+00:09:02,520 --> 00:09:07,920
+of parameters and the amount of data in tandem, but we get diminishing returns if either of
+
+110
+00:09:07,920 --> 00:09:11,680
+those is held fixed while the other increases.
+
+111
+00:09:11,680 --> 00:09:16,880
+And the performance penalty depends predictively on this ratio of the number of parameters
+
+112
+00:09:16,880 --> 00:09:22,040
+to the power of 0.74 over the amount of tokens in the data set.
+
+113
+00:09:22,040 --> 00:09:27,720
+And every time we increase the model size by eight times, we only need to increase the
+
+114
+00:09:27,720 --> 00:09:31,440
+data size by roughly five times to avoid a penalty.
+
+115
+00:09:31,440 --> 00:09:37,320
+However, this like particular relationship is later called into question.
+
+116
+00:09:37,320 --> 00:09:41,240
+As I think we'll see in the next paper presented.
+
+117
+00:09:41,240 --> 00:09:45,120
+Yeah, two papers from now.
+
+118
+00:09:46,040 --> 00:09:51,960
+And they also found this kind of ideal batch size for training models, and it's roughly
+
+119
+00:09:51,960 --> 00:09:59,720
+a power of the loss only and it continues to be determinable by measuring the gradient
+
+120
+00:09:59,720 --> 00:10:05,400
+noise scale, and it's roughly one to two million tokens at convergence for the largest
+
+121
+00:10:05,400 --> 00:10:07,840
+models we can train.
+
+122
+00:10:07,840 --> 00:10:14,920
+So yeah, the idea is that you might need, if your gradient is super noisy, you kind
+
+123
+00:10:14,920 --> 00:10:23,080
+of maybe want to have bigger batches so that you get a more reliable direction.
+
+124
+00:10:23,080 --> 00:10:28,880
+So the main takeaways from Kaplan are that the loss scales predictably with model scale.
+
+125
+00:10:28,880 --> 00:10:33,280
+So you can kind of predict what the loss will be just by looking at the scale of the model
+
+126
+00:10:33,280 --> 00:10:35,080
+and the model shape.
+
+127
+00:10:35,080 --> 00:10:40,360
+So the feed forward ratio, the aspect ratio, or the dimension of the attention heads just
+
+128
+00:10:40,360 --> 00:10:41,680
+doesn't really matter.
+
+129
+00:10:41,680 --> 00:10:48,920
+Like it matters to some extent, but the main driver of increasing performance is scale.
+
+130
+00:10:48,920 --> 00:10:51,880
+And the amount of embedding parameters doesn't really matter.
+
+131
+00:10:51,880 --> 00:10:56,600
+And we can predict the final loss of a model based on only the early part of a training
+
+132
+00:10:56,600 --> 00:10:57,600
+curve.
+
+133
+00:10:57,600 --> 00:11:01,280
+So this is nice as Cole mentioned from an engineering perspective.
+
+134
+00:11:01,520 --> 00:11:07,760
+We want to figure out how big our models should be to achieve some certain loss.
+
+135
+00:11:07,760 --> 00:11:13,920
+And you can kind of run a bunch of little training runs to kind of predict what the
+
+136
+00:11:13,920 --> 00:11:18,600
+final loss will be for your final full training run.
+
+137
+00:11:18,600 --> 00:11:23,400
+And they also found, importantly, that training these models to convergence is inefficient.
+
+138
+00:11:23,400 --> 00:11:28,920
+You can do much better by just training a bigger model, not all the way to convergence.
+
+139
+00:11:28,960 --> 00:11:33,160
+And they found this ideal batch size, which is a power of loss only and doesn't depend
+
+140
+00:11:33,160 --> 00:11:34,160
+on the model size.
+
+141
+00:11:37,160 --> 00:11:45,400
+OK, so after this work came out, people are interested in whether they could find similar
+
+142
+00:11:45,400 --> 00:11:51,720
+scaling laws for transfer, because typically a large foundation model is fine tuned for
+
+143
+00:11:51,720 --> 00:11:54,080
+some kind of downstream task.
+
+144
+00:11:54,080 --> 00:11:57,560
+So this is a practical importance.
+
+145
+00:11:58,200 --> 00:12:07,080
+What Kaplan had all found in 2021 was that pre-training can be particularly valuable
+
+146
+00:12:07,080 --> 00:12:14,800
+when the fine tuning data set is not very large, and which is kind of natural if the
+
+147
+00:12:14,800 --> 00:12:19,360
+fine tuning data set is larger than the pre-training data set, then the pre-training data set is
+
+148
+00:12:19,360 --> 00:12:22,160
+just kind of injecting out of distribution noise.
+
+149
+00:12:23,160 --> 00:12:31,480
+They were also able to model this effective data transfer from the pre-training with another
+
+150
+00:12:31,480 --> 00:12:43,720
+power law, and they used this measurement to construct a measure of similarity between
+
+151
+00:12:43,720 --> 00:12:49,600
+data sets, which comes from one of the parameters in their power law.
+
+152
+00:12:50,600 --> 00:12:56,200
+So it's sort of the idea being that you can measure how close one data set is to another
+
+153
+00:12:56,200 --> 00:13:00,200
+based on how useful the pre-training is.
+
+154
+00:13:02,200 --> 00:13:05,840
+And finally, they looked at ossification, which is the idea that pre-training could
+
+155
+00:13:05,840 --> 00:13:07,600
+actually reduce performance.
+
+156
+00:13:08,600 --> 00:13:13,280
+OK, so this power law is a little bit confusing, so it's kind of worth taking a close look
+
+157
+00:13:13,280 --> 00:13:17,200
+at this graph, maybe pausing the video.
+
+158
+00:13:17,200 --> 00:13:29,360
+But the idea is that with some amount of fine-tuning data, DF, which is provided to a pre-trained
+
+159
+00:13:29,360 --> 00:13:35,520
+model, we can see how far ahead the pre-trained model is compared to a model which is trained
+
+160
+00:13:35,520 --> 00:13:36,600
+from scratch.
+
+161
+00:13:37,600 --> 00:13:51,360
+So both models get this fine-tuning data set of size DF, but one, the pre-trained model
+
+162
+00:13:51,360 --> 00:13:53,800
+also has access to some pre-training data.
+
+163
+00:13:53,800 --> 00:14:04,720
+And by measuring how many additional tokens of fine-tuning data need to be, or I guess
+
+164
+00:14:04,720 --> 00:14:12,880
+in this case, characters, need to be trained on by both models, or by the trained from
+
+165
+00:14:12,880 --> 00:14:19,600
+scratch model to catch up with the pre-trained model so that horizontal line, then we see
+
+166
+00:14:19,600 --> 00:14:26,400
+how much the effective data has been transferred to the pre-trained model.
+
+167
+00:14:26,400 --> 00:14:30,120
+So that's the advantage that it gets from the pre-training, and it's DT.
+
+168
+00:14:31,120 --> 00:14:38,280
+So here N represents the non-embedding model parameters.
+
+169
+00:14:38,280 --> 00:14:43,280
+We saw earlier that the number of embedding model parameters doesn't matter that much,
+
+170
+00:14:43,280 --> 00:14:44,920
+and in the last paper.
+
+171
+00:14:44,920 --> 00:14:51,280
+And then we see this, we have the scaling law where the effective data transferred is
+
+172
+00:14:51,280 --> 00:15:00,320
+related by a power law to constant times the amount of fine-tuning data to the alpha
+
+173
+00:15:00,320 --> 00:15:03,640
+and times the number of parameters to the beta.
+
+174
+00:15:03,640 --> 00:15:11,240
+So beta doesn't depend on the data sets, it depends only on the model architecture, which
+
+175
+00:15:11,240 --> 00:15:16,160
+is one useful result that this can kind of be factored out.
+
+176
+00:15:16,160 --> 00:15:36,360
+And then the K and alpha depends on the data set, and you'll see that actually a smaller
+
+177
+00:15:36,360 --> 00:15:45,000
+alpha indicates more closely related data sets, because when the alpha is smaller, we
+
+178
+00:15:45,000 --> 00:15:51,280
+have gained more, we've kind of already factored in more advantage from the pre-training.
+
+179
+00:15:51,280 --> 00:15:57,000
+So a smaller alpha will correspond to a larger K, which means that there's a more significant
+
+180
+00:15:57,000 --> 00:16:01,000
+head start before we even start seeing fine-tuning data.
+
+181
+00:16:01,000 --> 00:16:08,520
+So then with a more dissimilar fine-tuning data set, there's kind of more rapid gains
+
+182
+00:16:08,520 --> 00:16:15,560
+from this fine-tuning data, because the fine-tuning data looks different from the pre-training
+
+183
+00:16:15,560 --> 00:16:18,060
+data.
+
+184
+00:16:18,060 --> 00:16:24,800
+So then they compare the similarity of text to Python and 50% Python code, 50% text to
+
+185
+00:16:24,800 --> 00:16:31,560
+Python, and propose this alpha as a similarity measurement, and you can see that it's a lot
+
+186
+00:16:31,560 --> 00:16:37,360
+smaller in the second case with a much larger K.
+
+187
+00:16:38,240 --> 00:16:45,880
+So lastly, so this concern about ossification, you can see that sometimes the pre-training
+
+188
+00:16:45,880 --> 00:16:50,720
+does hurt, but only when the model size is relatively small compared to the amount of
+
+189
+00:16:50,720 --> 00:16:56,520
+the training data.
+
+190
+00:16:56,520 --> 00:17:02,240
+So the takeaways are that the scaling laws continue to be pervasive, show up all over
+
+191
+00:17:02,320 --> 00:17:11,320
+the place, in transfer learning as well as in pre-training, that pre-training can have
+
+192
+00:17:11,320 --> 00:17:16,040
+significant benefits, particularly when it's hard to find fine-tuning data, and that it's
+
+193
+00:17:16,040 --> 00:17:23,560
+possible for pre-training to hurt, but only when there's very little data available, or
+
+194
+00:17:23,560 --> 00:17:27,560
+when the model size is very small compared to the amount of data.
+
+195
+00:17:32,560 --> 00:17:33,560
+Okay.
+
+196
+00:17:37,560 --> 00:17:45,040
+So after these results came out, there was this theoretical investigation by Hutter of
+
+197
+00:17:45,040 --> 00:17:51,040
+how the observed scaling laws could be explained mathematically.
+
+198
+00:17:51,040 --> 00:17:59,040
+So this is coming from the fact that usually in statistical learning theory, you expect
+
+199
+00:17:59,040 --> 00:18:05,040
+scales of learning to have exponents of, in power laws that have exponents of one-half
+
+200
+00:18:05,040 --> 00:18:15,040
+or one, so yeah, particularly the normal, yeah, so normally when you see a number of
+
+201
+00:18:15,040 --> 00:18:22,560
+examples, for instance, the standard deviation scales down as one over square root of n, so
+
+202
+00:18:22,560 --> 00:18:32,040
+this is what you'd typically expect, but the power laws in Kaplan at all had values of
+
+203
+00:18:32,040 --> 00:18:37,360
+the exponents that were lower than one-half, and Hutter tried to explain this with infinitely
+
+204
+00:18:37,360 --> 00:18:45,280
+parameterized models, and he was able to find some models that matched this behavior.
+
+205
+00:18:45,280 --> 00:18:49,200
+One thing that he, and possibly they mentioned, but didn't pursue was trying to scale the
+
+206
+00:18:49,200 --> 00:18:53,880
+model size up with the amount of data, which is more in line with what's actually happening
+
+207
+00:18:53,880 --> 00:18:58,000
+in practice, but looks less analytically tractable.
+
+208
+00:18:58,000 --> 00:19:04,600
+In any case, after this paper came out, and then the next paper actually found that the
+
+209
+00:19:04,600 --> 00:19:13,200
+ordinary exponent one-half scaling laws came back, and that the lower values were kind
+
+210
+00:19:13,200 --> 00:19:19,520
+of a methodological error, which is what maybe should have been expected, though it's
+
+211
+00:19:19,520 --> 00:19:25,840
+worth noting that maybe this doesn't fit the exact ordinary circumstances of learning theory
+
+212
+00:19:25,840 --> 00:19:32,920
+because of the changes in model size.
+
+213
+00:19:32,920 --> 00:19:39,280
+So kind of as a response to the papers by Kaplan at all, this paper training compute
+
+214
+00:19:39,280 --> 00:19:46,120
+optimal large language models came out from Hoffman et al. in 2022, and they were trying
+
+215
+00:19:46,120 --> 00:19:50,880
+to answer pretty much exactly the same question, maybe with a slightly different focus, which
+
+216
+00:19:50,880 --> 00:19:54,640
+is on what is the optimal trade-off between model size and number of tokens given a fixed
+
+217
+00:19:54,640 --> 00:19:55,640
+compute budget.
+
+218
+00:19:55,640 --> 00:20:01,320
+So they were trying to maybe approach this from more of an engineering lens, but it was
+
+219
+00:20:01,320 --> 00:20:08,240
+the exact same problem, still looking for scaling laws to inform how to spend compute
+
+220
+00:20:08,240 --> 00:20:12,840
+between tokens and parameters.
+
+221
+00:20:12,840 --> 00:20:17,120
+And what they found was that models were actually significantly under-trained, perhaps because
+
+222
+00:20:17,120 --> 00:20:22,000
+people were following the scaling strategies suggested by Kaplan, and it would be better
+
+223
+00:20:22,000 --> 00:20:25,320
+to train them closer to convergence.
+
+224
+00:20:25,320 --> 00:20:29,640
+And in fact, this model size and the number of trained tokens should be scaled equally,
+
+225
+00:20:29,640 --> 00:20:39,040
+so this should be scaled up by the same proportions with each other.
+
+226
+00:20:39,040 --> 00:20:42,760
+And in particular, it's kind of a practical demonstration of this.
+
+227
+00:20:42,760 --> 00:20:50,560
+They introduced this Chinchill model, which outperformed the larger Gopher model by training
+
+228
+00:20:50,560 --> 00:20:56,160
+on more tokens, even though it was a much smaller model.
+
+229
+00:20:56,160 --> 00:21:04,600
+So the main methodological detail that they fixed was that the learning rate schedule should
+
+230
+00:21:04,600 --> 00:21:06,400
+depend on the number of tokens.
+
+231
+00:21:06,400 --> 00:21:12,160
+So this was just a knob that I guess Kaplan would almost have forgotten to turn as they
+
+232
+00:21:12,160 --> 00:21:20,000
+were trying different settings of their hyperparameters, which is kind of maybe a natural error.
+
+233
+00:21:20,000 --> 00:21:25,760
+But normally, when you know how many tokens you're going to be training on, you'd probably
+
+234
+00:21:25,760 --> 00:21:30,840
+be likely to choose your learning rate schedule based on that.
+
+235
+00:21:30,840 --> 00:21:40,680
+So by doing this properly, they were able to get kind of more value out of their training
+
+236
+00:21:40,680 --> 00:21:46,800
+tokens, which then led to them recommending that you train more tokens and scale down
+
+237
+00:21:46,800 --> 00:21:51,560
+the model size.
+
+238
+00:21:51,560 --> 00:21:55,080
+And this rule doesn't really depend on the model size.
+
+239
+00:21:55,080 --> 00:22:01,320
+So explicitly, their goal was to find the optimal parameter count and token count, given
+
+240
+00:22:01,320 --> 00:22:04,480
+a fixed compute budget, which they expressed as this optimization problem.
+
+241
+00:22:04,480 --> 00:22:09,760
+And they tried three fairly similar approaches to estimating those values.
+
+242
+00:22:09,760 --> 00:22:14,000
+So first of all, they tried various learning rate schedules for each parameter count, which
+
+243
+00:22:14,000 --> 00:22:20,800
+is how they probably departed from Kaplan's results.
+
+244
+00:22:20,800 --> 00:22:30,920
+So in their first approach, they trained several models of different parameter size.
+
+245
+00:22:30,920 --> 00:22:37,000
+And for a given compute level, they just checked which combination of parameter size and number
+
+246
+00:22:37,000 --> 00:22:39,320
+of tokens had been optimal.
+
+247
+00:22:39,320 --> 00:22:43,760
+And then they fit both of those separately as power loss.
+
+248
+00:22:43,760 --> 00:22:49,200
+So for instance, if you look at the leftmost chart, just imagine finding the point, which
+
+249
+00:22:49,200 --> 00:22:58,240
+is the lowest on that curve, and then they extracted from that the optimal values for
+
+250
+00:22:58,240 --> 00:23:13,280
+the training tokens and the parameters corresponding to the color and the, yeah, I guess, I guess
+
+251
+00:23:13,280 --> 00:23:21,080
+in this case, maybe that's only showing the one, yeah, only showing the values of one
+
+252
+00:23:21,080 --> 00:23:22,080
+parameter.
+
+253
+00:23:22,080 --> 00:23:28,240
+But in any case, it's kind of a simple estimation problem.
+
+254
+00:23:28,240 --> 00:23:34,720
+So then they, for the second approach, they did almost exactly the same thing.
+
+255
+00:23:34,720 --> 00:23:43,520
+They just trained each model to completion to with a certain fixed amount of compute
+
+256
+00:23:43,520 --> 00:23:47,520
+and then compared which ones did the best.
+
+257
+00:23:47,520 --> 00:23:52,640
+And then again, they fit each of these values and they obtained almost exactly the same
+
+258
+00:23:52,640 --> 00:23:54,680
+exponents with approach two as with approach one.
+
+259
+00:23:54,680 --> 00:24:01,720
+So both were almost exactly one half for the exponents of both the number of parameters
+
+260
+00:24:01,720 --> 00:24:04,760
+and the amount of data.
+
+261
+00:24:04,760 --> 00:24:09,800
+And finally, they tried to minimize, they tried to fit a model that took into account
+
+262
+00:24:09,800 --> 00:24:16,640
+both the parameters and token counts at once and kind of fit them jointly.
+
+263
+00:24:16,640 --> 00:24:18,240
+And this is a slightly different approach.
+
+264
+00:24:18,240 --> 00:24:24,080
+They got slightly different values for the exponents, but still pretty close to one half.
+
+265
+00:24:24,080 --> 00:24:30,160
+Okay, so their conclusion from this was that with GoFers compute budget, a smaller model
+
+266
+00:24:30,160 --> 00:24:32,920
+should have been trained in more tokens and they put their money where their mouth was
+
+267
+00:24:32,920 --> 00:24:38,400
+and actually did it and trained Chinchilla, which was a 70 billion parameter model with
+
+268
+00:24:38,400 --> 00:24:41,760
+trained on 1.4 trillion tokens, which I think kind of blew out of the water the amount of
+
+269
+00:24:41,760 --> 00:24:46,320
+training data that anyone had used prior to that.
+
+270
+00:24:46,320 --> 00:24:53,880
+And some advantage of this, well, first of all, it turned out to have better performance,
+
+271
+00:24:53,880 --> 00:24:59,720
+but it also had reduced inference time and fine tuning time because it's a smaller model.
+
+272
+00:25:00,480 --> 00:25:06,840
+So it's a more lightweight approach as well because, yeah, so the training costs were
+
+273
+00:25:06,840 --> 00:25:15,840
+fixed, the kind of inference time costs were then saving on the inference time costs.
+
+274
+00:25:15,840 --> 00:25:20,680
+And you can see a head-to-head comparison of these models in terms of their hyperparameters
+
+275
+00:25:20,680 --> 00:25:29,360
+here, in particular, the GoFers model is significantly larger.
+
+276
+00:25:29,360 --> 00:25:34,760
+Okay, and then here we have various comparisons between the two.
+
+277
+00:25:34,760 --> 00:25:41,480
+Everywhere that's in the blue is a task where Chinchilla is outperforming GoFers on the top
+
+278
+00:25:41,480 --> 00:25:47,520
+left and then they also had some few shot tasks where Chinchilla outperformed GoFers
+
+279
+00:25:47,520 --> 00:25:51,280
+as well.
+
+280
+00:25:51,280 --> 00:25:55,240
+So the takeaways were that data and parameters should be scaled together.
+
+281
+00:25:55,240 --> 00:25:58,320
+They still don't recommend training models all the way to convergence.
+
+282
+00:25:58,320 --> 00:26:05,320
+They just recommend training for longer, closer to convergence than Kaplan had all suggested.
+
+283
+00:26:05,320 --> 00:26:10,720
+And yeah, I guess the final takeaway is to pay attention to the learning rate schedule.
+
+284
+00:26:10,720 --> 00:26:11,720
+Okay.
+
+285
+00:26:11,720 --> 00:26:16,080
+Okay, so now we'll kind of change gears.
+
+286
+00:26:16,080 --> 00:26:21,760
+So we talked about these nice smooth scaling curves so you could predict the performance
+
+287
+00:26:21,760 --> 00:26:28,960
+of a model very cleanly from the amount of compute and the size of the model, the amount
+
+288
+00:26:28,960 --> 00:26:34,320
+of data, and then emergent abilities kind of come along and they kind of throw a wrench
+
+289
+00:26:34,320 --> 00:26:35,320
+in that.
+
+290
+00:26:36,200 --> 00:26:43,920
+So at all 2022 looks at emergent abilities and their main research question is just basically
+
+291
+00:26:43,920 --> 00:26:52,760
+a survey of all these different emergent abilities and they kind of talk about some potential
+
+292
+00:26:52,760 --> 00:26:56,960
+causes of these emergent abilities.
+
+293
+00:26:56,960 --> 00:27:02,240
+So yeah, in the original scaling laws paper we have a figure from the left where it's
+
+294
+00:27:02,720 --> 00:27:06,520
+compute goes up, loss goes down, it's a very smooth relationship.
+
+295
+00:27:06,520 --> 00:27:11,520
+And then on the right hand side we see emergent abilities.
+
+296
+00:27:11,520 --> 00:27:19,280
+So here it's like you increase compute and the accuracy of doing modular arithmetic just
+
+297
+00:27:19,280 --> 00:27:25,520
+like is flat, it's zero until you kind of hit this magic, 10 to the 22 flops and all
+
+298
+00:27:25,520 --> 00:27:27,760
+of a sudden performance just shoots up.
+
+299
+00:27:27,760 --> 00:27:29,560
+So it's not a smooth relationship at all.
+
+300
+00:27:29,720 --> 00:27:36,440
+It's just kind of this like certain point where capabilities just kind of like really
+
+301
+00:27:36,440 --> 00:27:38,640
+quickly increase.
+
+302
+00:27:38,640 --> 00:27:43,720
+And they find a bunch of these kind of emergent abilities.
+
+303
+00:27:43,720 --> 00:27:51,960
+So some of the tasks are from Big Bench and yeah.
+
+304
+00:27:51,960 --> 00:27:59,120
+So they take a closer look at kind of what could be causing this and they kind of talk
+
+305
+00:27:59,160 --> 00:28:04,440
+about how some of these tasks are just like inherently discontinuous.
+
+306
+00:28:04,440 --> 00:28:12,800
+So for example, on exact string matching, a model might give an output that's like absolutely
+
+307
+00:28:12,800 --> 00:28:15,360
+nothing like the target output.
+
+308
+00:28:15,360 --> 00:28:20,400
+So if you're trying to get the model to say hello and it just outputs like a random string,
+
+309
+00:28:20,400 --> 00:28:22,440
+it's going to get a score of zero.
+
+310
+00:28:22,440 --> 00:28:26,400
+And then some of you try to like a bigger model and you try to get it to output just
+
+311
+00:28:26,400 --> 00:28:30,000
+hello and it outputs H-E-L-L-U.
+
+312
+00:28:30,000 --> 00:28:31,120
+It's like pretty close.
+
+313
+00:28:31,120 --> 00:28:36,000
+It's almost like the exact output you want, but it's like just a little bit off and that
+
+314
+00:28:36,000 --> 00:28:37,120
+still gets a score of zero.
+
+315
+00:28:37,120 --> 00:28:40,680
+So there's really like no differentiation between these two outputs, even though like
+
+316
+00:28:40,680 --> 00:28:45,120
+qualitatively the second one is like much better and then like a perfect response gets
+
+317
+00:28:45,120 --> 00:28:46,120
+a one.
+
+318
+00:28:46,120 --> 00:28:52,000
+So you kind of like there's this just very discontinuous metric.
+
+319
+00:28:52,000 --> 00:28:58,400
+So maybe they say that some of these tasks are hiding information that cross-entropy
+
+320
+00:28:58,400 --> 00:29:06,760
+loss is capturing and maybe this is why you see the smooth relationship between the amount
+
+321
+00:29:06,760 --> 00:29:12,760
+of compute and cross-entropy loss, but this very discontinuous relationship between the
+
+322
+00:29:12,760 --> 00:29:16,000
+amount of compute and some of these tasks.
+
+323
+00:29:16,000 --> 00:29:20,800
+But they kind of say maybe this isn't the case because emergent abilities are observed
+
+324
+00:29:20,800 --> 00:29:25,760
+on classification tasks as well.
+
+325
+00:29:25,760 --> 00:29:31,160
+But I think, yeah, I think we'll get into this later, but these classification tasks
+
+326
+00:29:31,160 --> 00:29:35,960
+also hide some degree of information.
+
+327
+00:29:35,960 --> 00:29:41,160
+So they also look at the relationship between perplexity and emergent abilities.
+
+328
+00:29:41,160 --> 00:29:46,080
+They think maybe there's some relationship there.
+
+329
+00:29:46,080 --> 00:29:51,360
+So just as a quick intro, perplexity is basically how surprised a model is by text.
+
+330
+00:29:51,360 --> 00:30:01,200
+So for example, we see a high perplexity on this high perplexity row.
+
+331
+00:30:01,200 --> 00:30:08,040
+The model has like even once it's already seen say the quick brown, it's still the pretty
+
+332
+00:30:08,040 --> 00:30:09,680
+surprised by Fox.
+
+333
+00:30:09,680 --> 00:30:15,200
+I think it only thought Fox was coming next was say a probability of 0.05.
+
+334
+00:30:15,200 --> 00:30:19,720
+So it wasn't really expecting Fox to come next, even though that's something that it's
+
+335
+00:30:19,720 --> 00:30:22,680
+a real utterance and it's a very common utterance.
+
+336
+00:30:22,680 --> 00:30:28,080
+However, if the model had low perplexity, by the time it's seen the quick brown Fox, it's
+
+337
+00:30:28,080 --> 00:30:34,480
+almost certain or by the time it's seen the quick brown, it's pretty certain that Fox
+
+338
+00:30:34,480 --> 00:30:35,480
+is going to be next.
+
+339
+00:30:35,480 --> 00:30:39,520
+So when Fox appears, it's not surprised.
+
+340
+00:30:39,520 --> 00:30:49,600
+And they plot.
+
+341
+00:30:49,600 --> 00:30:57,600
+So here on the plots, we see on the on the far left hand side, we see compute and performance
+
+342
+00:30:57,600 --> 00:31:04,280
+on MLU and we see it's kind of it's got this emergent ability at about 10 to 22 flops.
+
+343
+00:31:04,280 --> 00:31:08,800
+And we also see this on the middle plot with the number of parameters at about 10 billion
+
+344
+00:31:08,800 --> 00:31:13,560
+parameters, performance just shoots up and kind of, I guess, disappointingly, the same
+
+345
+00:31:13,560 --> 00:31:17,760
+as true for the relationship between perplexity and accuracy.
+
+346
+00:31:17,760 --> 00:31:24,960
+It's like, once perplexity kind of reduces to a certain level or yeah, reduces to a certain
+
+347
+00:31:24,960 --> 00:31:30,560
+level, you kind of just see this like huge jump on performance on MLU.
+
+348
+00:31:30,560 --> 00:31:39,440
+So there's like, again, kind of not smooth relationship between perplexity and performance
+
+349
+00:31:39,440 --> 00:31:41,840
+on MLU.
+
+350
+00:31:41,840 --> 00:31:48,800
+So overall, immersion abilities should probably be viewed as a function of many related variables.
+
+351
+00:31:48,800 --> 00:31:54,440
+It's not, they're not just, as we've seen, like a function of how much compute you throw
+
+352
+00:31:54,760 --> 00:31:57,200
+at it.
+
+353
+00:31:57,200 --> 00:32:06,760
+And the analysis they do doesn't really get to the bottom of why these abilities emerge.
+
+354
+00:32:06,760 --> 00:32:13,320
+And even though we can predict the loss just by using like the model scale or the amount
+
+355
+00:32:13,320 --> 00:32:20,440
+of data and compute, we can't use the loss to predict what abilities a model might have,
+
+356
+00:32:20,440 --> 00:32:28,120
+which could have important safety implications if you can kind of, you kind of never know
+
+357
+00:32:28,120 --> 00:32:34,440
+what a model is going to be able to do, just given the loss it achieves.
+
+358
+00:32:34,440 --> 00:32:37,240
+Okay.
+
+359
+00:32:37,240 --> 00:32:46,240
+So then this paper by Schaefer et al. in 253 asked if immersion abilities were a mirage.
+
+360
+00:32:46,240 --> 00:32:52,160
+So they try to argue that the apparently sudden emergence of new abilities in large language
+
+361
+00:32:52,160 --> 00:32:57,360
+models actually results from the metrics chosen to measure them.
+
+362
+00:32:57,360 --> 00:33:01,040
+So in other words, there's kind of no real discontinuity and ability.
+
+363
+00:33:01,040 --> 00:33:06,320
+It's just discontinuity in the measurement chosen by the researcher.
+
+364
+00:33:06,320 --> 00:33:16,480
+So kind of arguing this out explicitly, if you choose a nonlinear discontinuous metric,
+
+365
+00:33:16,480 --> 00:33:24,880
+for instance, the accuracy on a full word or a complete response, as Carter discussed,
+
+366
+00:33:24,880 --> 00:33:33,280
+you can show this sudden jump when a linear continuous metric would not show any jump.
+
+367
+00:33:33,520 --> 00:33:40,960
+They argue this explains the claims of emergence on published benchmarks in the vast majority
+
+368
+00:33:40,960 --> 00:33:47,280
+of instances, and they try to drive this point home.
+
+369
+00:33:47,280 --> 00:33:51,520
+Then they try to produce apparently emergent abilities of their own by changing the choice
+
+370
+00:33:51,520 --> 00:33:57,200
+of metric to something that's discontinuous or nonlinear.
+
+371
+00:33:57,760 --> 00:34:04,880
+So in particular, they look at these big bench tasks, and they find that over 92% of the immersion
+
+372
+00:34:04,880 --> 00:34:11,680
+abilities on big bench come from one of these two metrics, the multiple choice grade,
+
+373
+00:34:12,880 --> 00:34:19,360
+which requires that the highest probability mass is on the correct option or exact string match,
+
+374
+00:34:19,360 --> 00:34:23,280
+which is one if the output string exactly matches the target string.
+
+375
+00:34:23,280 --> 00:34:27,920
+So the multiple choice grade is clearly discontinuous.
+
+376
+00:34:27,920 --> 00:34:33,440
+There's a discontinuity when two options have the same probability mass,
+
+377
+00:34:34,480 --> 00:34:41,920
+and exact string match, they look into how this changes with the models per token accuracy.
+
+378
+00:34:45,600 --> 00:34:53,040
+So as kind of a theoretical model, they assume a standard scaling law on the cross-entropy
+
+379
+00:34:53,040 --> 00:35:00,560
+loss on a per token basis, and they show that there's this nasty kind of exponential relationship
+
+380
+00:35:00,560 --> 00:35:08,720
+with between the accuracy and this per token correctness.
+
+381
+00:35:11,600 --> 00:35:20,480
+So then they argue that if taking many samples from a poor model,
+
+382
+00:35:21,280 --> 00:35:29,040
+you might never see a perfect match. So you'd have to take many more samples than
+
+383
+00:35:31,280 --> 00:35:37,520
+might typically be taken just to observe any instances of correct behavior, which seems to
+
+384
+00:35:37,520 --> 00:35:44,160
+indicate that the model doesn't have an ability at all, when in fact it's just maybe it's making
+
+385
+00:35:44,160 --> 00:35:47,440
+progress towards having that ability, but it doesn't get every token right.
+
+386
+00:35:48,320 --> 00:35:55,040
+So what they suggest is using the token edit distance instead, which has a much less nasty relationship.
+
+387
+00:36:03,920 --> 00:36:14,480
+Well, yeah, so instead of scaling with this kind of power of the number of tokens,
+
+388
+00:36:15,200 --> 00:36:20,720
+it's just multiplicative with the number of tokens.
+
+389
+00:36:24,160 --> 00:36:35,040
+This position is a exponential. So they look at some examples. So for instance,
+
+390
+00:36:35,040 --> 00:36:39,920
+the InstructGPT or GPT-3 family is supposed to have emergent earth particularities,
+
+391
+00:36:40,800 --> 00:36:45,040
+but by switching from exact string match token edit distance as they suggested,
+
+392
+00:36:45,840 --> 00:36:48,640
+these abilities appear gradual instead of sudden.
+
+393
+00:36:49,040 --> 00:37:12,320
+So, yeah. So they, so the takeaways from this are that most of the cases of emergent abilities
+
+394
+00:37:12,320 --> 00:37:16,000
+are just depend on the metric. And then I haven't gone, I didn't go into this much,
+
+395
+00:37:16,000 --> 00:37:23,120
+but by, this is kind of a toy model, but by deliberately choosing a core metric for a vision
+
+396
+00:37:23,120 --> 00:37:31,120
+task, they're able to induce this apparently emergent behavior. And it's, but it's also worth
+
+397
+00:37:31,120 --> 00:37:36,400
+noting that some candidate emergent abilities did remain. For instance, the blue and normalized
+
+398
+00:37:36,400 --> 00:37:42,960
+aggregate score metrics that were not notably discontinuous or nonlinear, and they still show
+
+399
+00:37:42,960 --> 00:37:49,040
+these sudden sharp increases in performance. Okay.
+
+400
+00:37:50,720 --> 00:37:57,600
+Okay. So then way at all looks at when inverse scaling can become U-shaped. So
+
+401
+00:37:58,400 --> 00:38:02,720
+I'll start by looking at inverse scaling and kind of what that is. And then
+
+402
+00:38:04,240 --> 00:38:09,840
+I'll talk about U-shaped scaling. So the main question here is over what scales does
+
+403
+00:38:09,840 --> 00:38:18,080
+inverse scaling on certain tasks hold? So Mackenzie 2022 held this competition to
+
+404
+00:38:18,080 --> 00:38:25,760
+find tasks where bigger models performed worse. And they were able to find 11 tasks
+
+405
+00:38:25,760 --> 00:38:32,720
+for smaller models ended up performing much better than like much larger, like an order of
+
+406
+00:38:32,720 --> 00:38:40,080
+magnitude larger models. And one of these tasks was the modus tolens classification. So modus
+
+407
+00:38:40,080 --> 00:38:48,560
+tolens is this, the structure is just if P then Q, not Q, therefore not P. And present, present
+
+408
+00:38:48,560 --> 00:38:55,840
+models with a mold, they present models with a modus tolens argument, not just the logical
+
+409
+00:38:55,840 --> 00:39:03,520
+structure, but like an actual example and ask whether it's valid. And so humans often make
+
+410
+00:39:03,520 --> 00:39:12,240
+mistakes on this. They think it's invalid when it's actually valid. So what they find is that
+
+411
+00:39:12,240 --> 00:39:18,640
+kind of their hypothesis is that these smaller models kind of learn to imitate humans.
+
+412
+00:39:19,600 --> 00:39:35,600
+But the larger models kind of learn to correct the fallacy. So way at all 2022 looked at these 11
+
+413
+00:39:35,600 --> 00:39:44,800
+tasks. And they found that if you keep increasing scale even further, eventually, the performance
+
+414
+00:39:45,360 --> 00:39:52,720
+will go up again. And this held almost across the board for all of the 11 tasks. And so you
+
+415
+00:39:52,720 --> 00:40:01,920
+can see modus tolens is shown in the little green highlighted box. And so when they trained this
+
+416
+00:40:01,920 --> 00:40:11,200
+palm model with as they trained it more or increase the size, it starts by going down at first and
+
+417
+00:40:11,200 --> 00:40:21,920
+then eventually starts going up. So they kind of explain this. I'll quote the paper here. They say
+
+418
+00:40:21,920 --> 00:40:27,760
+we do not experimentally investigate how or why U shape scaling occurs, but we hypothesize that it
+
+419
+00:40:27,760 --> 00:40:34,160
+can happen when a task contains a distractor task. And so this distractor task, as I mentioned before
+
+420
+00:40:34,480 --> 00:40:42,880
+with this modus tolens, it's the distractor task is kind of imitating humans flawed reasoning. And
+
+421
+00:40:42,880 --> 00:40:49,280
+then this the true task which you wanted the model to do is to tell you whether a modus tolens
+
+422
+00:40:49,280 --> 00:40:55,040
+is accurate. But these smaller smaller models kind of get distracted by the task of imitating
+
+423
+00:40:55,040 --> 00:41:09,120
+humans fallacies. So even large models on some of these tasks can perform at random. So inverse
+
+424
+00:41:09,120 --> 00:41:15,680
+scaling occurs where performance begins random and then goes to worse than random and then the U
+
+425
+00:41:15,680 --> 00:41:20,800
+shape scaling can kind of bring the performance eventually back up to random. But random is still
+
+426
+00:41:20,800 --> 00:41:28,320
+not great performance. It's really bad. So these inverse scaling tasks aren't solved, but I guess
+
+427
+00:41:28,320 --> 00:41:34,560
+the narrative here is that there's some hope that if you just keep scaling up, maybe performance will
+
+428
+00:41:34,560 --> 00:41:43,200
+keep going up. They look at a couple of ways to kind of improve performance on these inverse
+
+429
+00:41:43,200 --> 00:41:49,600
+scaling tasks. And in particular, they look at using in context learning with so giving the model
+
+430
+00:41:49,920 --> 00:41:54,480
+an example of doing the task correctly. And they also look at prompting the model to perform
+
+431
+00:41:54,480 --> 00:42:03,280
+chain of thought reasoning. And they find pretty much across the board that if you use, if you give
+
+432
+00:42:03,280 --> 00:42:13,280
+the model an example, I guess, yeah, it helps performance, I guess, a little bit. However,
+
+433
+00:42:13,360 --> 00:42:19,440
+if you give it an example and prompt the model to engage in chain of thought reasoning, then
+
+434
+00:42:20,080 --> 00:42:25,200
+it helps performance quite a bit. And it almost across the board gets the model across the board.
+
+435
+00:42:25,200 --> 00:42:33,920
+Yeah, it gets the model to above average. So the main takeaways here that increasing scale
+
+436
+00:42:34,960 --> 00:42:42,000
+can turn these inverse scaling, these instances of inverse scaling into U shape scaling.
+
+437
+00:42:43,280 --> 00:42:49,840
+And inverse scaling may not be a big issue because for a lot of these tasks, like the
+
+438
+00:42:49,840 --> 00:42:54,960
+performance eventually started to improve. But there's still room for improvement.
+
+439
+00:42:56,320 --> 00:43:03,520
+Like I just mentioned, even scaling up to like 540 billion parameters still maybe only gets you
+
+440
+00:43:03,520 --> 00:43:10,560
+to random performance on some of these tasks. And maybe just using techniques like one shot
+
+441
+00:43:10,560 --> 00:43:17,360
+prompting and chain of thought can help. So the next paper looks at
+
+442
+00:43:19,200 --> 00:43:27,600
+if we can kind of transcend scaling laws or get better than predicted performance by just using
+
+443
+00:43:27,600 --> 00:43:34,640
+new training techniques. So they propose this new training procedure where they first take
+
+444
+00:43:35,440 --> 00:43:42,560
+the palm base model, and then they use an extra 0.1% compute on the same data to train with an
+
+445
+00:43:42,560 --> 00:43:48,240
+objective that just combines prefix language modeling and longshore span corruption. So an
+
+446
+00:43:48,240 --> 00:43:56,640
+infilling task and infilling tasks are basically where you're not getting, you're not, you're
+
+447
+00:43:57,360 --> 00:44:04,720
+taking out words or sequences from the middle of the string and getting the model to kind of
+
+448
+00:44:04,720 --> 00:44:09,920
+infill that. So it has context on either side as opposed to prefix language modeling,
+
+449
+00:44:09,920 --> 00:44:15,120
+where the context only comes at the start. And in particular, they kind of use a mixture of
+
+450
+00:44:15,120 --> 00:44:24,240
+denoisers for this infilling task. And this involves regular denoising. So the noise is just
+
+451
+00:44:24,320 --> 00:44:28,880
+sampled as spans or sequences and replaced with sentinel tokens. And these spans are
+
+452
+00:44:29,680 --> 00:44:34,160
+uniformly sampled with a mean of three, a mean length of three and a corruption
+
+453
+00:44:34,720 --> 00:44:41,840
+rate of 15% overall. And they also use extreme denoising where the corruption rate is up to
+
+454
+00:44:41,840 --> 00:44:50,400
+50% and the spans of missing tokens can be up to a length of 32. They also look at sequential
+
+455
+00:44:50,400 --> 00:44:58,000
+denoising where noise is always sampled from the start of the text to a randomly sampled point
+
+456
+00:44:58,000 --> 00:45:08,320
+in the text. And they find that this method is just like way better than only using prefix
+
+457
+00:45:08,320 --> 00:45:16,720
+language modeling. So they get huge compute savings. So for the 540 billion parameter model,
+
+458
+00:45:16,720 --> 00:45:24,800
+the savings are approximately 2x. So this is equivalent to training or equivalent to
+
+459
+00:45:25,920 --> 00:45:32,160
+saving about four and a half million TPU hours. And so you can kind of look at these graphs
+
+460
+00:45:32,160 --> 00:45:38,480
+in two ways. In the graph on the left, we can say, okay, say we have a fixed compute budget of
+
+461
+00:45:39,280 --> 00:45:51,840
+three, the 23 training flops. If you use this kind of training method proposed by Tay et al,
+
+462
+00:45:52,720 --> 00:46:02,160
+you can get, let's say, your score goes out by like quite a bit. So your performance on these
+
+463
+00:46:03,040 --> 00:46:09,840
+NLP tasks, kind of, you can see there's like a noticeable improvement. But you can also look
+
+464
+00:46:09,840 --> 00:46:15,200
+at it from another way. And you can say, say we want to get a certain level of performance,
+
+465
+00:46:15,200 --> 00:46:20,320
+how much training are we going to need to get that level of performance? And this is where you
+
+466
+00:46:20,320 --> 00:46:30,880
+kind of get that 2x number. So as you say you want to get 66, this metric of 66 on these NLP tasks.
+
+467
+00:46:30,880 --> 00:46:38,560
+And if you use UPOM, you can do it with about half the training as less than half of the training
+
+468
+00:46:38,560 --> 00:46:45,600
+as would be required with just the typical POM training without this kind of extra infilling
+
+469
+00:46:46,240 --> 00:46:53,760
+training. So the main takeaways here that maybe scaling laws only hold for autoregressive training
+
+470
+00:46:53,760 --> 00:47:01,040
+or prefix language modeling, and maybe it's, maybe if we come up with new training schemes
+
+471
+00:47:01,040 --> 00:47:09,520
+like UL2, we could get unexpected extra performance. So it's kind of, yeah, maybe model performance
+
+472
+00:47:09,520 --> 00:47:20,160
+isn't as predictable as we thought it was. That's, yeah, that's everything. And this is,
+
+473
+00:47:20,960 --> 00:47:22,800
+I'm just, you can't ask questions.
+
+474
+00:47:22,800 --> 00:47:26,640
+Oh, questions in my five minutes. Thanks for watching.
+
+475
+00:47:27,200 --> 00:47:28,000
+Yeah, thanks.
+
+476
+00:47:28,000 --> 00:47:32,080
+Hopefully this was helpful to people.
+

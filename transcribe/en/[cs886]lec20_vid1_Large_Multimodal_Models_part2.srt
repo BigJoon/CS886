@@ -1,0 +1,1044 @@
+1
+00:00:00,000 --> 00:00:08,000
+Hi everyone, my name is Xu Yixue. I'm going to continue the discussion of large multimodal models
+
+2
+00:00:08,000 --> 00:00:15,000
+and I'm going to introduce formal models in the LMM family.
+
+3
+00:00:15,000 --> 00:00:24,000
+So the first model we are going to look at is another family member in Polly family, which is Polly 3.
+
+4
+00:00:24,000 --> 00:00:31,000
+So the motivation of Polly 3 is quite straightforward. It focuses on a smaller scale model.
+
+5
+00:00:31,000 --> 00:00:39,000
+As mentioned in Polly, scaling of vision language models to tens and even hundreds of billions of parameters
+
+6
+00:00:39,000 --> 00:00:46,000
+has shown an ever-increasing performance, like we discussed Flamingo with 80 billion.
+
+7
+00:00:46,000 --> 00:00:55,000
+And Polly, which focuses on scaling up the language part of the LMM.
+
+8
+00:00:55,000 --> 00:01:00,000
+But Polly 3 point out that models at the smaller scale remain critical.
+
+9
+00:01:00,000 --> 00:01:05,000
+So it presents Polly 3 with only 5 billion parameters.
+
+10
+00:01:05,000 --> 00:01:13,000
+And there are three components in Polly 3 that help it to achieve a still-competitive performance.
+
+11
+00:01:13,000 --> 00:01:20,000
+The first is a contrastive pre-training of image encoders on WebScale image text data
+
+12
+00:01:20,000 --> 00:01:24,000
+and then improve dataset mixture inherited from Polly.
+
+13
+00:01:24,000 --> 00:01:29,000
+And also it will train the Polly 3 at higher resolutions.
+
+14
+00:01:29,000 --> 00:01:33,000
+And there are two dominant ways to pre-training image encoders.
+
+15
+00:01:33,000 --> 00:01:40,000
+And the author of this paper actually focused on compiling these two dominant ways
+
+16
+00:01:40,000 --> 00:01:47,000
+using the polyframe work, which are classification, pre-training using large weekly labeled datasets
+
+17
+00:01:47,000 --> 00:01:51,000
+and contrastive pre-training on WebScale noisy data.
+
+18
+00:02:10,000 --> 00:02:33,000
+So let's first look at the contrastive pre-trained seek leap.
+
+19
+00:02:34,000 --> 00:02:42,000
+So we should first recap the standard softmax loss for language image pre-training.
+
+20
+00:02:42,000 --> 00:02:54,000
+The objective of this language image pre-training is usually given a mini batch B equals I1, T1, I2, T2, etc. of image text files.
+
+21
+00:02:54,000 --> 00:03:05,000
+The learning objective encourages embeddings of matching files to align with each other while pushing embeddings of unmatched files apart.
+
+22
+00:03:05,000 --> 00:03:14,000
+And looking into the last function, we should notice that it actually consists of two terms, one is from image to text softmax
+
+23
+00:03:14,000 --> 00:03:17,000
+and another is from text to image softmax.
+
+24
+00:03:17,000 --> 00:03:37,000
+And notice that because of the asymmetry of the denominator, we usually need to compute the normalization term twice, which is really computationally inefficient.
+
+25
+00:03:37,000 --> 00:03:47,000
+And this kind of loss function is commonly used in modal-like clip, which requires a global view of the pairwise similarities for normalization,
+
+26
+00:03:47,000 --> 00:04:00,000
+batch-level softmax-based contrastive loss, and applied twice to normalize the pairwise similarity scores across all pairs of data.
+
+27
+00:04:01,000 --> 00:04:08,000
+Okay, so after recapping the standard softmax loss, we look into what is seek leap.
+
+28
+00:04:08,000 --> 00:04:23,000
+So seek leap is actually a paper that proposes the seek-moid-based loss, which, different from the softmax, is actually processed every image text file independently.
+
+29
+00:04:23,000 --> 00:04:30,000
+So looking into the formulation, it is way more simple than the previous one.
+
+30
+00:04:30,000 --> 00:04:38,000
+We only introduce an additional label for a given image at text-pair, which is stat-ig.
+
+31
+00:04:38,000 --> 00:04:47,000
+And it will turn this learning problem into the standard binary classification on the dataset of all pair combinations.
+
+32
+00:04:47,000 --> 00:04:53,000
+So whenever there is a matching pair, there is a positive label related.
+
+33
+00:04:53,000 --> 00:04:57,000
+And if there is an unmatched pair, the negative label is signed.
+
+34
+00:04:57,000 --> 00:05:11,000
+So this is actually better for a multi-label classification problem, as there is no need to compute global normalization factors, which is the denominator we mentioned in the previous formulation.
+
+35
+00:05:12,000 --> 00:05:22,000
+After looking into the seek leap, let's look at the UL2 framework, which is unifying language learning paradigms.
+
+36
+00:05:22,000 --> 00:05:29,000
+So the existing pre-trend models are generally geared toward a particular class of problems.
+
+37
+00:05:29,000 --> 00:05:40,000
+And that is the motivation of this paper, which asks why should the choice of the pre-trend depend on the downstream task?
+
+38
+00:05:40,000 --> 00:05:49,000
+So in order to understand this problem, let's recap what is the current pre-training objectives we have for large language models.
+
+39
+00:05:49,000 --> 00:06:00,000
+So UL3, which is cultural LM, which used all previous timestamps as inputs to the model to predict the next token, which is target.
+
+40
+00:06:00,000 --> 00:06:07,000
+And there is also prefix LM, which used past token as inputs, quite similar as cultural LM.
+
+41
+00:06:07,000 --> 00:06:12,000
+The only difference is like they consume the inputs bi-directionally.
+
+42
+00:06:12,000 --> 00:06:17,000
+And the other one is a span correction, which is a little different.
+
+43
+00:06:17,000 --> 00:06:26,000
+It levers all uncropped tokens from the past and future sets of inputs for predicting the corrupted span targets.
+
+44
+00:06:26,000 --> 00:06:36,000
+And we can notice that for each of these pre-training objectives, can always reduce one pre-training objective to another.
+
+45
+00:06:36,000 --> 00:06:49,000
+So for example, in a span correction objective, when the crafted, which is target, is equal to the entire sequence, the problem will become an LM problem.
+
+46
+00:06:50,000 --> 00:07:05,000
+So after noticing that common between each of the pre-training objectives, the author actually proposes a span crop, which is function used to generate inputs and targets after denoising tasks.
+
+47
+00:07:05,000 --> 00:07:12,000
+And here are a parameterization of this function, which has introduced three parameters.
+
+48
+00:07:12,000 --> 00:07:21,000
+Mu, that is the main span length, the R is the correction rate, and N is the number of crafted tokens of span.
+
+49
+00:07:21,000 --> 00:07:26,000
+It can be a function of input length L at the span length mu.
+
+50
+00:07:26,000 --> 00:07:37,000
+So given an input text, this function will introduce corrections to the span of lenses that are drawn from the normal uniform distribution with the mean of mu.
+
+51
+00:07:37,000 --> 00:07:48,000
+So for example, to express the prefix LM objective, we can set mu equals L minus P, where P is the length of the prefix,
+
+52
+00:07:48,000 --> 00:07:59,000
+and R, which is correction rate, is equal to 1.0 minus POL, with N equals 1, which means there is only one crafted span.
+
+53
+00:07:59,000 --> 00:08:11,000
+And after correction, the input text is the fact to the denoising task, and the crafted spans are used as targets to be recovered.
+
+54
+00:08:12,000 --> 00:08:25,000
+So after learning the span cropped function, based on the fact that a strong universal model has to be exposed to solving diverse set of problems during pre-training,
+
+55
+00:08:25,000 --> 00:08:37,000
+given that pre-training is done using self-superalization, authors argue that such diversity should be injected to the objective of the model.
+
+56
+00:08:37,000 --> 00:08:48,000
+Otherwise, the model might suffer from lack of center ability, and motivated by this, they propose as well as that current class of objective functions.
+
+57
+00:08:48,000 --> 00:08:59,000
+The author defines three main problems that are used during pre-training, which is R denoiser, S denoiser, and X denoiser.
+
+58
+00:08:59,000 --> 00:09:07,000
+So we can look into each of these paradigm, we can notice a different pattern of corruption.
+
+59
+00:09:07,000 --> 00:09:14,000
+So for R denoising, a more focused on mimicking the objective of span corruption,
+
+60
+00:09:14,000 --> 00:09:21,000
+and spans are short and partitionally only useful to acquire knowledge instead of learning, generating fluid tasks,
+
+61
+00:09:21,000 --> 00:09:27,000
+whereas S denoising is much more like a prefix LM objective.
+
+62
+00:09:27,000 --> 00:09:33,000
+So the context, which is prefix, will retain a bidirectional receptive field.
+
+63
+00:09:33,000 --> 00:09:41,000
+And finally, the X denoiser, which targets to recover a large part of the input given a small part of it,
+
+64
+00:09:41,000 --> 00:09:49,000
+is actually an interpolation between a regular span corruption and the language model, like objectives.
+
+65
+00:09:49,000 --> 00:10:00,000
+And besides of that, the author also introduced a notion of paradigm shifting while mode switching.
+
+66
+00:10:00,000 --> 00:10:08,000
+So during pre-training, we'll have the model with extra parent token, which is R, X, X.
+
+67
+00:10:08,000 --> 00:10:20,000
+So that will help the model switch scales between different tasks and operate on the mode that is more suitable for a given task.
+
+68
+00:10:20,000 --> 00:10:27,000
+So after learning the main components of poly3, let's look into the stages of training.
+
+69
+00:10:27,000 --> 00:10:33,000
+So poly3 actually have several different stages.
+
+70
+00:10:33,000 --> 00:10:41,000
+So for the first stage, it will do a unit model training, where each of the components is trained separately,
+
+71
+00:10:41,000 --> 00:10:48,000
+so the image encoder is pre-trained contrastively on an image text path from the web,
+
+72
+00:10:48,000 --> 00:10:51,000
+following the sickly training protocol.
+
+73
+00:10:51,000 --> 00:11:02,000
+And the text encoder decoder, which is a sweet billion language model, is trained following the mixture of denoisers.
+
+74
+00:11:03,000 --> 00:11:16,000
+And the second stage is the multimodal training, where we will frozen the contrastive vision encoder and only train on a multimodal task and data mixture,
+
+75
+00:11:16,000 --> 00:11:27,000
+which is retained from poly by keeping the encoder frozen at the resolution 224.
+
+76
+00:11:27,000 --> 00:11:33,000
+And after that, there is a resolution increase, which will fine-tune the whole model.
+
+77
+00:11:33,000 --> 00:11:50,000
+So at this moment, both the contrastive vision encoder and the language model is unfrozen and they are trained to either 812 or 1064 resolution.
+
+78
+00:11:50,000 --> 00:12:07,000
+So looking at the experiments conducted in this paper, so one important experiment being conducted is the comparison between a classification-based vision encoder and the contrastive-based vision encoder.
+
+79
+00:12:08,000 --> 00:12:21,000
+So we can notice that one pre-train for the classification on the JFT dataset, and the other is actually contrastive pre-train on the Wabley dataset using the sickly protocol.
+
+80
+00:12:21,000 --> 00:12:37,000
+And from the following table, we can notice that actually sickly models excel in tasks like captioning and more complex tasks like a text WQA here or RathCoco.
+
+81
+00:12:37,000 --> 00:12:43,000
+So the harder the problem is, the more benefits the sickly models can provide.
+
+82
+00:12:44,000 --> 00:12:48,000
+And there are other experiments being conducted.
+
+83
+00:12:48,000 --> 00:12:55,000
+For example, it will fine-tune and evaluate on the video captioning and video QA.
+
+84
+00:12:55,000 --> 00:13:01,000
+And notice that poly-free is not being pre-trained with any video data.
+
+85
+00:13:01,000 --> 00:13:06,000
+So this actually highlights the benefits of adopting a contrastive VITs.
+
+86
+00:13:07,000 --> 00:13:19,000
+And during this experiment, what it is, they concatenate the vision tokens for each frame at most 16 frames with a fixed temp rest, right?
+
+87
+00:13:19,000 --> 00:13:22,000
+So this is all about poly-free.
+
+88
+00:13:22,000 --> 00:13:33,000
+Okay, so let's go to the second model we are going to talk about, which is E-Mode 2, which is the Generative Multimodal Models.
+
+89
+00:13:34,000 --> 00:13:40,000
+And it points out that the GMM is actually an in-context learner.
+
+90
+00:13:40,000 --> 00:13:47,000
+So let's first quickly catch up or recap what is in-context learning.
+
+91
+00:13:47,000 --> 00:13:59,000
+So in-context learning is actually refers to the ability to solve a multi-modal task in context with only a few demonstrations or simple instructions.
+
+92
+00:13:59,000 --> 00:14:07,000
+So we can look into the example here and we can look at the bottom one here.
+
+93
+00:14:07,000 --> 00:14:19,000
+So the model is actually given three examples, a prompt like the subject A with a city in the background and the image.
+
+94
+00:14:19,000 --> 00:14:33,000
+So this is example one, example two, example three, and given a prompt to the model, which is the subject A, wearing a rainbow hat.
+
+95
+00:14:33,000 --> 00:14:41,000
+And the model is expected to generate an image following the previous examples.
+
+96
+00:14:41,000 --> 00:14:47,000
+And this is what E-Mode 2 is able to generate it.
+
+97
+00:14:47,000 --> 00:15:01,000
+So the motivation of E-Mode 2 is actually it's notice that multi-modal tasks really encompass anything evolving understanding and generation in single or multiple modalities.
+
+98
+00:15:01,000 --> 00:15:12,000
+And the previous multi-modal systems are largely rely on designing tasks, specific architecture, and collecting a sizable supervised training set.
+
+99
+00:15:12,000 --> 00:15:22,000
+But we notice that humans can solve a new task in context, which means with only a few demonstrations or simple instructions.
+
+100
+00:15:22,000 --> 00:15:38,000
+That is why this paper is actually demonstrate that a scale-up multi-modal generative pretrend model, which is around 37 billion parameters, can harness a similar in-context learning abilities.
+
+101
+00:15:38,000 --> 00:15:43,000
+So let's first look at the architecture of E-Mode 2.
+
+102
+00:15:43,000 --> 00:15:54,000
+And in order to understand what is the architecture of E-Mode 2, we better first understand the previous version of E-Mode 2, which is E-Mode.
+
+103
+00:15:54,000 --> 00:15:58,000
+Because E-Mode 2 is heavily built upon E-Mode.
+
+104
+00:15:59,000 --> 00:16:04,000
+So in E-Mode's model architecture, there's actually four components.
+
+105
+00:16:04,000 --> 00:16:17,000
+There's a visual encoder, there's a casual transformer, there's a multi-modal modeling component, which is LLM, and there's a visual encoder.
+
+106
+00:16:17,000 --> 00:16:39,000
+So we can see first, the image will be encode into a visual, a dense visual feature, and then transform the encodings into a fixed number of unvisual casual embeddings, like these casual transformers.
+
+107
+00:16:39,000 --> 00:17:00,000
+And these visual embeddings, combined with the tax tokens, are fed into the multi-modal modeling with LLM to form a multi-modal sequence, and then perform a unified autoregressive modeling.
+
+108
+00:17:01,000 --> 00:17:17,000
+And in the inference, there is a fine-tuned visual encoder, a decoder being used to decode these visual embeddings into a realistic image, that is why E-Mode 2 is able to generate image.
+
+109
+00:17:18,000 --> 00:17:34,000
+And we should notice that the goal of this casual transformer is to better capture the characteristics of images and achieve a unified modeling of different multi-modalities.
+
+110
+00:17:34,000 --> 00:17:47,000
+And all this casual transformer doing is just transform these embeddings generated by encoder into a fixed number of unvisual casual embeddings.
+
+111
+00:17:47,000 --> 00:17:58,000
+And besides of this casual transformer, what else we should actually pay attention to is this decoder, which is initialized by stable diffusion.
+
+112
+00:17:58,000 --> 00:18:21,000
+And notice that in E-Mode, in order to fine-tune this decoder for each training sample, the multi-modal modeling LLM, which is this part, is used to generate this unvisual embeddings in an autoregressive manner to fit into this image encoder as a condition of image generation training.
+
+113
+00:18:21,000 --> 00:18:32,000
+So in order to train this decoder every time, we need to run the LLM for once to do an inference to generate this unvisual embeddings.
+
+114
+00:18:32,000 --> 00:18:39,000
+So actually E-Mode 2 is target and optimize these two parts.
+
+115
+00:18:39,000 --> 00:18:50,000
+So looking to the E-Mode 2's objective and architecture, the architecture is still a unified autoregressive objective, which is predict the next multi-modal element.
+
+116
+00:18:50,000 --> 00:18:54,000
+Either it can be a visual embedding or texture token.
+
+117
+00:18:54,000 --> 00:19:00,000
+And when we explain this in our later slides, so we just first focus on the model architecture.
+
+118
+00:19:00,000 --> 00:19:11,000
+So in E-Mode 2, there is a simpler architecture, which only has a visual encoder, an autoregressive multi-modal and a visual decoder.
+
+119
+00:19:11,000 --> 00:19:26,000
+And in order to bridge between the encoder and the LLM, what they did is that they connect these two components by enabling pulling each image into an 8x8 image patches, followed by a linear projection.
+
+120
+00:19:26,000 --> 00:19:32,000
+And what's more is improved from E-Mode to E-Mode 2 is this decoder.
+
+121
+00:19:32,000 --> 00:19:38,000
+So this decoder in E-Mode 2 is actually trained as a token header, like here.
+
+122
+00:19:38,000 --> 00:19:41,000
+So it can be trained up the shelf without the language model.
+
+123
+00:19:41,000 --> 00:19:45,000
+And we will look into this in the later slides.
+
+124
+00:19:45,000 --> 00:19:52,000
+So let's first look at the training objective of E-Mode 2.
+
+125
+00:19:52,000 --> 00:20:09,000
+So recall the training objective is predict the next multi-modal element, which means given an unlabeled web-scale scope plot, which is D, which consisting of interleaved multi-modal sequence x equals x1 to xn,
+
+126
+00:20:09,000 --> 00:20:23,000
+they will first convert all this continuous 2D signals into a 1D later embedding sequence, u equals u1 to um, where ui can either be a descriptive text token or visual embedding.
+
+127
+00:20:23,000 --> 00:20:37,000
+And the goal is to approximate the likelihood of web-scale copper APX with PU using the log likelihood we are already familiar with.
+
+128
+00:20:37,000 --> 00:20:45,000
+So ui is always conditioning on all those previous use with the parameter.
+
+129
+00:20:45,000 --> 00:20:48,000
+And there is two types of losses being used.
+
+130
+00:20:48,000 --> 00:20:53,000
+For the discrete text tokens, there will be a cross entropy loss.
+
+131
+00:20:53,000 --> 00:21:02,000
+And if this is a continuous visual embeddings, L2 regression loss will be used.
+
+132
+00:21:02,000 --> 00:21:19,000
+So looking to the pre-training stages of the E-Mode 2, for training E-Mode 2, first it will pre-train our image text and video text pale data with only captioning loss on the text tokens.
+
+133
+00:21:19,000 --> 00:21:32,000
+And then it will phrase the visual encoder and only optimize the linear projection layer and multi-modal modeling with both the text classification loss and the image regression loss.
+
+134
+00:21:32,000 --> 00:21:44,000
+And looking to the visual decoding part, the visual decoder is trained to directly decode visual embeddings generated by the visual encoder into image like here.
+
+135
+00:21:44,000 --> 00:22:01,000
+So unlike E-Mode, where each optimization step of this 8th visual decoder requires an ultra-regressive inference of the language model, E-Mode 2 visual decoding is actually just can be considered as a token either.
+
+136
+00:22:01,000 --> 00:22:10,000
+So there is no more language model will be involved in the training of this decoder.
+
+137
+00:22:10,000 --> 00:22:16,000
+So for E-Mode 2, there is actually two variants with two different training objectives.
+
+138
+00:22:16,000 --> 00:22:28,000
+First, there is an E-Mode chat which can be efficiently aligned to follow specific task instruction by fine tuning our conversational data.
+
+139
+00:22:28,000 --> 00:22:46,000
+So for this instruction following chat, the training objective is like here and there will be two special tokens being introduced which is user and assistant to help organize the data type.
+
+140
+00:22:46,000 --> 00:22:52,000
+So for user, the instruction is multi-modal tokens which is a prompt and image.
+
+141
+00:22:52,000 --> 00:23:05,000
+And so the since after assistant token is the answer that's expected to be generated by the model and it's actually supervised by a cross entropy loss during training.
+
+142
+00:23:05,000 --> 00:23:16,000
+And there's also one more system message that varies between two major task categories, either an academic task oriented or a multi-modal chat.
+
+143
+00:23:16,000 --> 00:23:31,000
+And the other variant I E-Mode is E-Mode Jain which is capable of accepting a mix of tags, locations and images as conditions and a general image that are grounded in a specified text or subject.
+
+144
+00:23:31,000 --> 00:23:44,000
+So for this E-Mode 2 Jain, the training objective is still the unified generative pre-training objective which is predict the next multi-modal element.
+
+145
+00:23:44,000 --> 00:23:48,000
+But there is something different for the input.
+
+146
+00:23:48,000 --> 00:23:58,000
+So the coordinates of each object is represented in image form by drawing the bounding box at a specified location on a black image.
+
+147
+00:23:58,000 --> 00:24:01,000
+So we can look at one example as here.
+
+148
+00:24:01,000 --> 00:24:05,000
+So this is the prompt, this is the original image.
+
+149
+00:24:05,000 --> 00:24:16,000
+What smores that into the model is those bounding box for each object, like the man, the horse, the mountain and the water.
+
+150
+00:24:16,000 --> 00:24:21,000
+All this is actually highlighting this black image.
+
+151
+00:24:21,000 --> 00:24:25,000
+So finally, let's look at some evaluation E-Mode 2.
+
+152
+00:24:25,000 --> 00:24:29,000
+First, let's look at the performance of this pre-trained base model.
+
+153
+00:24:29,000 --> 00:24:46,000
+And we can notice that E-Mode 2 with only 37 billion parameters actually outperforms Flamingo 8 billion and IDE FICS 8 billion under all field shot settings with a much smaller model scale.
+
+154
+00:24:46,000 --> 00:24:52,000
+And also we can look at these controllable visual generation examples.
+
+155
+00:24:52,000 --> 00:25:05,000
+And we can see actually E-Mode 2 has much way greater performance compared to all other models.
+
+156
+00:25:05,000 --> 00:25:12,000
+So now we are going to move to the third model in this part, which is InterVL.
+
+157
+00:25:12,000 --> 00:25:22,000
+So InterVL is special in evaluating the vision encoder to align with the parameter scale of LLM.
+
+158
+00:25:22,000 --> 00:25:30,000
+So in InterVL, we first investigate the issues with existing vision-large language models.
+
+159
+00:25:30,000 --> 00:25:40,000
+So we can notice that for most of the vision language models we mentioned previously to bridge the vision models with a large language model,
+
+160
+00:25:40,000 --> 00:25:47,000
+there is always a lightweight glue layers used, and such alignment actually have several limitations.
+
+161
+00:25:47,000 --> 00:25:53,000
+But first, there is always a disparity in parameter scales.
+
+162
+00:25:53,000 --> 00:26:02,000
+For example, large language models can be up to 1,000 billion parameters, while visual encoders is only around 1 billion.
+
+163
+00:26:02,000 --> 00:26:07,000
+This may lead to the underuse of a large language model capacity.
+
+164
+00:26:07,000 --> 00:26:17,000
+And there is inconsistency between representations as vision models are usually trained on pure vision data.
+
+165
+00:26:17,000 --> 00:26:24,000
+And this kind of representation is usually inconsistent with large language models.
+
+166
+00:26:24,000 --> 00:26:30,000
+And since the glue layers are usually lightweight and randomly initialized,
+
+167
+00:26:30,000 --> 00:26:43,000
+this can be an inefficient connection, and then it may now capture the rich class model interactions and dependencies.
+
+168
+00:26:43,000 --> 00:26:55,000
+So based on that observation, we can first look at a very popular and famous lightweight glue layer, which is Qformer.
+
+169
+00:26:55,000 --> 00:27:01,000
+And I think Qformer is introduced or mentioned several times in previous lectures.
+
+170
+00:27:01,000 --> 00:27:08,000
+And so Qformer is just a lightweight querying transformer that is used to bridge the modality gap.
+
+171
+00:27:08,000 --> 00:27:16,000
+The goal is that the queries can learn to extract vision representation that is mostly informative of the task.
+
+172
+00:27:16,000 --> 00:27:27,000
+So the Qformer functions as the information bottleneck that fits the most useful information to the LRM while removing irrelevant visual information.
+
+173
+00:27:27,000 --> 00:27:34,000
+And we can clearly see how Qformer acts as a bridge between image encoder and the large language model.
+
+174
+00:27:34,000 --> 00:27:42,000
+So the capability of Qformer to extract information from image encodings generated by image encoder determines
+
+175
+00:27:42,000 --> 00:27:47,000
+how many useful visual information can be fed into LRM.
+
+176
+00:27:47,000 --> 00:27:53,000
+So the author in the interviewer argued that as the Qformer is just too lightweight,
+
+177
+00:27:53,000 --> 00:28:00,000
+it may not be able to capture all useful information and dependencies between image encodings and the task.
+
+178
+00:28:00,000 --> 00:28:08,000
+So then the interviewer is proposed, and we can first look at the overall architecture of the interviewer.
+
+179
+00:28:08,000 --> 00:28:11,000
+So interviewer has two main components.
+
+180
+00:28:11,000 --> 00:28:19,000
+The first is a large-scale vision encoder called with an internal reality with a size of 6 billion parameters.
+
+181
+00:28:19,000 --> 00:28:24,000
+And this is actually implemented with a vanilla vision transformer.
+
+182
+00:28:24,000 --> 00:28:33,000
+And there's also a large-language middleware, which is initialized by QLAMA with a size of 8 billion parameters.
+
+183
+00:28:33,000 --> 00:28:39,000
+And it is developed based on the preclinical multilingual LRMA,
+
+184
+00:28:39,000 --> 00:28:47,000
+and there will be a newly added 69 learnable queries and cross-attention layers that are randomly initialized.
+
+185
+00:28:47,000 --> 00:28:51,000
+So the advantage of such architecture is quite clear.
+
+186
+00:28:51,000 --> 00:28:56,000
+First, this is the parameter balanced vision and language component,
+
+187
+00:28:56,000 --> 00:29:01,000
+as both of the two major components are around 6 to 8 billion parameters.
+
+188
+00:29:01,000 --> 00:29:11,000
+And QLAMA can transfer image tokens generated by Intel VIT 6B to the representation that is aligned with LRMs
+
+189
+00:29:11,000 --> 00:29:15,000
+by initializing with the pre-train weights of multilingual LRMA.
+
+190
+00:29:15,000 --> 00:29:23,000
+And as QLAMA has 8 billion parameters, which is like 42 times larger than Qformer,
+
+191
+00:29:23,000 --> 00:29:33,000
+even with frozen LRMA decoder, Intel VAR can achieve really promising performance on multimodal dialogue tests.
+
+192
+00:29:33,000 --> 00:29:37,000
+So looking into the training strategies of Intel VAR,
+
+193
+00:29:37,000 --> 00:29:40,000
+so besides of this violence-actual architecture,
+
+194
+00:29:40,000 --> 00:29:49,000
+the author of Intel VAR also introduced a new training strategy to help with better alignment between the vision encoder, language, middleware, and LRMA.
+
+195
+00:29:49,000 --> 00:29:53,000
+So the first stage is a vision-language-contrasted training.
+
+196
+00:29:53,000 --> 00:30:03,000
+Well, it will adopt the LRMA 7B to encode the text at STF and use Intel VIT to extract the visual feature IF.
+
+197
+00:30:03,000 --> 00:30:12,000
+And the goal is to minimize the symmetric cross-entropy loss on the similarity scores of the image text pairs in a batch.
+
+198
+00:30:12,000 --> 00:30:22,000
+And this stage allows Intel VAR to excel on contrasted text like zero-shot image classification, zero-shot image text retrieval.
+
+199
+00:30:22,000 --> 00:30:26,000
+In the second stage, it's a vision-language-generative training.
+
+200
+00:30:26,000 --> 00:30:35,000
+Well, QLAMA inherits the weights of LRMA 7B in the first stage, and both the Intel VIT and QLAMA are frozen.
+
+201
+00:30:35,000 --> 00:30:45,000
+In this stage, only the newly added learnable queries and cross-attention layers are trained with this filtered high-quality data.
+
+202
+00:30:45,000 --> 00:30:57,000
+So the loss has 3K components, which is an image text-contrastive loss, ITC, image text-matching loss, ITM, and image-grounded text generation loss, ITG.
+
+203
+00:30:57,000 --> 00:31:08,000
+And this enables the queries to extract powerful visual representations and further align the feature space with large language models.
+
+204
+00:31:08,000 --> 00:31:24,000
+And the last stage is the supervised fine-tuning stage, where the Intel VIT and QLAMA will connect with off-the-shelf LM decoder and conduct supervised fine-tuning.
+
+205
+00:31:24,000 --> 00:31:41,000
+So the interesting part of Intel VAR is actually it can act as a Swiss R&R model, which means it can flexibly combine the wish encoder and the language middleware and support various wish language tasks.
+
+206
+00:31:41,000 --> 00:31:57,000
+So for contrasted tasks, Intel VLC and Intel VLG can be used by using the wish encoder or in combination of Intel VIT and QLAMA to encode the wish features.
+
+207
+00:31:57,000 --> 00:32:15,000
+And for generating tasks, QLAMA inherently have promising image captioning ability, and the prowess of QLAMA reorganize the wish representation from Intel VIT 6B and play as a prefix text for QLAMA.
+
+208
+00:32:15,000 --> 00:32:25,000
+And finally, there is the Intel VAR check motion, can be either used with or without QLAMA for multimodal dialogue.
+
+209
+00:32:26,000 --> 00:32:46,000
+So looking into the experiments conducted in turnware, we only show only some part of the experiments and I think one of the most important experiments being conducted by the author is to validate the wish or perceptual capabilities of Intel VIT 6B.
+
+210
+00:32:46,000 --> 00:33:00,000
+And we can say it's actually Intel VAT 6B, I'll perform all the sort of methods available and achieve a really promising results on all kinds of data set.
+
+211
+00:33:01,000 --> 00:33:28,000
+And there are other evaluations, for example the evaluation on Intel VLG chat, and we can see that the overall architecture with 6 billion wish encoder of QLAMA as the middleware and the ALM has the most promising and best results from all the other models like lava, flamingo, and blip, and instruct blip.
+
+212
+00:33:28,000 --> 00:33:33,000
+Which I think we've pretty discussed in the previous lectures.
+
+213
+00:33:37,000 --> 00:33:42,000
+Okay, so the last model I'm going to discuss is Germany.
+
+214
+00:33:42,000 --> 00:33:58,000
+And one thing I want to mention first is that Germany actually only has the technical report available online, so there's not much detail about the architecture or training strategy used in Germany available.
+
+215
+00:33:58,000 --> 00:34:04,000
+So what we'll focus right now is more like its quality and some evaluations.
+
+216
+00:34:04,000 --> 00:34:17,000
+So Germany is a family of highly capable multimodals, and there are three models with different sizes that can be used in different scenarios in this family.
+
+217
+00:34:17,000 --> 00:34:35,000
+And so they have Germany-Altra, which is really useful, highly complex tasks, and Germany Pro that use for enhanced performance and polarability scale, and Nano, which is for on-device applications.
+
+218
+00:34:35,000 --> 00:34:43,000
+And Germany-Altra is a really strong model, which has noticeable performance on various benchmarks.
+
+219
+00:34:43,000 --> 00:34:51,000
+And it actually achieved new state of art results in 30 out of 32 benchmarks.
+
+220
+00:34:51,000 --> 00:35:01,000
+Well, 10 out of 12 is taxa reasoning benchmarks and all other in which understanding video understanding speech recognition and translation benchmarks.
+
+221
+00:35:01,000 --> 00:35:11,000
+And one thing to notice that Germany-Altra is the first model to achieve a human expert performance on MMLU.
+
+222
+00:35:11,000 --> 00:35:23,000
+So MMLU is a benchmark that actually covers 57 tasks, including elementary mathematics, US history, computer science, law and more.
+
+223
+00:35:23,000 --> 00:35:31,000
+So this actually requires the model to possess extensive work knowledge and problem-solving ability.
+
+224
+00:35:31,000 --> 00:35:47,000
+So one example is like this. The model is actually given a physical problem and it's written notes, and MMLU is asked to reason the questions step-by-step to judge whether the students answered correctly.
+
+225
+00:35:47,000 --> 00:35:53,000
+And if the solution is wrong, point well is wrong, and given the correct solution.
+
+226
+00:35:53,000 --> 00:35:59,000
+And also it asks to use latex for mass and run off the final answer.
+
+227
+00:35:59,000 --> 00:36:09,000
+So this is actually a really comprehensive problem that tasks all sorts of knowledge from the model.
+
+228
+00:36:09,000 --> 00:36:17,000
+So looking into the architecture of Germany, so there's not a lot information available.
+
+229
+00:36:17,000 --> 00:36:28,000
+So in this technical report, it only mentions that Germany is built on top of transformer decoders that are enhanced with improvements in architecture and model optimization.
+
+230
+00:36:28,000 --> 00:36:40,000
+And notice that it's trained just for 32K contact lens, and it's trained to accommodate textual input, interlinked with a wide variety of audio and visual inputs.
+
+231
+00:36:40,000 --> 00:36:57,000
+So the influential encoding of Germany models is inspired by Flamingo-Kohan-Pali with the important distinction that the models are multimodal from the beginning and can not natively output images using discrete image tokens.
+
+232
+00:36:57,000 --> 00:37:23,000
+And until now, notice that the standard approach to creating multimodal models usually involves training separate components for different modalities, and then stitching them together to roughly mimic some of these functionalities, whereas Germany is actually native multimodal and pre-training from the start of different modalities, like shown here.
+
+233
+00:37:24,000 --> 00:37:48,000
+So looking into some evaluation on Germany, and one astonishing performance we can focus is here, like Germany, Altra can reach a 90.4% of accuracy on the MMLU dataset, and we already mentioned that MMLU is like a really comprehensive evolution dataset.
+
+234
+00:37:48,000 --> 00:37:53,000
+And the human expert performance is gauged at 89.8%.
+
+235
+00:37:53,000 --> 00:38:15,000
+And in this report, the other mission is that in order to achieve such great performance, there's kind of like prompting technique being used, which is CHEVSTAT with uncertainty routing on MMLU, where the model is asked to produce KCHEVSTAT samples, maybe like 16 or 32.
+
+236
+00:38:16,000 --> 00:38:26,000
+And then it will slap the majority vote if the model is confident about a threshold, otherwise it will just differ to the really simple choice.
+
+237
+00:38:26,000 --> 00:38:35,000
+And here you see that Germany, Altra with CHEVSTAT routing technique actually achieve its best performance.
+
+238
+00:38:36,000 --> 00:38:55,000
+And here is also evaluation of the multimodal capabilities of GENI models, using a diverse set of tasks requiring multi-lingual understanding, cross-lingual generalization, and a generation of tasks in multiple languages.
+
+239
+00:38:55,000 --> 00:39:06,000
+And beyond the translation, Germany is evaluated also on massive summarization benchmarks across all valuable languages.
+
+240
+00:39:06,000 --> 00:39:13,000
+And also, we are going to show like the strong multimodal ability of Germany.
+
+241
+00:39:13,000 --> 00:39:39,000
+So looking to the example, we can see that for this one, it actually shows the multimodal reasoning capabilities to generate a met plot, late code for rearranging the subplots, which reveals several capabilities like recognition in worse graphics, instruction following, and abstract reasoning.
+
+242
+00:39:40,000 --> 00:39:55,000
+And just as Google mentioned in this blog, like Germany can be your personal tutor creating step-by-step instructions, sample quizzes, or back and forth discussion tailored to your learning style.
+
+243
+00:39:56,000 --> 00:40:11,000
+So looking at some evaluation of zero shot image understanding and field shot video understanding, and we can see Germany actually achieve SOTI performance on all these benchmarks available.
+
+244
+00:40:12,000 --> 00:40:24,000
+And here is an example of video understanding where it's giving a video and they ask like what kind of like a technique is being used for the person in this video.
+
+245
+00:40:24,000 --> 00:40:34,000
+So this is actually not only test Germany's ability to take video as input, also like reasoning in the video.
+
+246
+00:40:35,000 --> 00:40:47,000
+And also to review the multimodal ability of Germany, we can look at the image generation and audio understanding performance.
+
+247
+00:40:48,000 --> 00:41:01,000
+And we can see that Germany Pro models is actually significantly outperforms the USM and whisper models across all ASR and ASC tasks, both for English and multilingual tasks.
+
+248
+00:41:02,000 --> 00:41:14,000
+And finally, after discussing all these models, let's have an overall comparison of all eight models we discussed today in this LMM module.
+
+249
+00:41:15,000 --> 00:41:33,000
+So we discussed Flamingo, which is the first large multimodal, Laowa, which highlights the visual instruction tuning, InstructPlate, which also highlights the Parva visual instruction tuning, and Instruction and Will visual feature extraction,
+
+250
+00:41:33,000 --> 00:41:57,000
+Poly, which focuses on scaling up the vision multimodal multilingual, and Poly3, which shows a contrasted trained visual encoder to ensure the performance of a smaller scale large multimodal, and Emo2, which has a strong in-contact learning ability by scaling up the model.
+
+251
+00:41:57,000 --> 00:42:10,000
+Interwell, which brings the gap between vision encoder and large language model using language middleware and Germany, which is natively multimodal.
+
+252
+00:42:10,000 --> 00:42:36,000
+So we can see in this table, it actually just displays some performance of each model in different datasets, and various kinds of datasets, like a VQA V2, which is a visual question altering, no cap, which focuses on captioning, GQA focuses on graphic QA, and TAX VQA is like a TAX visual QA.
+
+253
+00:42:37,000 --> 00:42:59,000
+Finally, I want to discuss the limitations of current large multimodal, which is the hallucination effect. So we first look at what is the hallucination? So hallucination is that model can generate text that is factually incorrect or nonsensical to the provided source content.
+
+254
+00:42:59,000 --> 00:43:10,000
+So look at these two examples. For example, it asks who was the first person to work on the moon, and we can see this model is just give a totally incorrect answer.
+
+255
+00:43:10,000 --> 00:43:30,000
+And for this one, the user is actually giving a context and let the model to summarize the following article, but the summarization has a totally wrong information that is inconsistent with the context it provides.
+
+256
+00:43:30,000 --> 00:43:42,000
+Like the year, and it's like 2006 from the model article, whereas in the context is 2023. So there are many possible causes of the hallucination.
+
+257
+00:43:43,000 --> 00:44:04,000
+We are going to like discuss three of them, which is data training and inference. So for data related hallucination, misinformation inherited biases within data sources, which means that the model tend to capture spurious correlations, demonstrate and demonstrate these difficulties in knowledge recalling.
+
+258
+00:44:05,000 --> 00:44:28,000
+And in the training of LMS that inadequate, you need directional representation, attention, glitches in architecture design, and also in the alignment phase capability misalignment and belief misalignment can also lead to the hallucination issue.
+
+259
+00:44:29,000 --> 00:44:50,000
+Finally, the decoding strategy can also influence the performance of LLMMS. So overallize the reliance, nearby content and the softmax bottleneck can limit the model's ability to express diverse output probabilities.
+
+260
+00:44:51,000 --> 00:45:01,000
+And this inherent randomness of decoding strategies and imperfect decoding representation can also be a possible cause of this hallucination.
+
+261
+00:45:01,000 --> 00:45:19,000
+So that's all about today's representation. We discussed eight current really popular large multimodal and point point out all of their great contributions and some limitations. And thanks for listening.
+

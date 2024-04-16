@@ -1,0 +1,2304 @@
+1
+00:00:00,000 --> 00:00:03,200
+And now we are going to talk about Tool LLM.
+
+2
+00:00:03,200 --> 00:00:09,880
+In this paper, the main goal is to make a framework
+
+3
+00:00:09,880 --> 00:00:14,560
+to train LLMs that could use multiple APIs
+
+4
+00:00:14,560 --> 00:00:18,640
+to fulfill the textual request from the user.
+
+5
+00:00:18,640 --> 00:00:22,840
+The solution they provide is called Tool LLM,
+
+6
+00:00:22,840 --> 00:00:24,680
+which is a general framework.
+
+7
+00:00:24,680 --> 00:00:25,840
+It has several parts.
+
+8
+00:00:25,840 --> 00:00:28,720
+If you want to mention at a very high level
+
+9
+00:00:28,720 --> 00:00:30,640
+the contributions of this paper.
+
+10
+00:00:30,640 --> 00:00:35,000
+First, there is Toolbench, which is a new instruction
+
+11
+00:00:35,000 --> 00:00:38,800
+tuning dataset specifically for tool use.
+
+12
+00:00:38,800 --> 00:00:42,160
+New algorithm called DFS Decision Tree
+
+13
+00:00:42,160 --> 00:00:50,200
+that can enhance the reasoning capabilities of LLMs.
+
+14
+00:00:50,200 --> 00:00:54,240
+A new way of evaluating these kind of tools, which
+
+15
+00:00:54,240 --> 00:00:59,520
+is called Tool Eval, and a new fine-tuned LLM based model
+
+16
+00:00:59,520 --> 00:01:04,320
+to actually recommend proper sequences of APIs
+
+17
+00:01:04,320 --> 00:01:10,240
+to fulfill the textual request.
+
+18
+00:01:10,240 --> 00:01:14,040
+So the problem with the previous work
+
+19
+00:01:14,040 --> 00:01:16,560
+and the current status in this area
+
+20
+00:01:16,560 --> 00:01:20,040
+is that the best thing we have right now
+
+21
+00:01:20,040 --> 00:01:24,960
+is chargivity from OpenAI, which is closed source, which
+
+22
+00:01:24,960 --> 00:01:29,400
+is not ideal for all of the users.
+
+23
+00:01:29,400 --> 00:01:34,440
+And in the open source world, the previous work
+
+24
+00:01:34,440 --> 00:01:41,720
+has several limitations, such as the limited set of APIs
+
+25
+00:01:41,720 --> 00:01:46,440
+or just using fake APIs to train models.
+
+26
+00:01:46,440 --> 00:01:49,360
+In some work, the scenarios are very constrained.
+
+27
+00:01:49,360 --> 00:01:51,640
+Either it's only single tool, or they
+
+28
+00:01:51,640 --> 00:01:53,800
+assume that the user would manually
+
+29
+00:01:53,800 --> 00:01:56,800
+specify the ideal set of APIs.
+
+30
+00:01:56,800 --> 00:02:01,840
+Or in some other works, the planning and reasoning
+
+31
+00:02:01,840 --> 00:02:04,480
+is very not great.
+
+32
+00:02:04,480 --> 00:02:08,920
+So to mitigate all of this issue, the first step
+
+33
+00:02:08,920 --> 00:02:12,680
+is making a good dataset.
+
+34
+00:02:12,680 --> 00:02:16,440
+They call it Toolbench in this paper.
+
+35
+00:02:16,480 --> 00:02:21,840
+Toolbench is a dataset that has been created using chargivity
+
+36
+00:02:21,840 --> 00:02:23,440
+as a teacher model.
+
+37
+00:02:23,440 --> 00:02:28,320
+And it has been constructed in three general phases.
+
+38
+00:02:28,320 --> 00:02:34,800
+First, they collected APIs from Rapid API Hub.
+
+39
+00:02:34,800 --> 00:02:40,760
+In the second phase, they used prompting chargivity
+
+40
+00:02:40,760 --> 00:02:45,240
+to generate instructions for different scenarios.
+
+41
+00:02:45,240 --> 00:02:49,320
+And in the last step, they annotated the correct path
+
+42
+00:02:49,320 --> 00:02:52,400
+and the correct sequences of APIs that
+
+43
+00:02:52,400 --> 00:02:54,440
+would accomplish that task.
+
+44
+00:02:54,440 --> 00:02:57,880
+So let's get into the details of this.
+
+45
+00:02:57,880 --> 00:03:02,600
+So the first step was the API collection.
+
+46
+00:03:02,600 --> 00:03:09,480
+In this step, first, they start with more than 53,000 APIs
+
+47
+00:03:09,520 --> 00:03:16,080
+from more than 10,000 tools in 49 categories.
+
+48
+00:03:16,080 --> 00:03:18,200
+But many of them are not functional.
+
+49
+00:03:18,200 --> 00:03:25,640
+They are just, if you call it, responses error or something.
+
+50
+00:03:25,640 --> 00:03:28,520
+And if you remove all of those things,
+
+51
+00:03:28,520 --> 00:03:33,440
+we can end up with more than 16,000 APIs
+
+52
+00:03:33,440 --> 00:03:37,600
+from more than 3,400 tools.
+
+53
+00:03:39,920 --> 00:03:46,360
+In the second phase, which is the instruction generation
+
+54
+00:03:46,360 --> 00:03:50,480
+phase, the core idea is that we randomly sample
+
+55
+00:03:50,480 --> 00:03:55,160
+a subset of those APIs that we collected in the previous phase.
+
+56
+00:03:55,160 --> 00:03:58,640
+And we feed it to chargivity and ask it
+
+57
+00:03:58,640 --> 00:04:06,480
+to create a sequence of actions for us.
+
+58
+00:04:06,480 --> 00:04:10,240
+So the actual prompt for this step
+
+59
+00:04:10,240 --> 00:04:12,960
+contains, at first, the general description
+
+60
+00:04:12,960 --> 00:04:16,080
+of this instruction generation task.
+
+61
+00:04:16,080 --> 00:04:19,760
+And second, the documentation of those selected APIs.
+
+62
+00:04:19,760 --> 00:04:24,520
+And third, there are several seed examples,
+
+63
+00:04:24,520 --> 00:04:26,320
+specifically three seed examples that
+
+64
+00:04:26,320 --> 00:04:30,040
+have been written by human experts.
+
+65
+00:04:30,040 --> 00:04:35,040
+To make sure that we have diversity in this process,
+
+66
+00:04:35,040 --> 00:04:39,400
+they generate instructions for three different scenarios.
+
+67
+00:04:39,400 --> 00:04:46,600
+First, single tool use scenarios, only one API.
+
+68
+00:04:46,600 --> 00:04:47,880
+One tool would be used.
+
+69
+00:04:47,880 --> 00:04:50,600
+The APIs of one tool would be used.
+
+70
+00:04:50,600 --> 00:04:54,200
+And in multi-tool scenario, we have two sub-scenarios,
+
+71
+00:04:54,200 --> 00:04:57,120
+intra-category and intra-collection.
+
+72
+00:04:57,120 --> 00:05:01,440
+So in rapid API, half, if you go and see,
+
+73
+00:05:01,480 --> 00:05:07,560
+categories are the more coarse-grained kind
+
+74
+00:05:07,560 --> 00:05:10,800
+of categorization of the APIs.
+
+75
+00:05:10,800 --> 00:05:13,520
+And collections are more fine-grained.
+
+76
+00:05:13,520 --> 00:05:17,360
+So we can have diversity at different levels.
+
+77
+00:05:17,360 --> 00:05:21,760
+At the category level or at the collection level,
+
+78
+00:05:21,760 --> 00:05:25,560
+they sample two to three five tools
+
+79
+00:05:25,560 --> 00:05:27,360
+from the same category for collection.
+
+80
+00:05:27,360 --> 00:05:31,960
+And for each tool, they sample up to three APIs.
+
+81
+00:05:31,960 --> 00:05:36,360
+And these are going to be collected and set aside.
+
+82
+00:05:36,360 --> 00:05:42,120
+As you can see in total, there are more than 87,000 single tool
+
+83
+00:05:42,120 --> 00:05:47,600
+APIs, more than 84,000 multi-tool APIs from the same category
+
+84
+00:05:47,600 --> 00:05:53,560
+and 24,000 multi-tool APIs from the same collection.
+
+85
+00:05:53,560 --> 00:06:00,840
+And in the final phase, we have to annotate the solution panel.
+
+86
+00:06:00,840 --> 00:06:05,760
+So in this phase, they prompt the attractivity
+
+87
+00:06:05,760 --> 00:06:08,240
+to find the valid action sequence.
+
+88
+00:06:11,320 --> 00:06:13,280
+More specifically, they have strategy
+
+89
+00:06:13,280 --> 00:06:22,320
+to tell its top and the API name and the arguments
+
+90
+00:06:22,320 --> 00:06:23,800
+for that API.
+
+91
+00:06:23,800 --> 00:06:26,200
+To be more specific, they use the function called
+
+92
+00:06:26,200 --> 00:06:29,000
+feature of the attractivity, and each API
+
+93
+00:06:29,000 --> 00:06:33,840
+would act as a function, plus two types
+
+94
+00:06:33,840 --> 00:06:38,320
+of special kinds of APIs as functions.
+
+95
+00:06:38,320 --> 00:06:40,840
+One is finished by giving up, and another one
+
+96
+00:06:40,840 --> 00:06:42,720
+is finished with final insert.
+
+97
+00:06:42,720 --> 00:06:48,920
+So if a model reaches finished by giving up function,
+
+98
+00:06:48,920 --> 00:06:50,800
+it means that, OK, this path, this sequence,
+
+99
+00:06:50,800 --> 00:06:53,120
+is not going to be valid.
+
+100
+00:06:53,120 --> 00:07:00,640
+And we should abort expanding this sequence.
+
+101
+00:07:00,640 --> 00:07:04,640
+And this is the place that their new novel idea of reasoning
+
+102
+00:07:04,640 --> 00:07:08,880
+comes into place, which is a DFS-based decision tree.
+
+103
+00:07:08,880 --> 00:07:12,320
+To actually find the best sequences
+
+104
+00:07:12,320 --> 00:07:20,600
+with the highest likelihood of actually reaching a good answer,
+
+105
+00:07:20,600 --> 00:07:28,680
+they use a simple but very effective method.
+
+106
+00:07:28,680 --> 00:07:32,400
+They use DFS to actually expand the nodes,
+
+107
+00:07:32,400 --> 00:07:36,000
+and the model says finished by giving up.
+
+108
+00:07:36,000 --> 00:07:38,400
+They abort the backtrack, and they
+
+109
+00:07:38,400 --> 00:07:43,960
+try to expand another node until they reach the node that
+
+110
+00:07:43,960 --> 00:07:46,560
+causes the function to finish with final answer.
+
+111
+00:07:46,560 --> 00:07:52,520
+And that path is going to act as a ground
+
+112
+00:07:52,520 --> 00:07:56,000
+tool in this data set.
+
+113
+00:07:56,000 --> 00:07:59,360
+So data collection aside, we also
+
+114
+00:07:59,360 --> 00:08:07,240
+need to have some way to evaluate tool use LLM.
+
+115
+00:08:07,240 --> 00:08:11,880
+And it's pretty obvious that manually annotating
+
+116
+00:08:11,880 --> 00:08:16,000
+fixed ground-tools solution is almost impossible.
+
+117
+00:08:16,440 --> 00:08:21,960
+There are thousands of APIs out there.
+
+118
+00:08:21,960 --> 00:08:24,040
+There are several ways to actually accomplish
+
+119
+00:08:24,040 --> 00:08:26,960
+one single instruction.
+
+120
+00:08:26,960 --> 00:08:31,720
+So it's pretty obvious that it's invisible.
+
+121
+00:08:31,720 --> 00:08:35,400
+So the basic, most fundamental thing
+
+122
+00:08:35,400 --> 00:08:37,880
+we could think of is a pass rate.
+
+123
+00:08:37,880 --> 00:08:42,920
+The sequence of the APIs that have been suggested by LLM
+
+124
+00:08:42,920 --> 00:08:46,160
+should be executable within a limited budget.
+
+125
+00:08:46,160 --> 00:08:49,400
+That's what they call pass rate in their tool
+
+126
+00:08:49,400 --> 00:08:52,320
+eval, which is an evaluation framework.
+
+127
+00:08:52,320 --> 00:08:59,320
+And they compared it with human evaluation,
+
+128
+00:08:59,320 --> 00:09:06,880
+and they found out the agreement rate of 87%.
+
+129
+00:09:06,880 --> 00:09:09,520
+The more useful thing is a win rate,
+
+130
+00:09:09,520 --> 00:09:15,840
+which gives us a sense of usefulness of that sequence.
+
+131
+00:09:15,840 --> 00:09:20,080
+The win rate, the idea is that we ask
+
+132
+00:09:20,080 --> 00:09:28,960
+creativity to that which solution path from a pair of solution
+
+133
+00:09:28,960 --> 00:09:32,600
+paths would be preferred, which one is the better one.
+
+134
+00:09:32,600 --> 00:09:36,720
+And we do this multiple times, and we take the average,
+
+135
+00:09:36,720 --> 00:09:42,440
+and that would be the winner between these two solution paths.
+
+136
+00:09:42,440 --> 00:09:49,920
+So based on this metric, they, again,
+
+137
+00:09:49,920 --> 00:09:56,160
+did some human evaluation and saw 80% agreement.
+
+138
+00:09:56,160 --> 00:10:03,480
+So another idea of the paper is called API Retriever,
+
+139
+00:10:03,560 --> 00:10:07,400
+which is used to find the best set of APIs
+
+140
+00:10:07,400 --> 00:10:11,120
+that would be relevant to solve a specific request.
+
+141
+00:10:11,120 --> 00:10:16,000
+And the way that they solve this is pretty simple.
+
+142
+00:10:16,000 --> 00:10:20,720
+We just take the, calculate the embedding similarities
+
+143
+00:10:20,720 --> 00:10:24,320
+between the instructions and the documentation of the API.
+
+144
+00:10:24,320 --> 00:10:28,360
+The embeddings have been calculated using dirt.
+
+145
+00:10:28,360 --> 00:10:31,000
+But they have done some experiments
+
+146
+00:10:31,000 --> 00:10:34,640
+and showed that this way of finding APIs
+
+147
+00:10:34,640 --> 00:10:40,800
+is way better than the previous ways,
+
+148
+00:10:40,800 --> 00:10:44,080
+namely, BM25 and the Ada model.
+
+149
+00:10:48,760 --> 00:10:51,720
+The other idea of the paper, as we discussed,
+
+150
+00:10:51,720 --> 00:10:54,240
+was this DFS-based decision tree.
+
+151
+00:10:54,240 --> 00:11:00,560
+And they also compared that with the more commonly used method,
+
+152
+00:11:00,560 --> 00:11:03,200
+namely React.
+
+153
+00:11:03,200 --> 00:11:07,720
+But to make things fair, because DFS-DT would consume
+
+154
+00:11:07,720 --> 00:11:12,480
+way more API calls, and they run React several end times
+
+155
+00:11:12,480 --> 00:11:16,480
+until they reach the same level of API calls.
+
+156
+00:11:16,480 --> 00:11:21,320
+But still, they saw that OK, DFS decision tree
+
+157
+00:11:21,320 --> 00:11:26,120
+outperforms React by a good margin.
+
+158
+00:11:26,120 --> 00:11:30,160
+And at the core of the paper, we have a fine-tuned
+
+159
+00:11:30,160 --> 00:11:34,840
+Lama model using all of the data that we discussed.
+
+160
+00:11:34,840 --> 00:11:37,840
+And they also increased the input lens from 4,000 to 8,000
+
+161
+00:11:37,840 --> 00:11:41,480
+using positional interpolation.
+
+162
+00:11:41,480 --> 00:11:45,760
+They did the evolution at three levels,
+
+163
+00:11:45,760 --> 00:11:49,960
+of generalizability, let's say, and thumbs-in instruction,
+
+164
+00:11:49,960 --> 00:11:51,480
+thumbs-in tools in the same category,
+
+165
+00:11:51,480 --> 00:11:54,120
+thumbs-in tools in different categories.
+
+166
+00:11:54,120 --> 00:11:56,280
+And the experiments also have been
+
+167
+00:11:56,280 --> 00:11:59,800
+done in three different scenarios,
+
+168
+00:11:59,800 --> 00:12:02,800
+which is corresponding to the data that they collected,
+
+169
+00:12:02,800 --> 00:12:05,640
+single-tool, intro category, multi-tool,
+
+170
+00:12:05,640 --> 00:12:07,720
+and intro collection multi-tool.
+
+171
+00:12:07,720 --> 00:12:11,880
+They also used several other baselines, as you can see
+
+172
+00:12:11,880 --> 00:12:14,520
+on the slides.
+
+173
+00:12:14,520 --> 00:12:20,280
+And this is the results of the evaluations of the comparison
+
+174
+00:12:20,280 --> 00:12:26,120
+between the fine-tuned model, which is called tool Lama,
+
+175
+00:12:26,120 --> 00:12:29,240
+using different methods of reasoning
+
+176
+00:12:29,240 --> 00:12:31,640
+compared with different models.
+
+177
+00:12:31,640 --> 00:12:39,160
+As you can see, other models like Bacuna and Alpaca's
+
+178
+00:12:39,160 --> 00:12:42,040
+instruction following abilities are not
+
+179
+00:12:42,040 --> 00:12:44,760
+very useful in this domain, which is tool use.
+
+180
+00:12:48,040 --> 00:12:53,080
+Also, we see that the DFS decision tree outperforms React
+
+181
+00:12:53,080 --> 00:12:55,920
+in both pass rate and win rate.
+
+182
+00:12:55,920 --> 00:13:01,720
+And we also see that tool Lama plus DFS decision tree,
+
+183
+00:13:01,720 --> 00:13:04,840
+actually John Street, said very competitive generalization
+
+184
+00:13:04,840 --> 00:13:05,600
+performance.
+
+185
+00:13:08,720 --> 00:13:12,880
+We also see the advantage of the API retriever,
+
+186
+00:13:12,880 --> 00:13:15,840
+which in some scenarios, they figure out
+
+187
+00:13:15,840 --> 00:13:20,520
+it is even better than the ground-throughs in the data set.
+
+188
+00:13:21,520 --> 00:13:29,520
+To learn more about the realizationability of tool Lama,
+
+189
+00:13:29,520 --> 00:13:35,120
+they evaluated it out of distribution data set.
+
+190
+00:13:35,120 --> 00:13:37,520
+Here, they use API Bench.
+
+191
+00:13:37,520 --> 00:13:42,160
+They also use both the ground-throughs retriever,
+
+192
+00:13:42,160 --> 00:13:46,640
+the oracle from that data set, and their own API retriever.
+
+193
+00:13:46,640 --> 00:13:51,240
+They also compared the tool Lama with the query log,
+
+194
+00:13:51,240 --> 00:13:57,360
+which is the model that have been specifically
+
+195
+00:13:57,360 --> 00:13:59,560
+trained on this data set.
+
+196
+00:13:59,560 --> 00:14:06,080
+And as you can see, in both scenarios,
+
+197
+00:14:06,080 --> 00:14:09,400
+RS here is the retriever over settings.
+
+198
+00:14:09,400 --> 00:14:12,080
+It means that retrieved APIs are sent to the model
+
+199
+00:14:12,080 --> 00:14:13,600
+as part of the prompt.
+
+200
+00:14:13,600 --> 00:14:15,920
+And ZS is a zero shot.
+
+201
+00:14:15,920 --> 00:14:21,960
+It means that the APIs are not in the prompt.
+
+202
+00:14:21,960 --> 00:14:30,280
+So still, we see that the tool Lama can beat a model that
+
+203
+00:14:30,280 --> 00:14:32,280
+have been trained on this data set.
+
+204
+00:14:32,280 --> 00:14:37,640
+And in other scenarios, it can actually perform very close
+
+205
+00:14:37,640 --> 00:14:39,440
+to a query log.
+
+206
+00:14:39,440 --> 00:14:42,240
+OK, now let's talk about tool connectivity, which
+
+207
+00:14:42,240 --> 00:14:46,280
+takes another approach into learning for LLMs.
+
+208
+00:14:46,280 --> 00:14:50,840
+Well, the fine-tuning LLMs is very
+
+209
+00:14:50,840 --> 00:14:53,520
+expensive in terms of computational costs.
+
+210
+00:14:53,520 --> 00:15:00,520
+And it's pretty hard to adapt that fine-tune model to new tools.
+
+211
+00:15:00,520 --> 00:15:03,840
+And also, other techniques, such as in context learning,
+
+212
+00:15:03,840 --> 00:15:05,440
+are pretty limited.
+
+213
+00:15:05,440 --> 00:15:07,400
+For example, one of the limitations
+
+214
+00:15:07,400 --> 00:15:12,760
+is that the context list has a limitation for most automotors.
+
+215
+00:15:12,760 --> 00:15:19,760
+And for many cases, the future of learning is not effective.
+
+216
+00:15:19,760 --> 00:15:23,600
+So the key idea in this paper is that we can represent each tool
+
+217
+00:15:23,600 --> 00:15:25,760
+as a token.
+
+218
+00:15:25,760 --> 00:15:28,440
+And we can augment the vocabulary
+
+219
+00:15:28,440 --> 00:15:32,320
+at the very beginning of the model.
+
+220
+00:15:32,320 --> 00:15:35,920
+So during the generation, when the tool can
+
+221
+00:15:35,920 --> 00:15:38,360
+is predicted, the LLM would temporarily
+
+222
+00:15:38,360 --> 00:15:41,240
+switch mode to a special tool mode
+
+223
+00:15:41,240 --> 00:15:45,480
+and would reduce proper input arguments
+
+224
+00:15:45,480 --> 00:15:48,880
+and would call the tool and would inject back
+
+225
+00:15:48,880 --> 00:15:53,920
+the result to the output that would generally
+
+226
+00:15:53,920 --> 00:15:57,640
+be made in a normal scenario.
+
+227
+00:15:57,640 --> 00:16:01,480
+So you can see in this picture the general architecture
+
+228
+00:16:01,480 --> 00:16:03,960
+of the tool connectivity.
+
+229
+00:16:04,000 --> 00:16:08,720
+The embeddings are appended to the model head,
+
+230
+00:16:08,720 --> 00:16:10,880
+like regular words.
+
+231
+00:16:10,880 --> 00:16:13,560
+And when a tool can is predicted,
+
+232
+00:16:13,560 --> 00:16:16,120
+the LLM switches to the tool mode.
+
+233
+00:16:16,120 --> 00:16:23,560
+And the tool is executed with proper predicted parameters.
+
+234
+00:16:23,560 --> 00:16:27,480
+And then the results are going back
+
+235
+00:16:27,480 --> 00:16:32,840
+and will be injected in the actual output for the user.
+
+236
+00:16:32,840 --> 00:16:38,000
+So in another way, in terms of mathematics,
+
+237
+00:16:38,000 --> 00:16:42,520
+the normal way of predicting the next token
+
+238
+00:16:42,520 --> 00:16:48,920
+would be just a softmax of the normal words, the vocabulary.
+
+239
+00:16:48,920 --> 00:16:54,400
+And but right now, we have a softmax over that vocabulary
+
+240
+00:16:54,400 --> 00:16:58,000
+plus the concatenation of that vocabulary
+
+241
+00:16:58,000 --> 00:17:00,040
+and the embedding matrix of the tools.
+
+242
+00:17:03,840 --> 00:17:08,040
+So again, to recap, the model by default is in reasoning mode,
+
+243
+00:17:08,040 --> 00:17:12,240
+tries to generate response normally to the user prompt.
+
+244
+00:17:12,240 --> 00:17:16,920
+And then the output is a tool token.
+
+245
+00:17:16,920 --> 00:17:20,040
+Instead of a word token, model goes to a tool mode.
+
+246
+00:17:20,040 --> 00:17:22,120
+And in the tool mode, it tries to generate
+
+247
+00:17:22,120 --> 00:17:24,400
+the proper arguments for the tool.
+
+248
+00:17:24,400 --> 00:17:28,600
+And in this step, in the tool mode,
+
+249
+00:17:28,600 --> 00:17:32,200
+we are going to include in the context
+
+250
+00:17:32,360 --> 00:17:35,400
+the demo for the tool with a special syntax
+
+251
+00:17:35,400 --> 00:17:37,400
+and the currently predicted context.
+
+252
+00:17:40,120 --> 00:17:44,960
+So the training of this model would be something like that.
+
+253
+00:17:44,960 --> 00:17:51,160
+So the LLM itself, the weights, could be frozen.
+
+254
+00:17:51,160 --> 00:17:56,800
+And the training data could be a form of the pairs SS
+
+255
+00:17:56,800 --> 00:18:04,160
+prime. And in the predicted sentence SS
+
+256
+00:18:04,160 --> 00:18:11,560
+prime, we are going to have a special tokens for tools.
+
+257
+00:18:11,560 --> 00:18:17,120
+And for the arguments, we use a special token here in the paper.
+
+258
+00:18:17,120 --> 00:18:18,560
+They call it NA.
+
+259
+00:18:18,560 --> 00:18:21,600
+That would be ignored in the actual loss function.
+
+260
+00:18:21,600 --> 00:18:24,400
+So if you can see it, if you see the formula,
+
+261
+00:18:24,400 --> 00:18:29,200
+you see that the loss function for those indices would be zero.
+
+262
+00:18:29,200 --> 00:18:32,840
+So we don't care about the argument prediction here.
+
+263
+00:18:32,840 --> 00:18:36,320
+We just want to predict the proper token.
+
+264
+00:18:36,320 --> 00:18:41,440
+That's how we can train the proper embeddings
+
+265
+00:18:41,440 --> 00:18:45,880
+for the tool tokens.
+
+266
+00:18:45,880 --> 00:18:49,440
+So there are three experiments in this paper
+
+267
+00:18:49,440 --> 00:18:54,680
+to evaluate this kind of architecture.
+
+268
+00:18:54,680 --> 00:18:58,240
+First is the arithmetic tools for numerical reasoning.
+
+269
+00:18:58,240 --> 00:19:02,640
+The second one is the database APIs for knowledge-based
+
+270
+00:19:02,640 --> 00:19:03,440
+question answering.
+
+271
+00:19:03,440 --> 00:19:06,560
+And the third one is robot actions for embodied plan
+
+272
+00:19:06,560 --> 00:19:07,640
+generation.
+
+273
+00:19:07,640 --> 00:19:11,000
+And we are going to go through them one by one.
+
+274
+00:19:11,000 --> 00:19:12,960
+So the first one is the numerical reasoning.
+
+275
+00:19:12,960 --> 00:19:17,720
+The data that they use in this experiment
+
+276
+00:19:17,720 --> 00:19:23,480
+is actually an enhanced version of the JSON 8K, which
+
+277
+00:19:23,480 --> 00:19:27,520
+contains some school grade math problems
+
+278
+00:19:27,520 --> 00:19:30,600
+with basic arithmetic for operations.
+
+279
+00:19:30,600 --> 00:19:36,600
+But they added larger numbers to that to make it even harder.
+
+280
+00:19:36,600 --> 00:19:44,120
+And the other data that they use and they actually enhanced
+
+281
+00:19:44,520 --> 00:19:49,320
+is the font QA, which contains synthetic data
+
+282
+00:19:49,320 --> 00:19:55,800
+for more complex arithmetic tools like the square power.
+
+283
+00:19:55,800 --> 00:20:05,640
+So this data set is going to be a little bit
+
+284
+00:20:05,640 --> 00:20:08,800
+like very smaller than the first one.
+
+285
+00:20:08,800 --> 00:20:13,840
+It only contains 68 one hop and 60 multi hop questions.
+
+286
+00:20:14,320 --> 00:20:17,760
+Other than the data that they use in several models
+
+287
+00:20:17,760 --> 00:20:21,600
+to compare with zero shot creativity,
+
+288
+00:20:21,600 --> 00:20:27,640
+chain of thoughts, LAMA-based LLN,
+
+289
+00:20:27,640 --> 00:20:30,560
+they use 33 billion parameters LAMA.
+
+290
+00:20:30,560 --> 00:20:36,440
+Also, they use their React reasoning method.
+
+291
+00:20:36,440 --> 00:20:43,360
+So it's important to note that tool embeddings
+
+292
+00:20:43,360 --> 00:20:47,160
+are only trained on the one hop synthetic data.
+
+293
+00:20:47,160 --> 00:20:50,760
+But still, as you can see on the results table,
+
+294
+00:20:50,760 --> 00:20:56,120
+they manage to perform pretty good in the multi hop problems.
+
+295
+00:20:56,120 --> 00:21:00,840
+So they could be incorporated in something
+
+296
+00:21:00,840 --> 00:21:04,840
+like a chain of thought prompting.
+
+297
+00:21:04,840 --> 00:21:07,600
+The second experiment is knowledge-based question
+
+298
+00:21:07,600 --> 00:21:08,080
+answering.
+
+299
+00:21:08,080 --> 00:21:11,960
+The data set they use is Camel, which
+
+300
+00:21:11,960 --> 00:21:19,600
+contains a lot of relational knowledge from Wikipedia.
+
+301
+00:21:19,600 --> 00:21:27,680
+There are 243 relations and there are subsets
+
+302
+00:21:27,680 --> 00:21:34,120
+of size 500 with different numbers of tools in this data set.
+
+303
+00:21:34,120 --> 00:21:42,400
+So for comparison sake, the models
+
+304
+00:21:42,400 --> 00:21:49,840
+that they developed like fine-tuned for this experiment,
+
+305
+00:21:49,840 --> 00:21:53,040
+the variations of toolkit and GBT are two variations.
+
+306
+00:21:53,040 --> 00:21:55,320
+One is the supervised learning variation
+
+307
+00:21:55,320 --> 00:22:00,680
+using 200 examples per tool from the data set
+
+308
+00:22:00,720 --> 00:22:01,720
+that I mentioned above.
+
+309
+00:22:01,720 --> 00:22:06,400
+And another variation is synthetic tool
+
+310
+00:22:06,400 --> 00:22:13,160
+can GBT, which is trained on 4D synthesized data
+
+311
+00:22:13,160 --> 00:22:17,200
+using prompting chat GBT.
+
+312
+00:22:17,200 --> 00:22:20,840
+The prompting is just putting the question
+
+313
+00:22:20,840 --> 00:22:24,280
+and saying that the answer is and getting
+
+314
+00:22:24,280 --> 00:22:28,440
+that answer from chat GBT.
+
+315
+00:22:28,480 --> 00:22:35,120
+So as a baseline, they used in-context learning
+
+316
+00:22:35,120 --> 00:22:38,200
+in two variations.
+
+317
+00:22:38,200 --> 00:22:45,360
+One is the view shot, in which they put the description
+
+318
+00:22:45,360 --> 00:22:49,840
+of the tools and the demo of those tools in the prompt.
+
+319
+00:22:49,840 --> 00:22:53,840
+But in a zero-shot setting, in-context learning,
+
+320
+00:22:53,840 --> 00:22:57,040
+they put the description of the tools,
+
+321
+00:22:57,120 --> 00:23:04,000
+but they put eight demo of unavailable tools
+
+322
+00:23:04,000 --> 00:23:09,640
+just to teach a model how it could generate
+
+323
+00:23:09,640 --> 00:23:13,640
+the proper calling format of the functions.
+
+324
+00:23:13,640 --> 00:23:19,400
+The base model they use for comparison for the baselines
+
+325
+00:23:19,400 --> 00:23:23,680
+are Lama 13 billion parameters.
+
+326
+00:23:24,680 --> 00:23:29,360
+As we can see in the results chart,
+
+327
+00:23:29,360 --> 00:23:35,920
+here the LLMs still struggle to store accurate facts
+
+328
+00:23:35,920 --> 00:23:42,480
+in the parameter, so we have to have some kind of supervised
+
+329
+00:23:42,480 --> 00:23:47,120
+learning to actually augment them with the knowledge
+
+330
+00:23:47,120 --> 00:23:48,120
+that they need.
+
+331
+00:23:49,120 --> 00:23:55,080
+And as you can see, to look at this idea,
+
+332
+00:23:55,080 --> 00:23:57,880
+the core idea of the paper is pretty effective method
+
+333
+00:23:57,880 --> 00:24:05,560
+on understanding and using a massive amount of in-domain data.
+
+334
+00:24:05,560 --> 00:24:09,560
+And another point to mention here is that the context length
+
+335
+00:24:09,560 --> 00:24:15,880
+limits actually makes a huge impact on the performance
+
+336
+00:24:15,880 --> 00:24:19,800
+of the models when we increase the number of relations
+
+337
+00:24:19,800 --> 00:24:23,240
+of tools in the test sets.
+
+338
+00:24:23,240 --> 00:24:28,360
+So in the third experiment, which they call
+
+339
+00:24:28,360 --> 00:24:32,240
+embodied plan generation, they use the activity programs
+
+340
+00:24:32,240 --> 00:24:37,680
+knowledge-based, which is on top of the virtual home platform.
+
+341
+00:24:37,680 --> 00:24:40,640
+This knowledge-based is comprised
+
+342
+00:24:40,640 --> 00:24:43,080
+of typical household activities.
+
+343
+00:24:43,080 --> 00:24:46,320
+So one task would look like something like, OK,
+
+344
+00:24:46,320 --> 00:24:49,520
+there's a goal, for example, a reading book or a book.
+
+345
+00:24:49,520 --> 00:24:52,040
+And a detailed instruction, for example,
+
+346
+00:24:52,040 --> 00:24:55,640
+I would go lie down in my bed and open the book
+
+347
+00:24:55,640 --> 00:24:57,520
+and start reading.
+
+348
+00:24:57,520 --> 00:25:01,360
+And also the description of the environment.
+
+349
+00:25:01,360 --> 00:25:04,880
+One part of that description is the initial state of the agent.
+
+350
+00:25:04,880 --> 00:25:10,760
+And another part is the object list in the environment.
+
+351
+00:25:10,760 --> 00:25:13,760
+For example, they say, I am in office home,
+
+352
+00:25:13,760 --> 00:25:17,600
+and the objects I can manipulate are mail, freezer,
+
+353
+00:25:17,600 --> 00:25:20,560
+television, and stuff.
+
+354
+00:25:20,560 --> 00:25:24,960
+And the model is expected to output an executable plan,
+
+355
+00:25:24,960 --> 00:25:29,400
+which is basically an ordered list of verb object instructions.
+
+356
+00:25:29,400 --> 00:25:30,720
+For example, find novel.
+
+357
+00:25:30,720 --> 00:25:47,440
+OK, for comparison, they used three different baselines.
+
+358
+00:25:47,440 --> 00:25:51,600
+First, they only used a basic LLN, which
+
+359
+00:25:51,640 --> 00:25:55,680
+is a LLN model, 13 billion parameters.
+
+360
+00:25:55,680 --> 00:26:01,640
+And simply they use in-context learning.
+
+361
+00:26:01,640 --> 00:26:04,960
+They put the action list, three demo plans,
+
+362
+00:26:04,960 --> 00:26:07,360
+a new task with the goal, detailed description,
+
+363
+00:26:07,360 --> 00:26:10,640
+and the environment description.
+
+364
+00:26:10,640 --> 00:26:16,000
+In the third, sorry, in the second variation,
+
+365
+00:26:16,000 --> 00:26:19,160
+they used translation on top of that.
+
+366
+00:26:19,200 --> 00:26:22,440
+This idea is that, OK, in some scenarios,
+
+367
+00:26:22,440 --> 00:26:27,920
+the model would probably generate some tools
+
+368
+00:26:27,920 --> 00:26:30,480
+that are objects that are not actually
+
+369
+00:26:30,480 --> 00:26:33,240
+grounded in the environment.
+
+370
+00:26:33,240 --> 00:26:36,600
+Now we can use a translation model
+
+371
+00:26:36,600 --> 00:26:43,240
+to translate the outputs from the LLN
+
+372
+00:26:43,240 --> 00:26:49,680
+to the actual grounded facts, the objects in the environment.
+
+373
+00:26:49,680 --> 00:26:53,160
+They use sentence for virtual large to do this.
+
+374
+00:26:53,160 --> 00:26:57,880
+And in the third step, on top of those previous steps,
+
+375
+00:26:57,880 --> 00:27:00,480
+they used grounded decoding, which actually
+
+376
+00:27:00,480 --> 00:27:04,280
+incorporates the grounding at the decoding level.
+
+377
+00:27:08,000 --> 00:27:10,000
+So we can see that translation actually
+
+378
+00:27:10,120 --> 00:27:13,880
+helps solving some shallow grounding problems,
+
+379
+00:27:13,880 --> 00:27:19,400
+but grounded decoding further improves that.
+
+380
+00:27:19,400 --> 00:27:22,560
+As you can see, Toolken GPT approach
+
+381
+00:27:22,560 --> 00:27:27,800
+significantly improves the LLN's performance.
+
+382
+00:27:27,800 --> 00:27:32,280
+Here in this table, the grounding column
+
+383
+00:27:32,280 --> 00:27:36,280
+shows a proportion of the outputs that are actually
+
+384
+00:27:36,280 --> 00:27:39,480
+valid and grounded to the environment.
+
+385
+00:27:39,520 --> 00:27:42,800
+Executables are the actual actions
+
+386
+00:27:42,800 --> 00:27:45,840
+that are valid and could be executed.
+
+387
+00:27:45,840 --> 00:27:52,080
+Success are the outputs that actually end
+
+388
+00:27:52,080 --> 00:27:57,040
+with the correct and successful state.
+
+389
+00:27:57,040 --> 00:28:00,720
+And success R is the relaxed version of success
+
+390
+00:28:00,720 --> 00:28:07,080
+that it doesn't necessarily finish or end with the proper
+
+391
+00:28:07,080 --> 00:28:10,760
+state, but at some point in the past,
+
+392
+00:28:10,760 --> 00:28:15,720
+it actually saw the output at the successful state.
+
+393
+00:28:18,360 --> 00:28:20,960
+So in terms of computational cost,
+
+394
+00:28:20,960 --> 00:28:23,760
+we can see that fine tuning with Laura
+
+395
+00:28:23,760 --> 00:28:31,680
+is way more costly, but the actual performance
+
+396
+00:28:31,680 --> 00:28:33,560
+is a little bit better.
+
+397
+00:28:33,560 --> 00:28:38,120
+And to do this competition cost comparison,
+
+398
+00:28:38,120 --> 00:28:43,640
+they used the LAMA 7 billion parameters.
+
+399
+00:28:43,640 --> 00:28:46,080
+In another evaluation study, they
+
+400
+00:28:46,080 --> 00:28:53,360
+showed that they compared the pure react method with a,
+
+401
+00:28:53,360 --> 00:28:58,600
+and they also added the tool mode, and they compared that,
+
+402
+00:28:58,600 --> 00:29:03,960
+and they saw that just adding this tool mode actually
+
+403
+00:29:03,960 --> 00:29:07,880
+improves the performance of vanilla react
+
+404
+00:29:07,880 --> 00:29:10,480
+pretty significantly.
+
+405
+00:29:10,480 --> 00:29:16,680
+So the final thing about this paper
+
+406
+00:29:16,680 --> 00:29:22,320
+is that there are several decisions in terms of training
+
+407
+00:29:22,320 --> 00:29:23,000
+data.
+
+408
+00:29:23,000 --> 00:29:26,800
+They wanted to see what is the effect of synthetic data
+
+409
+00:29:27,240 --> 00:29:31,880
+supervised data, and they chose different portions
+
+410
+00:29:31,880 --> 00:29:36,040
+of training examples from Camel, and they saw that using
+
+411
+00:29:36,040 --> 00:29:40,480
+supervised data actually outperforms
+
+412
+00:29:40,480 --> 00:29:46,520
+the synthetic data with a very high margin.
+
+413
+00:29:46,520 --> 00:29:50,360
+OK, now we are going to talk about the COG agent paper.
+
+414
+00:29:50,360 --> 00:29:51,880
+The core contribution of this paper
+
+415
+00:29:51,880 --> 00:29:55,880
+is a BLM that is specializing in agree understanding and planning,
+
+416
+00:29:55,920 --> 00:30:01,200
+and also have the general cross modality abilities.
+
+417
+00:30:01,200 --> 00:30:04,360
+There are other contributions for this paper as well,
+
+418
+00:30:04,360 --> 00:30:08,360
+like a larger scale, they released a larger scale
+
+419
+00:30:08,360 --> 00:30:13,400
+annotated data set about graph theory interfaces and OCR,
+
+420
+00:30:13,400 --> 00:30:17,200
+and they also made a new separate model
+
+421
+00:30:17,200 --> 00:30:22,920
+to extract features from a high-res UI interface.
+
+422
+00:30:22,920 --> 00:30:25,600
+The architecture of COG agent is as follows.
+
+423
+00:30:25,600 --> 00:30:29,120
+The core we have COG BLM from previous papers,
+
+424
+00:30:29,120 --> 00:30:32,560
+which has 17 billion parameters.
+
+425
+00:30:32,560 --> 00:30:37,360
+It also comes with a low-res image encoder
+
+426
+00:30:37,360 --> 00:30:45,520
+that can encode very coarse-grained pixels,
+
+427
+00:30:45,520 --> 00:30:51,720
+and on top of this is a multi-layer adapter
+
+428
+00:30:51,720 --> 00:30:56,520
+that can transform the output of the low-res encoder
+
+429
+00:30:56,520 --> 00:31:00,040
+to the feature space of the BLM.
+
+430
+00:31:00,040 --> 00:31:03,200
+And one of the main contributions of this paper
+
+431
+00:31:03,200 --> 00:31:07,440
+is a high-res image encoder that you can see is injected
+
+432
+00:31:07,440 --> 00:31:10,880
+using the cross-attention mechanism at each layer
+
+433
+00:31:10,880 --> 00:31:14,440
+to the BLM decoder.
+
+434
+00:31:14,440 --> 00:31:20,120
+So for pre-training this model, they
+
+435
+00:31:20,160 --> 00:31:23,560
+focus on three different aspects.
+
+436
+00:31:23,560 --> 00:31:27,040
+First is the capability to recognize text of various sizes
+
+437
+00:31:27,040 --> 00:31:30,120
+or indications on fonts in high-res images.
+
+438
+00:31:30,120 --> 00:31:32,120
+Second one is the grounding ability of text
+
+439
+00:31:32,120 --> 00:31:33,520
+on objects in the image.
+
+440
+00:31:33,520 --> 00:31:36,840
+And the third one is the special understanding capability
+
+441
+00:31:36,840 --> 00:31:39,160
+for GUI mysteries such as webpages.
+
+442
+00:31:39,160 --> 00:31:41,960
+And we're going to go through them one by one.
+
+443
+00:31:41,960 --> 00:31:43,760
+The first one is the texture organization,
+
+444
+00:31:43,760 --> 00:31:47,680
+and the data that they use is synthetic renderings
+
+445
+00:31:47,680 --> 00:31:53,560
+of text from language pre-training data set.
+
+446
+00:31:53,560 --> 00:32:00,200
+They basically sample text from the Layon2B data set
+
+447
+00:32:00,200 --> 00:32:03,920
+and used various font sizes and color
+
+448
+00:32:03,920 --> 00:32:06,840
+door intentions, different backgrounds
+
+449
+00:32:06,840 --> 00:32:11,680
+to render different types of text-rich images.
+
+450
+00:32:11,680 --> 00:32:14,000
+And the second data that they use
+
+451
+00:32:14,000 --> 00:32:16,960
+is an OCR optical character recognition
+
+452
+00:32:16,960 --> 00:32:20,560
+of natural images.
+
+453
+00:32:20,560 --> 00:32:25,600
+They extracted these images from Kaio and Layon2B
+
+454
+00:32:25,600 --> 00:32:29,760
+with the extracted text with the course
+
+455
+00:32:29,760 --> 00:32:31,840
+of the bounding boxes around.
+
+456
+00:32:31,840 --> 00:32:34,440
+And the third one is the academy documents
+
+457
+00:32:34,440 --> 00:32:38,720
+from archive, which is basically a data set of image text pairs.
+
+458
+00:32:39,600 --> 00:32:46,200
+The second category of the data or the focus
+
+459
+00:32:46,200 --> 00:32:48,160
+of the pre-training is a visual grounding,
+
+460
+00:32:48,160 --> 00:32:54,360
+and they used image caption pairs from the Layon115 million
+
+461
+00:32:54,360 --> 00:32:57,760
+data set, which actually has the bounding boxes
+
+462
+00:32:57,760 --> 00:33:00,760
+of the entities in the caption.
+
+463
+00:33:00,760 --> 00:33:05,400
+So the last one is the GUI imagery category
+
+464
+00:33:06,160 --> 00:33:08,480
+category for pre-training.
+
+465
+00:33:08,480 --> 00:33:11,880
+Again, here we have two different subsets of data.
+
+466
+00:33:11,880 --> 00:33:14,880
+One is the GUI-referring expression generation,
+
+467
+00:33:14,880 --> 00:33:17,320
+and the second one is the GUI-referring expression
+
+468
+00:33:17,320 --> 00:33:18,560
+comprehension.
+
+469
+00:33:18,560 --> 00:33:20,560
+On the generation, the model is basically
+
+470
+00:33:20,560 --> 00:33:25,920
+tasked with generating HTML code for DOM elements
+
+471
+00:33:25,920 --> 00:33:29,360
+based in the one specific area of the screenshot.
+
+472
+00:33:29,360 --> 00:33:34,440
+And on the comprehension task, the data task model
+
+473
+00:33:34,440 --> 00:33:42,120
+to create the bounding box given a DOM element.
+
+474
+00:33:42,120 --> 00:33:49,520
+They actually created a data set of 400,000 web pages
+
+475
+00:33:49,520 --> 00:33:52,680
+using this structure.
+
+476
+00:33:52,680 --> 00:33:57,960
+And they pre-trained CogAgent for 60,000 iterations.
+
+477
+00:33:57,960 --> 00:34:00,440
+And on top of that, they further fine-tuned it
+
+478
+00:34:00,440 --> 00:34:04,040
+on several different diverse tasks.
+
+479
+00:34:04,600 --> 00:34:08,000
+The first one is that they collected a lot of screenshots
+
+480
+00:34:08,000 --> 00:34:12,680
+of phones and computer with annotated screen elements
+
+481
+00:34:12,680 --> 00:34:15,520
+and potential tasks and methods of operation.
+
+482
+00:34:15,520 --> 00:34:18,800
+And they also used two famous data sets, Mind2Web
+
+483
+00:34:18,800 --> 00:34:23,240
+and Android in the world, which is more focused on the web
+
+484
+00:34:23,240 --> 00:34:27,320
+and Android, respectively.
+
+485
+00:34:27,320 --> 00:34:31,240
+And they also used some other miscellaneous VQA data sets
+
+486
+00:34:31,240 --> 00:34:33,240
+to find in their model.
+
+487
+00:34:33,240 --> 00:34:37,080
+So on the experiments, we have three categories
+
+488
+00:34:37,080 --> 00:34:38,240
+of experiments.
+
+489
+00:34:38,240 --> 00:34:42,080
+The first experiment is on the foundational visual
+
+490
+00:34:42,080 --> 00:34:43,320
+understanding.
+
+491
+00:34:43,320 --> 00:34:46,680
+They just wanted to make sure that the CogAgent is
+
+492
+00:34:46,680 --> 00:34:50,960
+capable of basic understanding or general understanding,
+
+493
+00:34:50,960 --> 00:34:53,800
+visual understanding in the domain of VQA.
+
+494
+00:34:53,800 --> 00:34:56,000
+They used some general VQA data sets,
+
+495
+00:34:56,000 --> 00:34:58,520
+such as VQAV2 and OKVQA.
+
+496
+00:34:58,560 --> 00:35:05,680
+And also, they used a bunch of text rich VQA data sets
+
+497
+00:35:05,680 --> 00:35:08,960
+to fine-tune and also test their model.
+
+498
+00:35:08,960 --> 00:35:14,320
+And as you can see, CogAgent reaches a state of the art
+
+499
+00:35:14,320 --> 00:35:19,040
+or very near to the state of the art in almost all of them.
+
+500
+00:35:19,040 --> 00:35:22,000
+They also conducted a zero shot test of their model
+
+501
+00:35:22,000 --> 00:35:24,920
+on two challenging out-of-distribution data
+
+502
+00:35:24,920 --> 00:35:27,720
+sets, so they didn't train or fine-tune their model
+
+503
+00:35:27,720 --> 00:35:29,600
+on this data data set.
+
+504
+00:35:29,600 --> 00:35:36,480
+And still, they saw that the generalizability
+
+505
+00:35:36,480 --> 00:35:38,800
+of the CogAgent is remarkable.
+
+506
+00:35:41,400 --> 00:35:45,120
+So on the second experiment, we have a GUI agent
+
+507
+00:35:45,120 --> 00:35:47,760
+on the computer interfaces or actually web interfaces.
+
+508
+00:35:47,760 --> 00:35:51,080
+The data set they used here mainly is a mine-to-web data
+
+509
+00:35:51,080 --> 00:35:57,040
+set, which is the data set that has more than 2,000
+
+510
+00:35:57,400 --> 00:36:04,000
+tasks from 137 websites across 31 different domains.
+
+511
+00:36:04,000 --> 00:36:08,000
+And each entry in the data set is comprised
+
+512
+00:36:08,000 --> 00:36:11,160
+of a high-level task description, a sequence of actions,
+
+513
+00:36:11,160 --> 00:36:14,120
+and a web page snapshot in a veritable format.
+
+514
+00:36:14,120 --> 00:36:16,720
+And given these things, the model should
+
+515
+00:36:16,720 --> 00:36:20,240
+predict subsequent or the next action.
+
+516
+00:36:21,240 --> 00:36:27,120
+And they are fine-tuned their model on the mining set
+
+517
+00:36:27,120 --> 00:36:33,240
+and evaluated on the three different out-of-domain subsets,
+
+518
+00:36:33,240 --> 00:36:36,520
+the cross-website, cross-domain, and cross-task.
+
+519
+00:36:36,520 --> 00:36:39,000
+As you can see, again, the CogAgent
+
+520
+00:36:39,000 --> 00:36:46,000
+can beat a simple famous model.
+
+521
+00:36:46,000 --> 00:36:49,800
+So there's LOMA2 or GBT4 in these scenarios.
+
+522
+00:36:53,320 --> 00:36:56,720
+The last experiment is on smart-mine interfaces,
+
+523
+00:36:56,720 --> 00:36:58,840
+and they use Android in the wild.
+
+524
+00:36:58,840 --> 00:37:02,800
+As their data set, Android in the wild
+
+525
+00:37:02,800 --> 00:37:08,920
+has more than 700,000 operation episodes,
+
+526
+00:37:08,920 --> 00:37:12,800
+covering more than 3,000 task instructions
+
+527
+00:37:12,800 --> 00:37:17,280
+for four different Android versions and 8 device styles,
+
+528
+00:37:17,280 --> 00:37:20,040
+which they have different sizes.
+
+529
+00:37:20,040 --> 00:37:24,000
+So again, similar to the previous one,
+
+530
+00:37:24,000 --> 00:37:25,760
+each episode in this data set consists
+
+531
+00:37:25,760 --> 00:37:28,040
+of a goal description in natural language,
+
+532
+00:37:28,040 --> 00:37:29,600
+followed by a sequence of actions
+
+533
+00:37:29,600 --> 00:37:31,880
+and corresponding screenshots.
+
+534
+00:37:31,880 --> 00:37:35,560
+And the task is to predict the next action based
+
+535
+00:37:35,560 --> 00:37:40,160
+on the given data, mainly based on the given goal.
+
+536
+00:37:40,160 --> 00:37:44,280
+So again, we see that CogAgent can reach a set of the art
+
+537
+00:37:44,280 --> 00:37:51,760
+and beat the set of the order in most of the sections
+
+538
+00:37:51,760 --> 00:37:55,560
+of this data set.
+
+539
+00:37:55,560 --> 00:38:00,440
+They've done a bunch of ablation studies.
+
+540
+00:38:00,440 --> 00:38:02,920
+So the first one is on the they wanted
+
+541
+00:38:02,920 --> 00:38:07,440
+to actually empirically verify the performance
+
+542
+00:38:07,440 --> 00:38:10,400
+gain of the cross-attention mechanism
+
+543
+00:38:10,400 --> 00:38:13,920
+for encoding high-res images.
+
+544
+00:38:13,920 --> 00:38:16,480
+And we see that computationally speaking,
+
+545
+00:38:16,480 --> 00:38:22,800
+when if you just feed the original model
+
+546
+00:38:22,800 --> 00:38:25,640
+without that cross-attention with a very high-res image,
+
+547
+00:38:25,640 --> 00:38:31,240
+the cost is going to go very, very higher.
+
+548
+00:38:31,240 --> 00:38:39,160
+They also did compare with the different kinds of settings
+
+549
+00:38:39,160 --> 00:38:43,600
+of using the high-res module and not using the high-res module
+
+550
+00:38:43,600 --> 00:38:45,280
+and with different input sizes.
+
+551
+00:38:45,280 --> 00:38:49,560
+And as you can see, the cross-module idea actually
+
+552
+00:38:49,560 --> 00:38:53,560
+enables us to perform way better with way lower cost.
+
+553
+00:38:57,080 --> 00:38:59,120
+And in another ablation study, they
+
+554
+00:38:59,120 --> 00:39:04,080
+wanted to check the effect of the pre-trained data.
+
+555
+00:39:04,080 --> 00:39:07,800
+They, in a sequence, first used the image caption data,
+
+556
+00:39:07,800 --> 00:39:11,160
+then they added the OCR data, and then added the GUI
+
+557
+00:39:11,160 --> 00:39:12,000
+grounding data.
+
+558
+00:39:12,000 --> 00:39:17,520
+And as we can see, specifically on the mind-to-wet column,
+
+559
+00:39:17,520 --> 00:39:20,440
+the beveling grounding data have a significant impact
+
+560
+00:39:20,440 --> 00:39:21,440
+on this data set.
+
+561
+00:39:21,440 --> 00:39:25,680
+So it shows the importance of constructing domain-specific
+
+562
+00:39:25,680 --> 00:39:27,800
+pre-trained data.
+
+563
+00:39:27,800 --> 00:39:31,640
+Then we want to train GUI agents.
+
+564
+00:39:31,640 --> 00:39:34,480
+So in summary, you have seen a tool
+
+565
+00:39:34,480 --> 00:39:39,560
+former, which is a general idea of finding LLMs with tool use.
+
+566
+00:39:39,560 --> 00:39:43,440
+ART, which is a framework for problem decomposition.
+
+567
+00:39:43,440 --> 00:39:47,400
+AgentBench, which is LLM as agent benchmark.
+
+568
+00:39:47,400 --> 00:39:53,600
+We saw the tool LLM paper, which gave us the idea of how
+
+569
+00:39:53,600 --> 00:39:56,960
+we can modify LLMs to use multiple APIs with enhanced
+
+570
+00:39:57,000 --> 00:39:58,120
+reasoning.
+
+571
+00:39:58,120 --> 00:40:01,880
+Obviously, the tool can GPT paper that
+
+572
+00:40:01,880 --> 00:40:05,360
+gave us the idea how to augment LLMs with a massive number
+
+573
+00:40:05,360 --> 00:40:06,240
+of tools.
+
+574
+00:40:06,240 --> 00:40:09,800
+And lastly, we saw a cog agent that gave us the idea
+
+575
+00:40:09,800 --> 00:40:16,000
+how we can create a LLM that can understand higher GUI
+
+576
+00:40:16,000 --> 00:40:20,280
+interfaces and the reason about them and plan.
+

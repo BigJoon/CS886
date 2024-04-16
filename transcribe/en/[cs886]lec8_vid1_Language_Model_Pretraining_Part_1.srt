@@ -1,0 +1,1608 @@
+1
+00:00:00,000 --> 00:00:02,000
+Hi, now let's start.
+
+2
+00:00:02,000 --> 00:00:06,000
+Today we are going to introduce those famous pre-trained models.
+
+3
+00:00:06,000 --> 00:00:10,000
+We will start from the question, why we need pre-training.
+
+4
+00:00:10,000 --> 00:00:14,000
+Normally, when a new task comes, we need to train a new model.
+
+5
+00:00:14,000 --> 00:00:18,000
+The drawbacks are, it is computation-expensive and consuming,
+
+6
+00:00:18,000 --> 00:00:23,000
+and it also requires a lot of storage space and annotated data.
+
+7
+00:00:23,000 --> 00:00:28,000
+There has been some solution like model compression, acceleration,
+
+8
+00:00:28,000 --> 00:00:32,000
+visual learning, which aims to solve these problems.
+
+9
+00:00:32,000 --> 00:00:37,000
+But the straightforward question is, whether we could do transfer learning?
+
+10
+00:00:37,000 --> 00:00:45,000
+So when a new task comes, they can only find part of the model with low data cost.
+
+11
+00:00:45,000 --> 00:00:50,000
+The goals for computer vision language modeling is similar.
+
+12
+00:00:50,000 --> 00:00:54,000
+The only difference is that their data modalities are different,
+
+13
+00:00:54,000 --> 00:00:58,000
+which leads to the difference in how their features are extracted.
+
+14
+00:00:58,000 --> 00:01:01,000
+It has already been widely applied.
+
+15
+00:01:01,000 --> 00:01:06,000
+We know that TITOS has absorbed many pre-trained models for computer vision,
+
+16
+00:01:06,000 --> 00:01:12,000
+like VGGFamily, ResNetFamily, InSectionFamily, MobileNetFamily, and so on.
+
+17
+00:01:12,000 --> 00:01:17,000
+These pre-trained models have already been developed and open to public since 2012,
+
+18
+00:01:17,000 --> 00:01:21,000
+as the computation in the image met gave the momentum.
+
+19
+00:01:21,000 --> 00:01:26,000
+From language modeling, the emergence of models like VIRT in 2018
+
+20
+00:01:26,000 --> 00:01:32,000
+has significantly impacted natural language processing tasks.
+
+21
+00:01:32,000 --> 00:01:37,000
+These models included here are the many models we will introduce today.
+
+22
+00:01:37,000 --> 00:01:42,000
+These models begin to emerge around 2019.
+
+23
+00:01:42,000 --> 00:01:46,000
+That was a promising year of NLP.
+
+24
+00:01:46,000 --> 00:01:49,000
+The next question is, where we can start from?
+
+25
+00:01:49,000 --> 00:01:52,000
+You know that there are many tasks in NLP.
+
+26
+00:01:52,000 --> 00:01:55,000
+Here we will provide a quick review on these tasks.
+
+27
+00:01:55,000 --> 00:02:00,000
+The first task is the complexity parsing.
+
+28
+00:02:00,000 --> 00:02:03,000
+The goal of this task is to understand the task.
+
+29
+00:02:03,000 --> 00:02:07,000
+It analyses the structure and syntax of the task,
+
+30
+00:02:07,000 --> 00:02:11,000
+breaking sentences into tree-like structures
+
+31
+00:02:11,000 --> 00:02:15,000
+to determine the dependency relationships between words.
+
+32
+00:02:15,000 --> 00:02:21,000
+These downstream applications include machine translation and question answering systems.
+
+33
+00:02:21,000 --> 00:02:28,000
+The goal of machine translation is to automatically translate tasks from one language to another.
+
+34
+00:02:28,000 --> 00:02:33,000
+The input is a source language test that needs to be translated,
+
+35
+00:02:33,000 --> 00:02:38,000
+and the output data is the translated task in the target language.
+
+36
+00:02:38,000 --> 00:02:41,000
+And the third task is the question answering.
+
+37
+00:02:41,000 --> 00:02:44,000
+Even though there are many kinds of methods for question answering,
+
+38
+00:02:44,000 --> 00:02:50,000
+the goal of question answering is to generate relevant answers to user queries
+
+39
+00:02:50,000 --> 00:02:55,000
+based on the given context or set of documents.
+
+40
+00:02:55,000 --> 00:03:01,000
+The input is a question or query and plus a context.
+
+41
+00:03:01,000 --> 00:03:08,000
+And then it will retrieve a set of documents which contains information that is relevant to the query.
+
+42
+00:03:08,000 --> 00:03:12,000
+And the output is the generated answer to the question.
+
+43
+00:03:12,000 --> 00:03:21,000
+Now, we came about the problem that if we need to train a pre-training model for a general language,
+
+44
+00:03:21,000 --> 00:03:24,000
+we need to train it on less equal amount of data.
+
+45
+00:03:24,000 --> 00:03:28,000
+However, many of these tasks are supervised tasks,
+
+46
+00:03:28,000 --> 00:03:34,000
+which requires extensive manual annotation, much like an image net.
+
+47
+00:03:34,000 --> 00:03:40,000
+Nevertheless, language data inherently possesses semantic information and coherence.
+
+48
+00:03:40,000 --> 00:03:47,000
+And we leverage these features to train an unsupervised training model.
+
+49
+00:03:47,000 --> 00:03:52,000
+Now, the researchers come out a task named the next word prediction.
+
+50
+00:03:52,000 --> 00:03:56,000
+The input of model is a sequence of tasks.
+
+51
+00:03:56,000 --> 00:03:59,000
+Then they go into the word embedding layer.
+
+52
+00:03:59,000 --> 00:04:05,000
+It lets each word in the input test to a dense vector representation.
+
+53
+00:04:05,000 --> 00:04:09,000
+Each word has a corresponding word embedding vector,
+
+54
+00:04:09,000 --> 00:04:14,000
+which captures the semantics and contextual information of the word.
+
+55
+00:04:14,000 --> 00:04:18,000
+Then they input the embedding vector into our transformer.
+
+56
+00:04:18,000 --> 00:04:23,000
+Then predicts the next word by learning patterns and context.
+
+57
+00:04:23,000 --> 00:04:27,000
+The model output is a probability distribution,
+
+58
+00:04:27,000 --> 00:04:34,000
+which represents the likelihood of each possible next word occurring in a given context.
+
+59
+00:04:34,000 --> 00:04:40,000
+The most common next word will have the highest probability in this probability distribution.
+
+60
+00:04:40,000 --> 00:04:46,000
+The next word prediction is inherently on unsupervised tasks.
+
+61
+00:04:46,000 --> 00:04:49,000
+Now coming to the word embedding layer,
+
+62
+00:04:49,000 --> 00:04:55,000
+the goal of word embedding is to map words from this great symbolic to a continuous vector space.
+
+63
+00:04:55,000 --> 00:05:01,000
+It aims to capture the semantic information on contextual relationships of words
+
+64
+00:05:01,000 --> 00:05:08,000
+so that similar words in the vector space have similar vector representation.
+
+65
+00:05:08,000 --> 00:05:14,000
+There are two traditional words embedding methods, continuous back of words and skip grand.
+
+66
+00:05:14,000 --> 00:05:20,000
+The simple goal is to predict a target word based on the surrounding words in the context.
+
+67
+00:05:20,000 --> 00:05:25,000
+The input consists of the surrounding words within a fixed size contextual,
+
+68
+00:05:25,000 --> 00:05:30,000
+typically a few words, and the output is the target word.
+
+69
+00:05:30,000 --> 00:05:36,000
+The symbol implies a shallow fit for word neural network architecture.
+
+70
+00:05:36,000 --> 00:05:41,000
+The input is the average of the word embedding vectors of the context words,
+
+71
+00:05:41,000 --> 00:05:46,000
+which is then passed through a hidden layer to predict the target word.
+
+72
+00:05:46,000 --> 00:05:55,000
+The skip grand model's objective is to predict the surrounding words in the context based on the target word.
+
+73
+00:05:55,000 --> 00:06:01,000
+The input in is the target word, and the output consists of the surrounding words.
+
+74
+00:06:01,000 --> 00:06:07,000
+And the skip grand uses a neural network architecture opposite to the symbol.
+
+75
+00:06:07,000 --> 00:06:12,000
+It maps the input to multiple outputs through a hidden layer.
+
+76
+00:06:12,000 --> 00:06:18,000
+Global vectors for word representations main goal is to learn word vector representation
+
+77
+00:06:18,000 --> 00:06:22,000
+based on global vocabulary statistics.
+
+78
+00:06:22,000 --> 00:06:28,000
+It constructs a vocabulary co-occurrence matrix with a complex window
+
+79
+00:06:28,000 --> 00:06:34,000
+and then learn the cinematic relationships between words.
+
+80
+00:06:34,000 --> 00:06:37,000
+Now we see another problem.
+
+81
+00:06:37,000 --> 00:06:46,000
+The word embedding vectors typically obtain from word to back and close aesthetic word embeddings,
+
+82
+00:06:46,000 --> 00:06:48,000
+and they are one-to-one projection.
+
+83
+00:06:48,000 --> 00:06:54,000
+Meaning each word has a fixed vector representation without considering context.
+
+84
+00:06:54,000 --> 00:07:03,000
+That means the usage of the learned embedding model is we can retrieve the embeddings for each word when we call the embedding layer.
+
+85
+00:07:03,000 --> 00:07:08,000
+But the problem is many words have polysomy issues.
+
+86
+00:07:08,000 --> 00:07:12,000
+A single word can have different meanings in different sentences.
+
+87
+00:07:12,000 --> 00:07:21,000
+For example, in the case of words, Python and Pandas, they can both represent the nearby PI leaves
+
+88
+00:07:21,000 --> 00:07:24,000
+and also refer to a kind of animal.
+
+89
+00:07:24,000 --> 00:07:28,000
+The way to solve this problem is the contextualized word embedding.
+
+90
+00:07:28,000 --> 00:07:35,000
+The primary goal of contextualized word embedding is to capture the schematic variations
+
+91
+00:07:35,000 --> 00:07:38,000
+and polysomy of words in different contexts.
+
+92
+00:07:38,000 --> 00:07:46,000
+The model uses all preceding words of the target word to predict the target word.
+
+93
+00:07:46,000 --> 00:07:48,000
+And intuition comes out.
+
+94
+00:07:48,000 --> 00:07:54,000
+Why do we not incorporate right content into input to predict the target word?
+
+95
+00:07:54,000 --> 00:08:00,000
+By incorporating more information in this manner, we can potentially enhance prediction accuracy.
+
+96
+00:08:00,000 --> 00:08:05,000
+However, it's crucial to be mindful of two important points.
+
+97
+00:08:05,000 --> 00:08:08,000
+The first concern is the issue of data leakage.
+
+98
+00:08:08,000 --> 00:08:13,000
+We cannot include the predicted word as input.
+
+99
+00:08:13,000 --> 00:08:16,000
+The second is the sequence structure.
+
+100
+00:08:16,000 --> 00:08:21,000
+We cannot mess it as the sequence order is important and contains some information.
+
+101
+00:08:21,000 --> 00:08:26,000
+So researchers developed bidirectional language models to solve this problem.
+
+102
+00:08:26,000 --> 00:08:30,000
+Here, the architecture is a little different than birth.
+
+103
+00:08:30,000 --> 00:08:34,000
+It consists of left to right and right to left to modules.
+
+104
+00:08:34,000 --> 00:08:39,000
+Not the same as birth consists of one whole module.
+
+105
+00:08:39,000 --> 00:08:43,000
+ELMO is the abbreviation of embeddings from language model.
+
+106
+00:08:43,000 --> 00:08:47,000
+The bidirectional language model is the foundation for ELMO.
+
+107
+00:08:47,000 --> 00:08:50,000
+The input is a sequence of tokens.
+
+108
+00:08:50,000 --> 00:08:56,000
+The language model learns to predict the profitability of next token given a history.
+
+109
+00:08:56,000 --> 00:09:02,000
+In the forward path, the history contains words before the target token.
+
+110
+00:09:02,000 --> 00:09:07,000
+The predictions in both directions are modeled by multi-layer LSTMs with hidden states.
+
+111
+00:09:07,000 --> 00:09:12,000
+Then these two kinds of hidden states goes into the sub-max localization.
+
+112
+00:09:12,000 --> 00:09:17,000
+The output of sub-max layer is the probabilities of word prediction.
+
+113
+00:09:17,000 --> 00:09:21,000
+The model is trained to minimize the negative log-likely hood,
+
+114
+00:09:21,000 --> 00:09:27,000
+which means to maximize the log-likely hood for true words in both directions.
+
+115
+00:09:27,000 --> 00:09:34,000
+Here, the parameter stands for LSTM, embedding layers, and sub-max layers.
+
+116
+00:09:34,000 --> 00:09:36,000
+We still have a question.
+
+117
+00:09:36,000 --> 00:09:42,000
+If we train on a supervised test, how it catches the representation
+
+118
+00:09:42,000 --> 00:09:47,000
+and will these features be effective enough for the downstream tasks?
+
+119
+00:09:47,000 --> 00:09:52,000
+So let's check the representation catch by ELMO training.
+
+120
+00:09:52,000 --> 00:09:58,000
+In ELMO, different layers of bi-LN produces different hidden states,
+
+121
+00:09:58,000 --> 00:10:02,000
+each containing different types of information about the test.
+
+122
+00:10:02,000 --> 00:10:06,000
+To utilize this information for downstream-specific tasks,
+
+123
+00:10:06,000 --> 00:10:14,000
+ELMO learns a task-specific linear combination that aggregates all layers of the hidden states.
+
+124
+00:10:14,000 --> 00:10:19,000
+Here, gamma and s are different types of hidden states.
+
+125
+00:10:19,000 --> 00:10:27,000
+Here, gamma and s are the parameters learned during downstream tasks on tuning.
+
+126
+00:10:27,000 --> 00:10:33,000
+Gamma is a scaling vector which is introduced to correct the mismatch
+
+127
+00:10:33,000 --> 00:10:41,000
+between the distribution of bi-LN hidden states and the distribution of task-specific representations.
+
+128
+00:10:42,000 --> 00:10:44,000
+s is the linear coefficient.
+
+129
+00:10:44,000 --> 00:10:53,000
+Learned for each end task and normalized by the sub-max to keep the constraint a sum to one.
+
+130
+00:10:53,000 --> 00:10:58,000
+The hidden representation learned by top layer in bi-LN module
+
+131
+00:10:58,000 --> 00:11:03,000
+contains much better representation for cinematic tasks.
+
+132
+00:11:03,000 --> 00:11:08,000
+This task enthuses the meaning of a word given a context.
+
+133
+00:11:08,000 --> 00:11:13,000
+The one learned by first layer is better for same task.
+
+134
+00:11:13,000 --> 00:11:20,000
+It infers a grammatical role of a word in one sentence.
+
+135
+00:11:20,000 --> 00:11:24,000
+Who knows, it's that after proving the capability of ELMO,
+
+136
+00:11:24,000 --> 00:11:28,000
+their researchers can stack information from different layers
+
+137
+00:11:28,000 --> 00:11:34,000
+together to help to improve variety of LLP tasks.
+
+138
+00:11:34,000 --> 00:11:38,000
+Then the question is, we have obtained the model.
+
+139
+00:11:38,000 --> 00:11:41,000
+Then how to apply to the downstream task?
+
+140
+00:11:41,000 --> 00:11:49,000
+Take those output embeddings and feed them into whatever architecture we want to use for specific tasks.
+
+141
+00:11:49,000 --> 00:11:51,000
+This is the first choice.
+
+142
+00:11:51,000 --> 00:12:00,000
+And the second choice is that one can update weights for their downstream specific network
+
+143
+00:12:00,000 --> 00:12:04,000
+but keep the ELMO parameters frozen.
+
+144
+00:12:04,000 --> 00:12:10,000
+The third one is that it depends on the performance.
+
+145
+00:12:10,000 --> 00:12:18,000
+If the performance is not good, then one might choose to find the whole model.
+
+146
+00:12:18,000 --> 00:12:23,000
+Here we can see massive improvements across six benchmark data sets.
+
+147
+00:12:23,000 --> 00:12:33,000
+The question answering and textual entitlement and so on.
+
+148
+00:12:33,000 --> 00:12:38,000
+We now answer the question, whether it solves the core problem of polysomy.
+
+149
+00:12:38,000 --> 00:12:42,000
+Let's take a look at the contrasting examples provided in the paper.
+
+150
+00:12:42,000 --> 00:12:46,000
+If we were to use the original globe word embeddings,
+
+151
+00:12:46,000 --> 00:12:50,000
+it based solely on the words embedding in space.
+
+152
+00:12:50,000 --> 00:12:53,000
+We would get many similar problems.
+
+153
+00:12:53,000 --> 00:12:59,000
+Not only including the core polysomy of play, but also varieties of installations of play.
+
+154
+00:12:59,000 --> 00:13:07,000
+However, if we were to use ELMO, it would search for genetically similar elements of play in some contexts.
+
+155
+00:13:07,000 --> 00:13:17,000
+For example, if it refers to the sparse game or stage performance, ELMO would only find the play with the same meaning.
+
+156
+00:13:17,000 --> 00:13:20,000
+However, ELMO contains some drawbacks.
+
+157
+00:13:20,000 --> 00:13:24,000
+It easily lists LSTN instead of transformer.
+
+158
+00:13:24,000 --> 00:13:31,000
+It has to be claimed that the transformer has better feature extraction capability than LSTN.
+
+159
+00:13:31,000 --> 00:13:35,000
+At that time, the transformer was actually proposed.
+
+160
+00:13:35,000 --> 00:13:47,000
+Someone claimed that if ELMO used transformer instead of LSTN, it might achieve better performance.
+
+161
+00:13:47,000 --> 00:13:52,000
+The next question is that, is ELMO enough as a pre-trained model?
+
+162
+00:13:52,000 --> 00:14:02,000
+Whether we just stick to ELMO as pre-trained model and leave the improving place for downstream tasks and their model training?
+
+163
+00:14:02,000 --> 00:14:07,000
+So, why we still pursue pre-training models?
+
+164
+00:14:07,000 --> 00:14:10,000
+This is an image from the superglue paper.
+
+165
+00:14:10,000 --> 00:14:20,000
+The main point of this image is to illustrate how much large language models underperform compared to elements underglue dataset.
+
+166
+00:14:20,000 --> 00:14:22,000
+Glue dataset is a benchmark.
+
+167
+00:14:22,000 --> 00:14:27,000
+It collects of diverse natural language understanding tasks.
+
+168
+00:14:27,000 --> 00:14:32,000
+These tasks are used to evaluate the performance of NLP models.
+
+169
+00:14:32,000 --> 00:14:36,000
+These tasks include the tasks we just mentioned for ELMO,
+
+170
+00:14:36,000 --> 00:14:44,000
+a sentiment classification, text matching, question pairing matching, and so on.
+
+171
+00:14:44,000 --> 00:14:47,000
+Each task has its own training and task being set,
+
+172
+00:14:47,000 --> 00:14:54,000
+so researchers can compare the first web capability of their models.
+
+173
+00:14:54,000 --> 00:14:58,000
+Here, each column stands for future language model.
+
+174
+00:14:58,000 --> 00:15:04,000
+Each point stands for the performance on this model, one specific task.
+
+175
+00:15:04,000 --> 00:15:08,000
+And the blue dotted line is the average of this model.
+
+176
+00:15:08,000 --> 00:15:12,000
+While the black line stands for the human performance.
+
+177
+00:15:12,000 --> 00:15:15,000
+So, the answer of our question is,
+
+178
+00:15:15,000 --> 00:15:21,000
+the initial ELMO model is far from reaching the level of human understanding of language task.
+
+179
+00:15:21,000 --> 00:15:28,000
+This is why researchers need to continue their efforts in pre-training language models.
+
+180
+00:15:28,000 --> 00:15:31,000
+We know that there are two earnings.
+
+181
+00:15:31,000 --> 00:15:36,000
+The first one developed by Baidu is enhanced representation through knowledge integration.
+
+182
+00:15:36,000 --> 00:15:40,000
+There inside is the random masking invert good enough.
+
+183
+00:15:40,000 --> 00:15:46,000
+We know that there exist some phrases where several words together represent meaning.
+
+184
+00:15:46,000 --> 00:15:53,000
+The strategy of granting masking can disrupt the integrity of phrases or words combinations.
+
+185
+00:15:53,000 --> 00:15:57,000
+Another problem is the generalization capability.
+
+186
+00:15:57,000 --> 00:16:01,000
+For example, previous, the model only see the Apple watch.
+
+187
+00:16:01,000 --> 00:16:08,000
+Now, as Apple has released Apple Vision Pro, can the model recognize it as a product of Apple?
+
+188
+00:16:08,000 --> 00:16:12,000
+Or it can generate embedding stands for these phrases,
+
+189
+00:16:12,000 --> 00:16:17,000
+so that embedding closes to other Apple products in embedding space.
+
+190
+00:16:17,000 --> 00:16:27,000
+So, they proposed whole word masking in time to mask entire words as units maintained the interpreting.
+
+191
+00:16:27,000 --> 00:16:32,000
+Then the first question is, to which level they need to mask?
+
+192
+00:16:32,000 --> 00:16:36,000
+There are two levels, face level and entity level.
+
+193
+00:16:36,000 --> 00:16:46,000
+For example, in face level, it will mask something like a series or they will mask a proportion of phrases in a sentence.
+
+194
+00:16:46,000 --> 00:16:56,000
+In entity level, it will mask JK Rowling, so they will mask out some name entities such as personal names, organization names, product names.
+
+195
+00:16:56,000 --> 00:17:03,000
+Comparing to basic level, the basic level randomly masks out one Chinese character in each word.
+
+196
+00:17:03,000 --> 00:17:05,000
+Then more questions generated.
+
+197
+00:17:05,000 --> 00:17:14,000
+Firstly, since this is an unsupervised learning, how did they recognize the entity and phrases to mask?
+
+198
+00:17:14,000 --> 00:17:22,000
+What we concern is whether they include other supervised information, whether they need extra information.
+
+199
+00:17:22,000 --> 00:17:30,000
+They use automatic part of speech tagging tool and name entity recognition tool like spacing,
+
+200
+00:17:30,000 --> 00:17:39,000
+well, JK, stand for NLP to identify the phrases and entity, so they can avoid human annotation.
+
+201
+00:17:39,000 --> 00:17:44,000
+The second question is, what is the relation between two levels?
+
+202
+00:17:44,000 --> 00:17:55,000
+The answer is, these three levels are masked unsequentially, first masked in basic level, then entity level and then phrase level,
+
+203
+00:17:55,000 --> 00:17:59,000
+so the final masked input includes all kinds of masks.
+
+204
+00:17:59,000 --> 00:18:02,000
+Lastly, how did they label the output?
+
+205
+00:18:02,000 --> 00:18:09,000
+Since it is contextual learning, the continuous mask of words won't affect training people.
+
+206
+00:18:09,000 --> 00:18:13,000
+The input output on that is just the same as birds.
+
+207
+00:18:13,000 --> 00:18:22,000
+For the architecture, learning is not a layer transformer as a basic encoder, just like what Judy and Bert did.
+
+208
+00:18:22,000 --> 00:18:33,000
+Learning also incorporates conversation data into training data, finally focusing on two aspects, reference relationships and cinematic consistency.
+
+209
+00:18:33,000 --> 00:18:41,000
+The motivation here is, for example, if we mask the words in the red line and only train on the last two sentences,
+
+210
+00:18:41,000 --> 00:18:44,000
+we won't know they present for laptops.
+
+211
+00:18:44,000 --> 00:18:49,000
+We also don't know what user is picking and buying.
+
+212
+00:18:49,000 --> 00:19:00,000
+If just give last two sentences to the model and fill in the blanks, it may directly output to buy a computer.
+
+213
+00:19:00,000 --> 00:19:02,000
+Let's check the performance.
+
+214
+00:19:02,000 --> 00:19:09,000
+It shows that it improves a little bit on this NLP task compared to birds.
+
+215
+00:19:09,000 --> 00:19:17,000
+Many of these tasks are for cross mingle because in Chinese, they always use multiple words.
+
+216
+00:19:17,000 --> 00:19:21,000
+We just take a glance because this paper is not our target.
+
+217
+00:19:21,000 --> 00:19:27,000
+This paper just had the same abbreviation with another earning.
+
+218
+00:19:27,000 --> 00:19:30,000
+Now, we consider another problem.
+
+219
+00:19:30,000 --> 00:19:37,000
+That for most current pre-training language models, they require a lot of computation resources.
+
+220
+00:19:37,000 --> 00:19:39,000
+How can we reduce the cost?
+
+221
+00:19:39,000 --> 00:19:50,000
+As we have mentioned, others might think about the data perspective, use future learning or know the perspective like model compression.
+
+222
+00:19:50,000 --> 00:19:54,000
+But currently, we are working on pre-training large language models.
+
+223
+00:19:54,000 --> 00:19:59,000
+We cannot consider trade-off between performance and time consumption.
+
+224
+00:19:59,000 --> 00:20:02,000
+We cannot sacrifice the performance.
+
+225
+00:20:02,000 --> 00:20:11,000
+So some researchers think that whether they can change the task after sequence generation task is quite time consuming.
+
+226
+00:20:11,000 --> 00:20:21,000
+Whether they can change the original sequence prediction to a binary classification task, this binary signal is whether this token has been replaced or changed.
+
+227
+00:20:21,000 --> 00:20:24,000
+For example, here two words are must.
+
+228
+00:20:24,000 --> 00:20:27,000
+And one is the, and another is eight.
+
+229
+00:20:27,000 --> 00:20:32,000
+It means that the chip might first cook the meal than 80.
+
+230
+00:20:32,000 --> 00:20:36,000
+So eight is a word that might be substituted.
+
+231
+00:20:36,000 --> 00:20:48,000
+Then a question comes out that whether this design is reasonable, whether a model train on discrimination task can substitute sequence-to-sequence pre-trained model.
+
+232
+00:20:48,000 --> 00:20:51,000
+The answer is that it is somewhat reasonable.
+
+233
+00:20:51,000 --> 00:20:59,000
+The discrimination task also requires the model to capture the grammical, semantic information in the given sentence.
+
+234
+00:20:59,000 --> 00:21:04,000
+For example, the difference between these two sentences is the verb.
+
+235
+00:21:04,000 --> 00:21:10,000
+So this word is of highly flexibility to be other words for the given context.
+
+236
+00:21:10,000 --> 00:21:15,000
+But for the word, it is of common usage to be used before or not.
+
+237
+00:21:15,000 --> 00:21:18,000
+So it is unlikely to be replaced.
+
+238
+00:21:19,000 --> 00:21:24,000
+So the language model needs to know how the words work here.
+
+239
+00:21:24,000 --> 00:21:30,000
+Then it can distinguish whether the word here is of highly flexibility.
+
+240
+00:21:30,000 --> 00:21:35,000
+Another perspective is that it is more like a side effect.
+
+241
+00:21:35,000 --> 00:21:43,000
+The language model can learn whether the word is not only the flexibility, but also prep usage here.
+
+242
+00:21:43,000 --> 00:21:51,000
+So it can be handled arrow and typos in some sentences inputted by the user.
+
+243
+00:21:51,000 --> 00:21:57,000
+Then we face a problem that again this is an unsupervised learning.
+
+244
+00:21:57,000 --> 00:22:00,000
+How can we generate the data without annotation?
+
+245
+00:22:00,000 --> 00:22:08,000
+The most straightforward method is to randomly sampling other words in corpus to substitute the target word.
+
+246
+00:22:08,000 --> 00:22:14,000
+But if we apply this method, then the native sample we obtained is not distinguishable.
+
+247
+00:22:14,000 --> 00:22:16,000
+It is meaningless.
+
+248
+00:22:16,000 --> 00:22:24,000
+Again, our target is to train a large language model which can represent meaningful information from sentences.
+
+249
+00:22:24,000 --> 00:22:28,000
+We also need to train a powerful discrimination model.
+
+250
+00:22:28,000 --> 00:22:32,000
+So we need to generate reasonable sequence data here.
+
+251
+00:22:32,000 --> 00:22:39,000
+Then what is the simplest method for this sequence generation task?
+
+252
+00:22:39,000 --> 00:22:46,000
+These researchers think about using a small bird to generate a sequence based on the mask's synced sentence.
+
+253
+00:22:46,000 --> 00:22:52,000
+So this is the lowest cost method to produce more distinguishable hair.
+
+254
+00:22:52,000 --> 00:22:55,000
+There are several problems also came up.
+
+255
+00:22:55,000 --> 00:23:03,000
+Whether it improves comparing to a single small bird, since it already trained on a pre-trained model.
+
+256
+00:23:03,000 --> 00:23:11,000
+If it just improves a little bit, then the total commutation cost will also surpass most training models.
+
+257
+00:23:11,000 --> 00:23:13,000
+Then it is not reasonable.
+
+258
+00:23:13,000 --> 00:23:22,000
+And the small question is that whether they will find to a small bird or just frozen up the small bird.
+
+259
+00:23:22,000 --> 00:23:31,000
+The answer is yes that they will find to on the model, but in a way to save the floating point operation.
+
+260
+00:23:31,000 --> 00:23:41,000
+So in order to compare the benchmark setting, they would compare the performance on Google data set with same floating point operations.
+
+261
+00:23:41,000 --> 00:23:47,000
+We will check this later in the performance part.
+
+262
+00:23:47,000 --> 00:23:55,000
+Another question is that if the output of this model is binary signal, then how do you apply this model for downstream task?
+
+263
+00:23:55,000 --> 00:24:05,000
+So regardless of its training, we first assume it already possesses more of the capabilities of the language model in this part.
+
+264
+00:24:05,000 --> 00:24:08,000
+The output is a probability vector.
+
+265
+00:24:08,000 --> 00:24:10,000
+It can be regarded as embedded output.
+
+266
+00:24:10,000 --> 00:24:22,000
+So it just needs to pass the output to another module and to be fine-tuned by adding another module, maybe a small neural network.
+
+267
+00:24:22,000 --> 00:24:30,000
+For classification tasks, typically one or more fully connected layers are added on top of the election model.
+
+268
+00:24:30,000 --> 00:24:40,000
+And for sequence labeling tasks, it might involve adding a classification layer on the top of articles for each token to predict level.
+
+269
+00:24:40,000 --> 00:24:46,000
+The design here is it randomly samples a position from inputs to be masked.
+
+270
+00:24:46,000 --> 00:24:52,000
+Then this mask tokens are predicted by a small bird, denoted as the generator.
+
+271
+00:24:52,000 --> 00:24:57,000
+Then the discriminator trains on a binary classification task.
+
+272
+00:24:57,000 --> 00:25:01,000
+The label is whether the packet word is replaced or not.
+
+273
+00:25:01,000 --> 00:25:05,000
+The architecture of this discriminator is asperd.
+
+274
+00:25:05,000 --> 00:25:12,000
+The difference with GET and GAN here is since the word is masked and discrete here.
+
+275
+00:25:12,000 --> 00:25:19,000
+So the gradient of this discriminator cannot be passed to the generator, a little similar to Ralu.
+
+276
+00:25:19,000 --> 00:25:27,000
+So as they are not connected, they can only set the loss target of generator is the stilled stainless bird.
+
+277
+00:25:27,000 --> 00:25:35,000
+The loss of generator is a negative log likelihood, just the same in other large language models.
+
+278
+00:25:35,000 --> 00:25:41,000
+The loss of the discriminator is a cross entropy, because it is classification task.
+
+279
+00:25:41,000 --> 00:25:48,000
+Then they are trained at the same time as a linear combination.
+
+280
+00:25:48,000 --> 00:25:56,000
+Then let's compare ELECTRA to GAN. ELECTRA is quite different with GAN if even they have similar architecture.
+
+281
+00:25:56,000 --> 00:26:05,000
+The input of ELECTRA is the real test, not noise, and the output is real test, not fake.
+
+282
+00:26:05,000 --> 00:26:10,000
+And it's generated not inch to deceive the discriminator.
+
+283
+00:26:10,000 --> 00:26:19,000
+From the gradient perspective, it cannot slope from the discriminator to the generator.
+
+284
+00:26:19,000 --> 00:26:26,000
+But also, and thus, they considered whether performance could be improved by sharing weights with the discriminator.
+
+285
+00:26:26,000 --> 00:26:35,000
+After all, the discriminator is only trained on a single binary classification task, so the training might be a little difficult.
+
+286
+00:26:35,000 --> 00:26:43,000
+During their trials, this method can help, and here they just put some metrics in paper that didn't visualize it.
+
+287
+00:26:43,000 --> 00:26:52,000
+The second considering is, based on their architecture and task, what is the smallest bird that can possess the most fundamental capabilities?
+
+288
+00:26:52,000 --> 00:26:56,000
+So they try to reduce the layers and check the performance.
+
+289
+00:26:56,000 --> 00:27:03,000
+Here the X label in image is the size of generator, and the Y label is the glue performance.
+
+290
+00:27:03,000 --> 00:27:13,000
+The conclusion for all there is, the performance is best when the size of generator is half or 25% of the discriminator,
+
+291
+00:27:13,000 --> 00:27:17,000
+comparing to other ratio setting between generator and discriminator.
+
+292
+00:27:17,000 --> 00:27:24,000
+The inside here is a strong generator will also enhance the difficulty of discriminator training.
+
+293
+00:27:24,000 --> 00:27:27,000
+The third one is the gradient issue.
+
+294
+00:27:27,000 --> 00:27:34,000
+The author used other laws together with some tricks to pass the gradient from discriminator to the generator.
+
+295
+00:27:34,000 --> 00:27:43,000
+Here the X label shows that the original electron upperforms the one adding other tricks, so we won't go into details.
+
+296
+00:27:43,000 --> 00:27:50,000
+Another trick is that they try to train generator first, then visit in the first phase,
+
+297
+00:27:50,000 --> 00:27:56,000
+and initialize the weights in discriminator weights by generator weights in the second phase.
+
+298
+00:27:56,000 --> 00:28:00,000
+Then they train discriminator in same steps.
+
+299
+00:28:00,000 --> 00:28:02,000
+Then let's check the performance.
+
+300
+00:28:02,000 --> 00:28:06,000
+The left one is the zoomed out version of the one on the left, right.
+
+301
+00:28:06,000 --> 00:28:15,000
+On the vertical axis, we have the glue scores, and on the horizontal axis, we are measuring floating points operations.
+
+302
+00:28:15,000 --> 00:28:22,000
+The conclusion is that, the electron always outperforms bird with the same flowing points.
+
+303
+00:28:22,000 --> 00:28:27,000
+The goal here is to check whether the electron enhance the training efficiency.
+
+304
+00:28:27,000 --> 00:28:35,000
+Here the metrics are training an inference, floating point operations counts, and the number of parameters.
+
+305
+00:28:35,000 --> 00:28:39,000
+The speed up is compute based on the flow.
+
+306
+00:28:39,000 --> 00:28:47,000
+In order to train on a single GPU, the author creates electron small with bird small as the based model.
+
+307
+00:28:47,000 --> 00:28:50,000
+Then they compare it to L-mode GVT and bird.
+
+308
+00:28:50,000 --> 00:29:00,000
+The conclusion is, no matter under a floating million parameters or a hundred and ten million parameters,
+
+309
+00:29:00,000 --> 00:29:07,000
+under the same level of parameters, electron always outperforms bird.
+
+310
+00:29:07,000 --> 00:29:15,000
+Then the author also check how about the performance of a larger electron to compare with the robot.
+
+311
+00:29:15,000 --> 00:29:20,000
+Here the metrics are floating points.
+
+312
+00:29:20,000 --> 00:29:34,000
+We can see that under same level of floating points operations, the electron always outperforms robot in multiple classes.
+
+313
+00:29:34,000 --> 00:29:36,000
+Here is another earning.
+
+314
+00:29:36,000 --> 00:29:41,000
+It has language representation with informative entities.
+
+315
+00:29:41,000 --> 00:29:47,000
+Another insight is whether we can incorporate structured entity information into the earning.
+
+316
+00:29:47,000 --> 00:29:53,000
+For example, here the person has two identity, the songwriter and the writer.
+
+317
+00:29:53,000 --> 00:29:58,000
+So the relation between this person name entity with different items are different.
+
+318
+00:29:58,000 --> 00:30:03,000
+We also want to incorporate this relation in the model.
+
+319
+00:30:03,000 --> 00:30:12,000
+However, we want this additional information can help pilot on a few tasks like relationship.
+
+320
+00:30:12,000 --> 00:30:17,000
+Here the input is text and entity with relations.
+
+321
+00:30:17,000 --> 00:30:20,000
+The architecture consists of two parts.
+
+322
+00:30:20,000 --> 00:30:32,000
+The input of first part is only the sentence and the input of second part is the embedding output of first module and the entity embedding.
+
+323
+00:30:32,000 --> 00:30:34,000
+Here our concern is the task.
+
+324
+00:30:34,000 --> 00:30:38,000
+They prepare an entity relation prediction task.
+
+325
+00:30:38,000 --> 00:30:41,000
+They randomly mask some token entity alignments.
+
+326
+00:30:41,000 --> 00:30:47,000
+Then let model predict all corresponding entities based on align tokens.
+
+327
+00:30:47,000 --> 00:30:50,000
+So here partly unknown, partly unmasked.
+
+328
+00:30:50,000 --> 00:30:58,000
+Here another concern is how they merge to get a better embedding output that represents both information.
+
+329
+00:30:58,000 --> 00:31:08,000
+In the second part, both entity and tokens will pass into the multi-head and the attention independently to project them into same embedding space.
+
+330
+00:31:08,000 --> 00:31:13,000
+Then they are merged according to the non-entity alignment relationship,
+
+331
+00:31:13,000 --> 00:31:16,000
+depending to the entity to the first token.
+
+332
+00:31:16,000 --> 00:31:20,000
+Then they go into a fusion layer to fuse.
+
+333
+00:31:20,000 --> 00:31:27,000
+Here since it is an entity relation classification task, the gloss is cross-enderman.
+
+334
+00:31:28,000 --> 00:31:31,000
+To apply this model on downstream tasks,
+
+335
+00:31:31,000 --> 00:31:35,000
+the only effort is to modify the input.
+
+336
+00:31:35,000 --> 00:31:37,000
+So count the LLP tasks.
+
+337
+00:31:37,000 --> 00:31:40,000
+They just leave the placeholder as blend.
+
+338
+00:31:40,000 --> 00:31:44,000
+And for entity in typing or relation classification,
+
+339
+00:31:44,000 --> 00:31:51,000
+they replace placeholder as special tokens that used for this task.
+
+340
+00:31:52,000 --> 00:31:58,000
+The performance is that Ernie aims to improve those name entity tasks and relation tasks,
+
+341
+00:31:58,000 --> 00:32:04,000
+so it only outperforms Bert in this task.
+
+342
+00:32:04,000 --> 00:32:07,000
+Now we consider another problem.
+
+343
+00:32:07,000 --> 00:32:10,000
+Bert is not good at generating tasks,
+
+344
+00:32:10,000 --> 00:32:15,000
+because it is trained on hold sentences with mask words.
+
+345
+00:32:15,000 --> 00:32:20,000
+It cannot generate words on partial sequence data like GVD input.
+
+346
+00:32:20,000 --> 00:32:24,000
+So Bert only acts as encoder.
+
+347
+00:32:24,000 --> 00:32:30,000
+For sequence-to-sequence task, it needs to be trained decoder.
+
+348
+00:32:30,000 --> 00:32:32,000
+So the question comes out,
+
+349
+00:32:32,000 --> 00:32:36,000
+how to absorb sequence-to-sequence task into Bert?
+
+350
+00:32:36,000 --> 00:32:38,000
+To answer this question,
+
+351
+00:32:38,000 --> 00:32:42,000
+we first check the elements in different exceeding language models.
+
+352
+00:32:42,000 --> 00:32:46,000
+So there are multiple kinds of LLP tasks.
+
+353
+00:32:46,000 --> 00:32:50,000
+However, they can be classified as three types of tasks.
+
+354
+00:32:50,000 --> 00:32:55,000
+The bidirectional language model, which Bert includes.
+
+355
+00:32:55,000 --> 00:32:59,000
+And the second one is the left-to-right language model.
+
+356
+00:32:59,000 --> 00:33:01,000
+It's totally single direction.
+
+357
+00:33:01,000 --> 00:33:04,000
+The third one is sequence-to-sequence task.
+
+358
+00:33:04,000 --> 00:33:06,000
+During the first sentence,
+
+359
+00:33:06,000 --> 00:33:11,000
+we can see information from right side of the target word as input.
+
+360
+00:33:11,000 --> 00:33:14,000
+But in the second sequence,
+
+361
+00:33:14,000 --> 00:33:18,000
+we can just do single direction prediction.
+
+362
+00:33:18,000 --> 00:33:21,000
+So it contains both parts of Bert and GVD.
+
+363
+00:33:21,000 --> 00:33:26,000
+The task is actually decided by its input and output.
+
+364
+00:33:26,000 --> 00:33:30,000
+For LLP, Bert, GVD, the input needs to be lost.
+
+365
+00:33:30,000 --> 00:33:35,000
+And output, or is the probability of word prediction.
+
+366
+00:33:35,000 --> 00:33:39,000
+So they find that the core of language model is lost.
+
+367
+00:33:39,000 --> 00:33:43,000
+This is also a natural way to unify language models.
+
+368
+00:33:43,000 --> 00:33:48,000
+So the author called it unitLM.
+
+369
+00:33:48,000 --> 00:33:53,000
+Then the problem is from the perspective of mass metrics.
+
+370
+00:33:53,000 --> 00:33:58,000
+Whether we can leave the inputs and output as seen,
+
+371
+00:33:58,000 --> 00:34:03,000
+but vary the mass metrics to control different tasks.
+
+372
+00:34:03,000 --> 00:34:07,000
+Thus, we can control the network training
+
+373
+00:34:07,000 --> 00:34:11,000
+by just changing this mass metric.
+
+374
+00:34:11,000 --> 00:34:14,000
+From previous description,
+
+375
+00:34:14,000 --> 00:34:17,000
+this must indicate whether the input can contain
+
+376
+00:34:17,000 --> 00:34:19,000
+which kinds of information.
+
+377
+00:34:19,000 --> 00:34:23,000
+The left side, or the right side, or combination.
+
+378
+00:34:24,000 --> 00:34:29,000
+There are other explosions in this paper to improve the accuracy.
+
+379
+00:34:43,000 --> 00:34:46,000
+Here, our concern is the improvement on each task
+
+380
+00:34:46,000 --> 00:34:49,000
+and all kinds of tasks, unitLM performance.
+
+381
+00:34:49,000 --> 00:34:53,000
+Here are the performance of summarization task,
+
+382
+00:34:53,000 --> 00:34:58,000
+extractive QA task, the question and response generation task.
+
+383
+00:35:00,000 --> 00:35:04,000
+Next, we want to check how pre-training helps with the downstream task.
+
+384
+00:35:04,000 --> 00:35:06,000
+This is a figure from paper,
+
+385
+00:35:06,000 --> 00:35:10,000
+visualizing and understanding the effectiveness of Bert.
+
+386
+00:35:10,000 --> 00:35:14,000
+From the figure, we see that if we want to compare
+
+387
+00:35:14,000 --> 00:35:17,000
+the model trained from scratch
+
+388
+00:35:17,000 --> 00:35:22,000
+and the fine-tuned model that trained from pre-trained models,
+
+389
+00:35:22,000 --> 00:35:26,000
+their training gradient curve is totally different.
+
+390
+00:35:26,000 --> 00:35:28,000
+We can see that the fine-tuned model
+
+391
+00:35:28,000 --> 00:35:31,000
+has faster gradient descending at first.
+
+392
+00:35:33,000 --> 00:35:37,000
+And here is another perspective on how pre-training helps.
+
+393
+00:35:37,000 --> 00:35:40,000
+Here are the figures of error surface,
+
+394
+00:35:40,000 --> 00:35:45,000
+which visualize the millions of ways into 2D or 3D figure.
+
+395
+00:35:45,000 --> 00:35:47,000
+The meaning of this figure is,
+
+396
+00:35:47,000 --> 00:35:54,000
+if the figure is smooth, then it is more generalization capability.
+
+397
+00:35:54,000 --> 00:35:58,000
+We can see that the fine-tuned Bert has smaller platforms
+
+398
+00:35:58,000 --> 00:36:00,000
+than the one trained from scratch.
+
+399
+00:36:00,000 --> 00:36:03,000
+So the model fine-tuned on pre-trained models
+
+400
+00:36:03,000 --> 00:36:06,000
+will have more generalization capability
+
+401
+00:36:06,000 --> 00:36:08,000
+than the one trained from scratch.
+
+402
+00:36:10,000 --> 00:36:12,000
+Thank you.
+

@@ -1,0 +1,2100 @@
+1
+00:00:00,000 --> 00:00:08,280
+Hello. Today we will be discussing the topic parameter efficient transformers. So let's
+
+2
+00:00:08,280 --> 00:00:13,240
+begin. Parameter efficient transformers are modifications of the standard transformer
+
+3
+00:00:13,240 --> 00:00:19,480
+model designed to reduce the number of trainable parameters while maintaining the performance.
+
+4
+00:00:19,480 --> 00:00:24,920
+These methods aim to make transformers more computationally efficient and easier to deploy
+
+5
+00:00:24,920 --> 00:00:31,360
+in a resource constrained environment. In the first half of the presentation, we will
+
+6
+00:00:31,360 --> 00:00:37,360
+be covering four research papers discussing their prerequisites, concepts, experiments
+
+7
+00:00:37,360 --> 00:00:43,160
+and results of each of them. In paper one, parameter efficient transfer learning for
+
+8
+00:00:43,160 --> 00:00:49,480
+NLP, we will be covering water transfer learning, teacher based versus fine tuning, adapter
+
+9
+00:00:49,480 --> 00:00:56,160
+tuning and architecture. In paper two, Laura, low rank adaptation of language models, large
+
+10
+00:00:56,160 --> 00:01:02,600
+language models, we will talk about fine tuning, LLMs and parameter efficient approach, adapter
+
+11
+00:01:02,600 --> 00:01:11,480
+modules and prefix tuning, intrinsic dimension and intrinsic rank and Laura. In paper three,
+
+12
+00:01:11,480 --> 00:01:16,480
+it's not just the size that matters. Small language models are also few short learners.
+
+13
+00:01:16,960 --> 00:01:22,880
+We'll discuss zero short learning versus a few short learning, pet pattern exploiting
+
+14
+00:01:22,880 --> 00:01:30,920
+training, IPET, iterative variant of pet and pet with multiple masks. For paper four, making
+
+15
+00:01:30,920 --> 00:01:37,400
+pre-trained language models better few short learners, topics are LMBFF, better few short
+
+16
+00:01:37,400 --> 00:01:43,640
+fine tuning of language models, prompt based fine tuning, automatic prompt generation and
+
+17
+00:01:43,640 --> 00:01:51,360
+fine tuning with demonstrations. In paper one, parameter efficient transfer learning
+
+18
+00:01:51,360 --> 00:01:57,880
+for NLP, let's start. So what is transfer learning? It is machine learning method where
+
+19
+00:01:57,880 --> 00:02:03,920
+a model developed for one task is used as a starting point for a model on a different
+
+20
+00:02:03,920 --> 00:02:09,920
+but related task. Basically, the concept is that there is no need to reinvent the wheel
+
+21
+00:02:09,920 --> 00:02:16,280
+but to use the wheel to make a car. This approach is more efficient and versatile as it can
+
+22
+00:02:16,280 --> 00:02:23,920
+be used in many similar tasks and mostly results in higher performance. To understand the key
+
+23
+00:02:23,920 --> 00:02:29,560
+difference between feature based and fine tuning, let's take an example. For someone
+
+24
+00:02:29,560 --> 00:02:34,520
+like me who comes from India where multiple languages are spoken, it is easier to learn
+
+25
+00:02:34,520 --> 00:02:40,760
+a new language as many languages share similar features. And I can use the same understanding
+
+26
+00:02:40,760 --> 00:02:47,640
+and concepts I have already learned and use them to my benefit, to learn a new language.
+
+27
+00:02:47,640 --> 00:02:53,000
+For a friend of mine who only speaks one language, it could be comparatively difficult to learn
+
+28
+00:02:53,000 --> 00:02:58,560
+a completely new language as the similarities between both languages could be limited, leading
+
+29
+00:02:58,560 --> 00:03:06,360
+to a requirement of more resources and time to get good at any new language. In feature
+
+30
+00:03:06,360 --> 00:03:13,520
+based, the original function phi w is used as the base to train on new parameters V,
+
+31
+00:03:13,520 --> 00:03:20,200
+making the new function as sky V phi w X. There is almost no change made to the original
+
+32
+00:03:20,200 --> 00:03:26,040
+function and its parameters. In fine tuning, the later half of the function is modified
+
+33
+00:03:26,040 --> 00:03:31,880
+for the new parameters, where new parameters are introduced and old parameters are used
+
+34
+00:03:31,880 --> 00:03:38,360
+to tune the model. A new concept of adapter tuning is introduced here, where the original
+
+35
+00:03:38,360 --> 00:03:43,600
+function and its parameters are frozen during the time of training and new parameters are
+
+36
+00:03:43,600 --> 00:03:49,320
+added in between the function in the form of adapter modules. It is like taking a time
+
+37
+00:03:49,320 --> 00:03:56,000
+machine and adding only a few minutes of learning a new language every day in your entire lifetime
+
+38
+00:03:56,240 --> 00:04:01,200
+without modifying the course of your life and the core understanding and learning of your
+
+39
+00:04:01,200 --> 00:04:07,520
+original language. On the left is a basic transformer layer architecture that we have
+
+40
+00:04:07,520 --> 00:04:13,760
+modified by adding adapter modules in between. On the right is a view of the adapter modules,
+
+41
+00:04:13,760 --> 00:04:20,960
+which we have used. Let us take a deeper look into each of them. In the transformer layer,
+
+42
+00:04:20,960 --> 00:04:26,480
+the primary sub layer is the multi-headed attention layer, which processes the input
+
+43
+00:04:26,480 --> 00:04:32,000
+data for the model. Then comes the feed forward layer, where the data is processed using the
+
+44
+00:04:32,000 --> 00:04:38,080
+attention mechanism. We will discuss the adapter layer in a bit. Then we see a plus sign, which
+
+45
+00:04:38,080 --> 00:04:43,680
+is the skip connection. Here, the decision is made whether the output of the adapter or feed
+
+46
+00:04:43,680 --> 00:04:49,840
+forward layer is to be added to the original input layer or sub layer. This helps in preserving
+
+47
+00:04:49,840 --> 00:04:56,000
+the information from earlier stages and making the decision whether this new process data is
+
+48
+00:04:56,000 --> 00:05:03,280
+to be added to the network or not. Finally, we have the layer normalization, which normalizes
+
+49
+00:05:03,280 --> 00:05:11,040
+the combined output provided by its previous sub layers. The adapter modules, which are added
+
+50
+00:05:11,040 --> 00:05:16,880
+to the transformer layer, have a bottleneck architecture to it. This specific architecture
+
+51
+00:05:16,880 --> 00:05:23,360
+helps us add only a few parameters, ranging between 0.5 to 8%, making the total number of
+
+52
+00:05:23,360 --> 00:05:31,680
+parameters as 2MD plus D plus M. The number of new parameters that are being added can be
+
+53
+00:05:31,680 --> 00:05:38,080
+controlled by increasing the size of this adapter module. Finally, there is a skip connection,
+
+54
+00:05:38,080 --> 00:05:44,560
+where the impact of the newly added parameters are controlled by initializing it to a near zero
+
+55
+00:05:44,560 --> 00:05:51,680
+at the start and slowly increasing it over the training. The goal of this paper is to help
+
+56
+00:05:51,680 --> 00:05:58,320
+build compact and extensible systems that give good results on multiple similar downstream tasks,
+
+57
+00:05:58,320 --> 00:06:03,120
+where the new data that is coming into the system is unknown at the time of training.
+
+58
+00:06:04,880 --> 00:06:10,640
+For this, the authors have used 26 different classification tasks to benchmark the results
+
+59
+00:06:10,720 --> 00:06:17,200
+using BERT. Gluebenchmark is an important benchmarking tool, which is widely used to train
+
+60
+00:06:17,200 --> 00:06:23,120
+and evaluate such natural language understanding systems. The key feature is that it is model
+
+61
+00:06:23,120 --> 00:06:28,400
+agnostic and has a leaderboard and dashboard to benchmark and showcase the results.
+
+62
+00:06:30,160 --> 00:06:37,200
+Squad, the Stanford question answering data set, was also utilized in this paper. It comprises of
+
+63
+00:06:37,760 --> 00:06:44,560
+107,785 question answer pairs from Wikipedia articles in its 1.1 version.
+
+64
+00:06:46,640 --> 00:06:52,720
+On the gluebenchmarking tool, the BERT model with adapter modules matches the performance of fine
+
+65
+00:06:52,720 --> 00:07:00,080
+tuning and by only utilizing around 3% of the new parameters, the AutoML benchmark results are
+
+66
+00:07:00,080 --> 00:07:10,080
+also good. BERT based with adapters utilizes only 1.14% new parameters and reaches 73.3% accuracy,
+
+67
+00:07:10,080 --> 00:07:16,640
+while BERT based fine tuning uses 100% new parameters and reaches 73.7% accuracy.
+
+68
+00:07:17,600 --> 00:07:22,880
+The graph on the right also shows that the validation accuracy with adapter modules can be
+
+69
+00:07:22,880 --> 00:07:27,840
+similar to fine tuning while utilizing 100 times less number of new parameters.
+
+70
+00:07:30,800 --> 00:07:35,280
+Paper 2 is Laura, low-ranked adaptation of large language models.
+
+71
+00:07:36,080 --> 00:07:42,320
+This equation is used to predict the next word in a phrase. Here, yt is the next word and its
+
+72
+00:07:42,320 --> 00:07:50,080
+probability is calculated based on the previous words y0 to yt minus 1 and the parameters 5.
+
+73
+00:07:50,720 --> 00:07:57,600
+In the fine tuning, this equation is altered by replacing 5 with new parameter weights y0 plus
+
+74
+00:07:57,600 --> 00:08:04,880
+delta 5, where the dimension of delta 5 and 5 are not the same. In the parameter efficient approach,
+
+75
+00:08:04,880 --> 00:08:12,560
+this is further altered by multiplying delta 5 with theta, which has a much smaller dimension than
+
+76
+00:08:12,560 --> 00:08:18,800
+5 and 5 naught. This is approximately 10,000 times smaller than 5 naught.
+
+77
+00:08:19,600 --> 00:08:26,880
+As we just learned about adapter modules, a question might arise that can we not use
+
+78
+00:08:26,880 --> 00:08:33,600
+adapter modules in LLMs like GPT-3? And the answer is yes, we can, but adapter modules need to be
+
+79
+00:08:33,600 --> 00:08:39,040
+processed sequentially, which leads to high inference latency and additional depth to our
+
+80
+00:08:39,040 --> 00:08:45,920
+approach in large modules like GPT-3. Let's address another question regarding prefix tuning here.
+
+81
+00:08:45,920 --> 00:08:50,800
+In the later half of the video, we will look into prefix tuning, but I can just give a brief
+
+82
+00:08:50,800 --> 00:08:56,160
+for now. In prefix tuning, we add instructions at the start of the training process and freeze
+
+83
+00:08:56,160 --> 00:09:02,960
+the original parameters, but this will lead to inconsistent results and a difficulty to optimize
+
+84
+00:09:02,960 --> 00:09:08,720
+the entire approach. Also, we will have to add a prompt before each input, which would limit
+
+85
+00:09:08,720 --> 00:09:17,440
+length of the tasks. We wish to process with the model. Hence, these two approaches are possible,
+
+86
+00:09:17,440 --> 00:09:26,240
+but come with their own flaws. Let's understand two key concepts we would require in this approach.
+
+87
+00:09:26,240 --> 00:09:31,680
+Number one, intrinsic dimension, which refers to the minimum number of parameters needed to get
+
+88
+00:09:31,680 --> 00:09:37,440
+the performance similar to the full model. It is basically the simplest version of the model
+
+89
+00:09:37,520 --> 00:09:41,920
+that does similar level of work. Second concept is intrinsic rank,
+
+90
+00:09:41,920 --> 00:09:46,400
+which is the complexity of freedom in a particular component of the neural network.
+
+91
+00:09:46,960 --> 00:09:52,320
+Basically, it indicates the minimum number of dimensions needed to represent the important
+
+92
+00:09:52,320 --> 00:09:58,320
+information in that component of the neural network. These concepts are usually paired together,
+
+93
+00:09:58,320 --> 00:10:03,600
+where we find the intrinsic dimension for the whole architecture and the intrinsic rank at
+
+94
+00:10:03,600 --> 00:10:07,440
+each step to optimize our approach to use the least number of features.
+
+95
+00:10:09,440 --> 00:10:15,280
+This is the main concept that is being utilized in GARA. Here, the pre-trained weights are frozen
+
+96
+00:10:15,280 --> 00:10:20,400
+during the time of the training, and the key parameters that are being added to the model
+
+97
+00:10:20,400 --> 00:10:26,160
+are added in a matrix multiplication format represented by A cross B matrices here.
+
+98
+00:10:26,960 --> 00:10:35,680
+The intrinsic rank, which we just discussed, R is much lower than both D and K, which are original
+
+99
+00:10:35,680 --> 00:10:42,800
+dimension length that was being utilized by the neural network. Here, B is initialized as zero,
+
+100
+00:10:42,800 --> 00:10:49,600
+and A is initialized in a random Gaussian manner, and this is done so as to feed the model with very
+
+101
+00:10:49,600 --> 00:10:56,160
+less number of new parameters at the start and escape eventually to reduce the need to redo
+
+102
+00:10:56,160 --> 00:11:06,320
+in hyperparameters. Finally, the forward pass using LARA, which is W0x plus BAx has a lower rank
+
+103
+00:11:06,320 --> 00:11:14,320
+and uses much less number of parameters than usual. The experiments in this paper were conducted
+
+104
+00:11:14,320 --> 00:11:20,960
+using Robberta, Debberta, GPT-2, and GPT-3 was finally used for comparison. This was done over
+
+105
+00:11:20,960 --> 00:11:30,800
+the glue benchmarking tool and various datasets like Vicky STL, SAMSUM, A2A, NLG, Dart, and Web
+
+106
+00:11:30,800 --> 00:11:36,960
+Energy. These are some commonly used datasets and benchmarking tools to test natural language
+
+107
+00:11:36,960 --> 00:11:45,520
+understanding systems. On the glue benchmark, we can see the approach using Robberta based with
+
+108
+00:11:45,520 --> 00:11:53,840
+LARA only utilizes 0.3 million new parameters to result in an 87.2% accuracy using the least
+
+109
+00:11:53,840 --> 00:11:58,800
+number of parameters, other than the approach with bit width, which results in a much lower
+
+110
+00:11:58,800 --> 00:12:07,360
+accuracy of 85.2%. And in the A2E NLG challenge with GPT-2, the approach with GPT-2 medium with
+
+111
+00:12:07,360 --> 00:12:14,800
+LARA uses only 0.35 million new parameters to give the highest accuracy in all cases when compared
+
+112
+00:12:14,800 --> 00:12:22,400
+to fine tuning which used 354.9 to million new parameters to give a lower accuracy. A similar
+
+113
+00:12:22,400 --> 00:12:28,560
+trend can be seen in the GPT-2 large trainable parameters and accuracy with LARA outperforming
+
+114
+00:12:28,640 --> 00:12:37,040
+other approaches in most cases. When LARA is utilized with GPT-3, we can see it only uses
+
+115
+00:12:37,040 --> 00:12:44,240
+37.7 million and 4.7 million new parameters to reach a slightly higher accuracy when compared
+
+116
+00:12:44,240 --> 00:12:51,040
+to fine tuning with 175 billion new parameters. These trends are mapped out on the graphs on
+
+117
+00:12:51,040 --> 00:12:56,240
+the right as well where LARA outperforms all the other approaches in terms of accuracy.
+
+118
+00:12:59,120 --> 00:13:06,400
+Paper 3 is not just a size that matters, small language models are also few short learners.
+
+119
+00:13:07,040 --> 00:13:12,080
+Let's firstly understand zero short learning. This is the approach when a model is trained for
+
+120
+00:13:12,080 --> 00:13:19,120
+a variety of tasks and is later applied to a new task and given no new examples to learn from.
+
+121
+00:13:19,680 --> 00:13:24,960
+In this, the model relies on its general understanding and knowledge gained during
+
+122
+00:13:24,960 --> 00:13:31,040
+the original training to make predictions about the new task. Few short learning is
+
+123
+00:13:31,040 --> 00:13:36,800
+similar to zero short learning but a few examples related to the new task are used to fine tune
+
+124
+00:13:36,800 --> 00:13:43,360
+this model. This usually results in better accuracy than zero short learning due to the new examples.
+
+125
+00:13:45,200 --> 00:13:50,160
+Let's consider a model when trained on English language data set is applied for sentiment
+
+126
+00:13:50,160 --> 00:13:55,760
+analysis on French language data directly then it is zero short learning but when the same model
+
+127
+00:13:55,760 --> 00:14:01,360
+is fine tuned on a few examples which contain documents with French language in it then it is
+
+128
+00:14:01,360 --> 00:14:09,680
+few short learning. Pet or pattern exploiting training here an input x1 comma x2 is converted
+
+129
+00:14:09,680 --> 00:14:17,520
+to a closed question px and the probability qp y by x is derived for the possible choices of outputs
+
+130
+00:14:17,520 --> 00:14:26,320
+that fit the input to complete the closed question using a mass language model or mlm as given in
+
+131
+00:14:26,320 --> 00:14:35,440
+the example here x1 is oil prices fallback and x2 is oil prices rise a yes or no needs to fit in
+
+132
+00:14:35,440 --> 00:14:41,440
+the blank space between x1 and x2 to connect these inputs to complete the closed question.
+
+133
+00:14:42,000 --> 00:14:50,080
+This is done using a pair of pattern verbalizer pairs or pvps which help map inputs to outputs
+
+134
+00:14:50,640 --> 00:14:57,040
+here p maps inputs to closed question containing single mass and v is used to map each output
+
+135
+00:14:57,040 --> 00:15:05,840
+to a token representing its task specific meaning in the pattern. qpy by x is calculating using the
+
+136
+00:15:05,840 --> 00:15:13,040
+raw position of vy that are the possible outputs to complete the closed question at the mass position
+
+137
+00:15:13,040 --> 00:15:19,680
+in px as we're using future learning that is a less number of examples to fine tune the model
+
+138
+00:15:19,680 --> 00:15:25,360
+we need multiple pvps and a combination of these is used to determine the output.
+
+139
+00:15:27,200 --> 00:15:32,880
+These pvps are used to assign final probabilities to the unlabeled examples
+
+140
+00:15:32,880 --> 00:15:38,400
+resulting in a probability distribution of each unlabeled input to a possible output.
+
+141
+00:15:40,720 --> 00:15:48,000
+ipet or iterative variant of pet is similar to pet where the flow comprises of three main steps
+
+142
+00:15:48,000 --> 00:15:54,880
+number one initial training where an ensemble of mlms are trained using pet as we just discussed
+
+143
+00:15:54,880 --> 00:16:01,440
+number two creating new training sets where each model in this ensemble uses a random subset of
+
+144
+00:16:02,400 --> 00:16:09,920
+models to label a set of unlabeled examples number three retraining models where each model is
+
+145
+00:16:09,920 --> 00:16:16,800
+retrained on its newly created training set and step two and three are repeated multiple times by
+
+146
+00:16:16,800 --> 00:16:24,800
+changing the size of the training set by adding more and more examples to it pet with multiple
+
+147
+00:16:24,800 --> 00:16:30,800
+masks this is similar to pet with single mask just that the prediction word would be longer
+
+148
+00:16:30,800 --> 00:16:36,000
+and needs to be broken down into multiple masks just like the one in the example
+
+149
+00:16:38,160 --> 00:16:47,440
+here the input x is awful pizza it's followed by it was and multiple masks to form a closed question
+
+150
+00:16:47,440 --> 00:16:53,600
+instead of mapping the input to outputs here they are mapped back to the possible outputs
+
+151
+00:16:53,600 --> 00:16:59,600
+and then the process is repeated to find the best set that fits the complete closed question
+
+152
+00:17:01,440 --> 00:17:06,800
+if we take the example of sentiment classification of restaurant reviews we can broadly divide the
+
+153
+00:17:06,800 --> 00:17:13,920
+reviews as positive that is plus one and negative that is minus one we calculate the probability of
+
+154
+00:17:13,920 --> 00:17:21,280
+each word that can fit each part of the mask token for each set and finally recalculate the best token
+
+155
+00:17:21,280 --> 00:17:29,120
+that fits the closed question pet is based on albert and the authors have used an advanced
+
+156
+00:17:29,120 --> 00:17:35,360
+version of glue benchmark known as superglue this benchmarking tool contains more challenging tasks
+
+157
+00:17:35,360 --> 00:17:44,800
+like bool cube popa etc the authors have developed a variation of superglue known as few glue to
+
+158
+00:17:44,800 --> 00:17:51,360
+evaluate language models like pet and gpt3 few glue was developed by randomly selecting 32
+
+159
+00:17:51,360 --> 00:17:57,040
+examples from each superglue task to ensure consistent and controlled selection of the data
+
+160
+00:17:57,840 --> 00:18:04,800
+they also created sets of unlabeled examples up to 20 000 for each task by removing labels
+
+161
+00:18:04,800 --> 00:18:10,720
+from the original training sets to evaluate the models unsupervised and semi-supervised learning
+
+162
+00:18:10,720 --> 00:18:20,400
+capabilities the results showcase that pet and ipad model outperforms on the 32 randomly selected
+
+163
+00:18:20,400 --> 00:18:27,840
+examples after training on few glue where albert xx large v2 uh than most of the gpt3 models on
+
+164
+00:18:27,840 --> 00:18:35,920
+superglue these are some extended examples where pet outperforms or closely matches the accuracy
+
+165
+00:18:35,920 --> 00:18:45,040
+of most in-use models today paper four is uh making pre-trained language models better few
+
+166
+00:18:45,040 --> 00:18:52,240
+short learners this paper builds on the previous paper we discussed and introduces lmbf a better
+
+167
+00:18:52,240 --> 00:18:58,800
+few short fine tuning of language models approach it's a three-step process which involves taking
+
+168
+00:18:58,800 --> 00:19:05,200
+the new task and automatically converting it into a prompt an example from each class of the
+
+169
+00:19:05,200 --> 00:19:13,200
+training data is added to the prompt which is then fed to the lm we can see this as a task that
+
+170
+00:19:13,200 --> 00:19:20,160
+is an input which can be converted to a prompt which fits the basic format for the lm this prompt
+
+171
+00:19:20,160 --> 00:19:26,720
+also includes examples from every class we can see that as one example from each positive and
+
+172
+00:19:26,720 --> 00:19:34,800
+negative class from reviews about the restaurant the first step is prompt based fine tuning the
+
+173
+00:19:34,800 --> 00:19:41,440
+input task is converted to fit the right format by the lm for example with uh the cls token at the
+
+174
+00:19:41,440 --> 00:19:47,840
+start and set token in between the different inputs this input also contains the masked word
+
+175
+00:19:47,840 --> 00:19:55,120
+which is the masked token this prompt is an extended answer for the possible uh direct input
+
+176
+00:19:55,120 --> 00:20:01,200
+like no reason to watch uh where the prompt would would be it was great or it was terrible
+
+177
+00:20:03,520 --> 00:20:09,840
+these tasks can be classification or regression tasks for classification a single probability
+
+178
+00:20:09,840 --> 00:20:16,640
+is calculated for the masked word to help classify task label space to individual words
+
+179
+00:20:16,640 --> 00:20:22,640
+in the vocabulary based on the prompt for regression the final probability is the sum of all the
+
+180
+00:20:22,640 --> 00:20:31,360
+probabilities of possible sets example positive and negatives the second step of uh automatic
+
+181
+00:20:31,360 --> 00:20:36,960
+prompt generation is divided into two parts automatic selection of label words and automatic
+
+182
+00:20:36,960 --> 00:20:44,320
+generation of templates in the automatic selection of label words a set of top k vocabulary words
+
+183
+00:20:44,320 --> 00:20:52,240
+is constructed for each class in automatic generation of templates the authors have used a large
+
+184
+00:20:52,240 --> 00:20:59,280
+pre-trained text-to-text transformer t5 to input sentences from the training set and fill in
+
+185
+00:20:59,280 --> 00:21:05,680
+template tokens like x and y to create an initial template for the prompt uh all these
+
+186
+00:21:05,680 --> 00:21:12,720
+templates are built using a label mapping scheme uh these uh help find the final output template
+
+187
+00:21:12,720 --> 00:21:19,520
+that best fits um this done like this is done by testing them on datasets d def
+
+188
+00:21:21,520 --> 00:21:27,520
+in the final step fine tuning of the llm takes place by taking the prompt generated before
+
+189
+00:21:27,520 --> 00:21:34,560
+and extending it with uh examples of each class this can be seen in uh the example where no reason
+
+190
+00:21:34,560 --> 00:21:42,480
+to watch is the is the input and a template it was mask was added to it uh at the end of it
+
+191
+00:21:42,480 --> 00:21:48,480
+and a positive demonstration of a fun ride it was great and a negative demonstration of
+
+192
+00:21:48,480 --> 00:21:54,240
+the drama discloses nothing it was terrible were also added to the prompt this is then
+
+193
+00:21:54,240 --> 00:22:00,400
+repeated to fine tune the llm over the entire dataset to help with the few short learning
+
+194
+00:22:00,720 --> 00:22:10,320
+uh for the evaluation of uh this the authors use roberta large over eight single sentence and seven
+
+195
+00:22:10,320 --> 00:22:17,200
+sentence pairs uh pair english tasks including eight tasks from the glue benchmark uh stand
+
+196
+00:22:17,200 --> 00:22:23,680
+for language natural language uh inference snli and six other popular sentence classification
+
+197
+00:22:23,680 --> 00:22:30,160
+tasks uh and the average performance is measured across five different randomly sampled detrain
+
+198
+00:22:30,160 --> 00:22:36,960
+and d d def splits in the tables we can see the templates that were utilized for this
+
+199
+00:22:40,160 --> 00:22:46,080
+the results are great as we can see that this method outperforms prompt with zero short in
+
+200
+00:22:46,080 --> 00:22:53,120
+context learning with fine tuning of gpd 3 in most of the cases um these results also show
+
+201
+00:22:53,120 --> 00:22:59,040
+both automatic prompt generation and manual prompt generation outperform other models
+
+202
+00:23:00,880 --> 00:23:07,600
+these results show a fair comparison of this three-step approach with pet as discussed earlier
+
+203
+00:23:07,600 --> 00:23:15,120
+and the graph shows the accuracy versus instances of standard fine tuning versus lmbff where the
+
+204
+00:23:15,120 --> 00:23:21,840
+latter outperforms the former i would highly encourage everyone to check out the code of
+
+205
+00:23:21,840 --> 00:23:26,240
+all four papers on github as they are well documented and easy to use
+
+206
+00:23:26,480 --> 00:23:33,040
+and so now i'll be covering the second half of this presentation where i cover additional
+
+207
+00:23:33,040 --> 00:23:38,320
+parameter efficient fine tuning methods that is prefix tuning prompt tuning and ia cubed
+
+208
+00:23:38,320 --> 00:23:42,720
+and then i'll look at understanding peft more broadly and that's through a unified view of peft
+
+209
+00:23:43,760 --> 00:23:50,800
+and comparing peft with full model fine tuning first i'll look at this paper that introduces
+
+210
+00:23:50,800 --> 00:23:56,080
+prompt tuning and before i cover prompt tuning some background in prefix tuning is necessary
+
+211
+00:23:56,480 --> 00:24:01,760
+where in prefix tuning we learn a small fixed set of additional parameters that is the prefixes
+
+212
+00:24:01,760 --> 00:24:08,400
+so to do prefix tuning we prepare some number of tunable prefix vectors or l tunable prefix
+
+213
+00:24:08,400 --> 00:24:12,320
+vectors to the keys and values of the multi-head attention at every layer
+
+214
+00:24:14,560 --> 00:24:20,880
+more formally mathematically given a query vector x and a sequence of m vectors c over
+
+215
+00:24:20,880 --> 00:24:25,360
+which we would like to perform attention normally multi-head attention takes this form
+
+216
+00:24:25,440 --> 00:24:31,120
+where we have the queries keys and values where we take the relevant vector and we map it
+
+217
+00:24:31,840 --> 00:24:34,400
+to queries keys and values through these weight matrices
+
+218
+00:24:36,720 --> 00:24:41,680
+but now multi-head attention with prefixes looks like this where now the keys is actually
+
+219
+00:24:41,680 --> 00:24:47,200
+the concatenation of the keys as they were before but also now these prefixed keys
+
+220
+00:24:48,160 --> 00:24:52,080
+and same with the values so the concatenation of the values as they were before
+
+221
+00:24:52,080 --> 00:24:58,080
+but now with the prefix values the two sets of our prefix vectors p sub k and p sub v are
+
+222
+00:24:58,080 --> 00:25:03,440
+concatenated with the original keys and values at every attention head and every layer and now
+
+223
+00:25:03,440 --> 00:25:08,720
+we just have to learn p sub k and p sub v instead of all of the model parameters
+
+224
+00:25:13,040 --> 00:25:17,600
+now i get into prompt tuning which is a descendant of prefix tuning so where in prefix tuning we
+
+225
+00:25:17,600 --> 00:25:22,400
+were prefixing activations propended to the keys and values in each layer in each attention head
+
+226
+00:25:22,400 --> 00:25:27,920
+in prompt tuning we prefix key tokens k tokens to the input text and then we just learned the
+
+227
+00:25:27,920 --> 00:25:34,240
+token embeddings i'm assuming we're all familiar with attention tokenization but here is an example
+
+228
+00:25:34,240 --> 00:25:39,600
+where we have this as an input text it gets broken down into these tokens start of sequence tokens
+
+229
+00:25:39,600 --> 00:25:45,120
+cls and then basically the words become tokens although there's also subword tokenization that
+
+230
+00:25:45,120 --> 00:25:50,000
+isn't shown here but basically these tokens then get mapped to token IDs which then get mapped to
+
+231
+00:25:50,000 --> 00:25:57,120
+embeddings through an embedding layer but in the case of the prefixed tokens they don't really
+
+232
+00:25:57,120 --> 00:26:02,480
+correspond to tokens in the vocabulary they just have some associated embeddings that we then learn
+
+233
+00:26:03,040 --> 00:26:11,280
+in prompt tuning how are these methods evaluated well they're evaluated using the t5 lm adapt model
+
+234
+00:26:11,360 --> 00:26:17,600
+of all sizes so there's sort of a a scale shown there right where we have the small models
+
+235
+00:26:18,240 --> 00:26:23,360
+that have about 60 million parameters and the xxl model and the higher range has 11 billion
+
+236
+00:26:23,360 --> 00:26:29,120
+parameters and the models are evaluated using the superglue benchmark which is a collection
+
+237
+00:26:29,120 --> 00:26:35,920
+of eight challenging english language understanding tasks for example one of which is boolq which is
+
+238
+00:26:35,920 --> 00:26:45,280
+a question answering dataset involving i believe boolean answers so the first question that they
+
+239
+00:26:45,280 --> 00:26:50,960
+try to answer in this paper is how should the prompt be initialized and three different alternatives
+
+240
+00:26:50,960 --> 00:26:56,160
+are considered one is that the prompt is initialized randomly so each number in the embedding is
+
+241
+00:26:56,160 --> 00:27:03,200
+a random number or perhaps prompts can be randomly sampled from the model vocabulary or from the
+
+242
+00:27:03,280 --> 00:27:09,280
+5000 most common tokens in the vocabulary we choose random tokens maybe dog sky and purple
+
+243
+00:27:09,280 --> 00:27:14,240
+which all form their own tokens and we just take the embeddings of those random tokens initialize
+
+244
+00:27:14,240 --> 00:27:22,880
+using those and then we learn from there alternatively embeddings can also be those that enumerate
+
+245
+00:27:22,880 --> 00:27:27,600
+output classes so if i'm trying to learn a news classification task where i have a passage and
+
+246
+00:27:27,600 --> 00:27:32,800
+i'm trying to classify it as news related to the world the news related to sports or business news
+
+247
+00:27:33,360 --> 00:27:40,640
+then i can just take those output classes find the relevant token embeddings and initialize
+
+248
+00:27:40,640 --> 00:27:46,400
+using those and then we learn our embeddings from there right and just as a reminder prompts are
+
+249
+00:27:46,400 --> 00:27:52,320
+represented as a parameter p sub e that are matrices of size p times e where e is the dimension
+
+250
+00:27:52,320 --> 00:27:59,920
+of the embedding space and p is the length of the prompt right and what they find is that while
+
+251
+00:27:59,920 --> 00:28:05,040
+they say that class label initialization performs best and they also say that at smaller model sizes
+
+252
+00:28:05,040 --> 00:28:09,520
+there are large gaps between the different initializations but once the model is scaled up to
+
+253
+00:28:09,520 --> 00:28:15,840
+the xxl size these differences disappear but i wanted to ask does the chart suggest the same
+
+254
+00:28:15,840 --> 00:28:21,760
+and so here we have a chart where the x axis is model parameters and the y axis is the average
+
+255
+00:28:21,760 --> 00:28:26,080
+superglue score and then we have the three methods random uniform sample vocabulary and class label
+
+256
+00:28:27,040 --> 00:28:30,880
+and it's first to say class label initialization performs best but i think the chart suggests
+
+257
+00:28:30,880 --> 00:28:36,160
+that basically class label initialization and sample vocabulary perform very similarly and they
+
+258
+00:28:36,160 --> 00:28:43,920
+walk hand in hand and then for random uniform they say that smaller model sizes there's larger
+
+259
+00:28:43,920 --> 00:28:49,920
+gaps but once we grow the model the gap shorten and certainly at the largest model all three methods
+
+260
+00:28:49,920 --> 00:28:55,520
+perform very similarly but also in the smallest model they perform similarly i think the random
+
+261
+00:28:55,520 --> 00:29:05,680
+uniform just has more noise and is a method with more variance second question they attempt to
+
+262
+00:29:05,680 --> 00:29:10,640
+answer is how long should prompts be and they find that across all models increasing beyond
+
+263
+00:29:10,640 --> 00:29:16,480
+20 tokens only yields marginal gains and in fact with xxl model it still gives strong results with
+
+264
+00:29:16,480 --> 00:29:21,200
+a single token prompt suggesting that for larger models prompts don't need to be as large and
+
+265
+00:29:21,200 --> 00:29:26,400
+not as many parameters need to be learned right actually what's interesting is that in the case
+
+266
+00:29:26,400 --> 00:29:34,160
+of the t5 xxl model a single token embedding has dimension 1024 so we're only learning 1024 parameters
+
+267
+00:29:34,720 --> 00:29:38,640
+and that seems to work well so that is quite interesting
+
+268
+00:29:42,480 --> 00:29:47,360
+and now comparing to other methods interestingly the paper doesn't make effectiveness comparisons
+
+269
+00:29:47,360 --> 00:29:52,000
+with other path methods only comparisons to full model fine tuning are made for effectiveness
+
+270
+00:29:52,560 --> 00:29:59,120
+they do compare parameter usage with other methods right and they argue that prompt tuning is the most
+
+271
+00:29:59,120 --> 00:30:05,440
+parameter efficient method because it learns very few parameters across the range of model sizes
+
+272
+00:30:07,600 --> 00:30:14,080
+but it is interesting that they did not make comparisons with other path methods for effectiveness
+
+273
+00:30:14,160 --> 00:30:18,240
+on one hand making these comparisons would have required them to reproduce these other
+
+274
+00:30:18,240 --> 00:30:23,440
+methods which would have been more work but on the other hand i argue that their work on a pep
+
+275
+00:30:23,440 --> 00:30:27,760
+method is incomplete without effectiveness comparisons to other path methods
+
+276
+00:30:31,200 --> 00:30:35,280
+they do make comparisons again to full model fine tuning and so we show this right where
+
+277
+00:30:35,280 --> 00:30:41,440
+prompt tuning becomes more effective with scale they show prompt tuning matches even the stronger
+
+278
+00:30:41,440 --> 00:30:46,560
+multi-task model tuning baseline and that is a baseline where a single model is tuned on all
+
+279
+00:30:46,560 --> 00:30:51,200
+the superglue tasks at the same time and so that's the strongest baseline and achieves the strongest
+
+280
+00:30:51,200 --> 00:30:57,760
+results but for a sufficiently large and up t5 model prompt tuning does just as well as full
+
+281
+00:30:57,760 --> 00:31:05,040
+model fine tuning or multi-task full model fine tuning the fourth line there is prompt design the
+
+282
+00:31:05,120 --> 00:31:11,920
+blue line and that measures the performance of gpt3 in a few shot in context learning example
+
+283
+00:31:13,440 --> 00:31:19,600
+so their method where they train actually does better than gpt3 just using the t5 model
+
+284
+00:31:23,520 --> 00:31:27,840
+and so the final part of this paper that i'll look at is resilience to domain shift and domain
+
+285
+00:31:27,840 --> 00:31:32,400
+shift is the change in data characteristics across context perhaps you train in one context
+
+286
+00:31:32,400 --> 00:31:36,800
+and then you try to evaluate the model in another context in this example the model is trained on
+
+287
+00:31:36,800 --> 00:31:42,800
+the stanford question answering data set and it's evaluated on these other data sets so out of
+
+288
+00:31:42,800 --> 00:31:48,400
+distribution right so the stanford question answering data set has passages from wikipedia
+
+289
+00:31:48,400 --> 00:31:54,240
+and then we try to answer questions given those passages but the textbook qa data set actually
+
+290
+00:31:54,960 --> 00:31:59,680
+has passages from i think a middle school level textbook the questions are also the middle school
+
+291
+00:31:59,680 --> 00:32:06,800
+level knowledge questions and bio ask i believe is a biomedical question answering data set where
+
+292
+00:32:06,800 --> 00:32:14,080
+the domain is biomedical papers i believe right and so we see that the prompt tuning math that
+
+293
+00:32:14,080 --> 00:32:20,880
+actually does very well in these settings compared to full model fine tuning but again in this table
+
+294
+00:32:20,880 --> 00:32:26,000
+there are there are methods where full model fine tuning does better but anyway the authors argue
+
+295
+00:32:26,000 --> 00:32:30,720
+that by freezing the core language model parameters prompt tuning prevents the model from modifying
+
+296
+00:32:30,720 --> 00:32:35,040
+its general understanding of language and this reduces the model's ability to overfit to a data
+
+297
+00:32:35,040 --> 00:32:39,520
+set which would be bad and that's not something that we want so they argue that prompt tuning may
+
+298
+00:32:39,520 --> 00:32:47,520
+improve robustness to domain shifts but i present this table as it is and so you might disagree with
+
+299
+00:32:47,520 --> 00:32:52,880
+that if the results aren't you know a clear prompt tuning looks better
+
+300
+00:32:56,800 --> 00:33:01,440
+i'll now move on to the second paper entitled view shot parameter efficient fine tuning is
+
+301
+00:33:01,440 --> 00:33:07,600
+better and cheaper than in context learning where they introduce a new path method iacubed
+
+302
+00:33:07,600 --> 00:33:14,640
+that comes from this name and the idea of the method is that they learn l sub k l sub v and l
+
+303
+00:33:14,720 --> 00:33:21,840
+sub ff which are vectors with the task of rescaling via l and y's multiplication the keys and the
+
+304
+00:33:21,840 --> 00:33:28,560
+values and attention and the interactivations in feedforward neural networks or in the network
+
+305
+00:33:30,400 --> 00:33:37,760
+right so here we have the attention mechanism and the values are rescaled using lv the key
+
+306
+00:33:37,760 --> 00:33:44,080
+is a rescale using lk and then in the feedforward network after the dense layer and the non-linearity
+
+307
+00:33:44,800 --> 00:33:51,040
+there is l sub ff which rescales whatever is output from there that's going into the next dense layer
+
+308
+00:33:54,160 --> 00:33:58,640
+so again this paper introduces this method and it argues that peft is better than icl in
+
+309
+00:33:58,640 --> 00:34:04,160
+few shot settings and just to remind you few shot learning is learning from only a few examples
+
+310
+00:34:04,960 --> 00:34:12,240
+and icl is in context learning where we induce a model to perform a downstream task about inputting
+
+311
+00:34:12,240 --> 00:34:17,440
+prompted examples and so here's an example of both few shot and icl so it's a four shot input
+
+312
+00:34:17,440 --> 00:34:23,360
+for context that is please unscramble the letters into a word so we're asking the model to unscramble
+
+313
+00:34:23,360 --> 00:34:29,840
+these letters and write the word and so here are four examples for example asinoc gets
+
+314
+00:34:29,840 --> 00:34:38,880
+re scrambled to casino and so we wanted to unscramble that last example astedro and it would
+
+315
+00:34:38,880 --> 00:34:46,000
+hopefully rescramble that to roasted now what's wrong with in context learning well the advantage
+
+316
+00:34:46,000 --> 00:34:51,440
+the author say is that icl they recognize does enable single models to perform many tasks without
+
+317
+00:34:51,440 --> 00:34:58,000
+fine-tuning but the disadvantage is that making predictions is expensive because the model needs
+
+318
+00:34:58,000 --> 00:35:01,920
+to process all the in-context examples every single time a prediction is made
+
+319
+00:35:02,160 --> 00:35:08,000
+so instead of in context learning peft is a promising alternative
+
+320
+00:35:10,640 --> 00:35:15,680
+so how they evaluate their methods is they use the t0 model which is created by fine-tuning
+
+321
+00:35:15,680 --> 00:35:20,880
+the t5 model in a mixture of datasets to enable zero shot generalization for each dataset that
+
+322
+00:35:20,880 --> 00:35:25,920
+they test the number of few shot examples used varies from 20 to 70 and that's not arbitrary
+
+323
+00:35:25,920 --> 00:35:30,880
+they do that to match the same number as the evaluation from the paper language models or
+
+324
+00:35:30,880 --> 00:35:36,960
+few shot learners and that's a paper that looks at few shot learning with the gp3 model and that's
+
+325
+00:35:36,960 --> 00:35:49,200
+a paper by openai and so the datasets they consider stretch you know these four different
+
+326
+00:35:50,000 --> 00:35:54,320
+areas sentence completion natural language inference coreference resolution and word
+
+327
+00:35:54,320 --> 00:36:00,160
+sense disambiguation very quickly sentence completion is you know given one sentence you
+
+328
+00:36:00,160 --> 00:36:07,840
+just complete it natural language inference is given some premise we classify whether or not
+
+329
+00:36:07,840 --> 00:36:14,000
+another premise is logically entailed by that first sentence or by the first premise if we say
+
+330
+00:36:14,000 --> 00:36:20,480
+you know dot dot dot she was playing golf with Ron when her phone rang and it was Liz her mother's
+
+331
+00:36:20,480 --> 00:36:27,600
+friend if we say that Liz called Taylor that is logically entailed if we say Ron called Taylor
+
+332
+00:36:27,600 --> 00:36:31,360
+that's a contradiction that doesn't make sense and if we say a doctor called Taylor
+
+333
+00:36:32,640 --> 00:36:41,600
+perhaps Liz is a doctor so that's unknown logically coreference resolution is recognizing
+
+334
+00:36:41,600 --> 00:36:47,520
+whether or not an entity is referring to the same thing as another entity in some text and word
+
+335
+00:36:47,520 --> 00:36:52,960
+sense disambiguation is figuring out in what sense do we mean of the word if we say something we
+
+336
+00:36:52,960 --> 00:36:57,680
+please open the window to let some fresh air in are we referring to you know the kind of
+
+337
+00:36:57,680 --> 00:37:02,640
+window that we look out of to see outside or are we talking about the operating system
+
+338
+00:37:06,000 --> 00:37:12,400
+and so here are the results they compare iac cubed both with other path methods and they compare
+
+339
+00:37:13,840 --> 00:37:20,960
+iac cubed in the tfue model with icl and so it's actually pretty confusing so the number
+
+340
+00:37:20,960 --> 00:37:26,320
+of things i need to explain first of all the comparison with peft methods is made with a
+
+341
+00:37:26,320 --> 00:37:31,360
+three billion parameter version of the model and the comparisons with icl is made with 11
+
+342
+00:37:31,360 --> 00:37:35,280
+billion parameter version of the model they say it's just quicker to evaluate with three billion
+
+343
+00:37:36,800 --> 00:37:39,520
+parameter models because it's just smaller and easier to work with
+
+344
+00:37:42,400 --> 00:37:48,000
+so starting with the left figure we see that iac cubed actually does very well it beats full
+
+345
+00:37:48,000 --> 00:37:52,160
+model fine-tuning which is marked by the dash line and it beats the other methods
+
+346
+00:37:53,280 --> 00:37:58,240
+some of these which we have covered like adapters prompt tuning prefix tuning and laura
+
+347
+00:37:59,600 --> 00:38:04,640
+and it does so with not a large amount of parameters updated a relatively modest amount
+
+348
+00:38:06,160 --> 00:38:11,920
+so now comparing to icl these baselines are not intuitive so let's explain tfue is just
+
+349
+00:38:11,920 --> 00:38:17,200
+taking a t0 fine-tuning it with iac cubed and then evaluating that and that performs the best
+
+350
+00:38:17,760 --> 00:38:22,960
+in terms of accuracy and x-axis is number of flops for example so the amount of floating
+
+351
+00:38:22,960 --> 00:38:32,240
+point operation is needed to make a prediction right so t0 evaluates the t0 11 billion parameter
+
+352
+00:38:32,240 --> 00:38:36,480
+model in a zero shot setting so without any training or without even in-contact learning
+
+353
+00:38:37,280 --> 00:38:41,840
+and that actually does fairly well it does better than gpt3 in the in-contact learning setting so
+
+354
+00:38:41,920 --> 00:38:48,000
+that's a relevant baseline to include the t5 plus lm actually evaluates the t5 lm adapt 11
+
+355
+00:38:48,000 --> 00:38:55,920
+billion parameter model with ensemble icl so it's using icl and because the context window
+
+356
+00:38:55,920 --> 00:39:04,640
+of the t5 is so small each example in is basically its own context and then the predictions are
+
+357
+00:39:04,640 --> 00:39:09,440
+averaged so if i have four examples there are four predictions made using the t5 model and
+
+358
+00:39:09,440 --> 00:39:15,280
+those predictions are averaged and they don't do icl with the t0 model because they show that
+
+359
+00:39:15,280 --> 00:39:21,040
+actually the results were worse than not using icl so the baseline model for icl for the t5
+
+360
+00:39:21,040 --> 00:39:27,520
+model is this which actually performs the worst of all the methods in that in that figure and then
+
+361
+00:39:27,520 --> 00:39:34,320
+there's the gpt3 which is the strong icl baseline which performs relatively well but it takes a lot
+
+362
+00:39:34,320 --> 00:39:38,640
+of floating point operations to compute and in fact it still doesn't do as well as tfue
+
+363
+00:39:42,160 --> 00:39:48,160
+right so now making arguments about efficiency the tfue method shines in terms of inference
+
+364
+00:39:48,160 --> 00:39:53,600
+floating point operations it is very cheap to make a prediction compared to the other methods
+
+365
+00:39:54,160 --> 00:40:01,840
+especially the icl methods right that being said it is a model that is trained unlike the other
+
+366
+00:40:01,840 --> 00:40:10,400
+methods and so there is a cost to that so the flops again are the floating point operations to
+
+367
+00:40:10,400 --> 00:40:17,360
+make a prediction for a single example and so again tfue method performs the best it has low
+
+368
+00:40:17,360 --> 00:40:23,600
+inference floating point operations but it does take some cost to train and the disk space is not
+
+369
+00:40:23,600 --> 00:40:29,920
+too interesting but basically the parameters of the model need to be stored and so the extra cost
+
+370
+00:40:29,920 --> 00:40:35,360
+of storing those models is you know a disk space usage of four megabytes which is basically nothing
+
+371
+00:40:35,360 --> 00:40:41,600
+because these models and their weights already take you know gigabytes to store the 11 billion
+
+372
+00:40:41,600 --> 00:40:50,320
+parameter model i think it's probably like 30 gigabytes to store and the gpt3 models at 170
+
+373
+00:40:50,320 --> 00:40:55,040
+billion parameters will be a lot to store but that four megabytes is the cost of storing the
+
+374
+00:40:55,040 --> 00:41:00,880
+additional parameters and the 16 kilobytes is the cost of storing the input prompt for each task
+
+375
+00:41:01,680 --> 00:41:09,120
+16 kilobytes is basically nothing right now that's some criticism of this work that i wanted to share
+
+376
+00:41:09,760 --> 00:41:14,800
+one is that the experiments were on classification tasks only optimally i'd like to see
+
+377
+00:41:15,600 --> 00:41:19,520
+experiments done on other tasks for example generative question answering
+
+378
+00:41:20,400 --> 00:41:24,320
+other criticism is that the valuation was only done using the t0 model
+
+379
+00:41:24,320 --> 00:41:28,240
+optimally as a parameter efficient fine tuning method it should be evaluated in other models
+
+380
+00:41:28,240 --> 00:41:35,920
+models as well the t0 model is an encoder decoder model maybe some experiment should be done with
+
+381
+00:41:35,920 --> 00:41:43,120
+encoder only models like the burp family of models where decoder only models like a lot of the open
+
+382
+00:41:43,120 --> 00:41:46,000
+lm's that we're seeing today llama or mistral
+
+383
+00:41:48,320 --> 00:41:52,560
+final criticism is that the valuation of the peft method is only done in the few shot setting
+
+384
+00:41:52,560 --> 00:41:58,400
+and that is the point of the paper i recognize that but i would have liked to see the evaluation
+
+385
+00:41:58,400 --> 00:42:03,280
+of this method in a more high resource setting where a lot of training data is made available
+
+386
+00:42:07,360 --> 00:42:11,920
+and now i that brings me to this paper that is towards a unified view of parameter efficient
+
+387
+00:42:11,920 --> 00:42:17,840
+transfer learning which relates prefix tuning to adapters and then tries to draw new insights from
+
+388
+00:42:17,840 --> 00:42:25,520
+that relation mainly they try to answer so as i just mentioned can adapters lower on prefix
+
+389
+00:42:25,520 --> 00:42:29,840
+tuning be related to one another and in fact they can and a unified understanding of these
+
+390
+00:42:29,840 --> 00:42:34,640
+allow for the creation of even better even better parameter efficient fine tuning methods
+
+391
+00:42:35,600 --> 00:42:41,760
+we call adapters uh we've already covered this but basically the adapter approaches
+
+392
+00:42:42,560 --> 00:42:48,480
+approach inserts small modules between transform layers and so there's a down projection matrix
+
+393
+00:42:48,480 --> 00:42:52,720
+and up projection matrix and a normal linear activation function you know go very quickly
+
+394
+00:42:52,720 --> 00:42:58,160
+over this but basically we can derive a new functional form uh of what the adapter is doing
+
+395
+00:42:58,160 --> 00:43:05,360
+where the new hidden states equals the old hidden states plus uh the output of the adapter which is
+
+396
+00:43:05,360 --> 00:43:11,440
+the activation the old hidden state times the down projection and then all that matrix multiply
+
+397
+00:43:11,440 --> 00:43:18,720
+with up projection so let's remember this for later now let's try to derive a similar functional
+
+398
+00:43:18,720 --> 00:43:25,840
+form for prefix tuning so to do prefix tuning again we talked about this but to recall two sets
+
+399
+00:43:25,920 --> 00:43:30,720
+of prefix vectors are concatenated with the original keys and values at every attention
+
+400
+00:43:30,720 --> 00:43:35,360
+head in every layer and then given a query of vector x and a sequence of m vector c over which
+
+401
+00:43:35,360 --> 00:43:42,160
+we would like to perform attention um that prefix tuning takes them this form right
+
+402
+00:43:44,400 --> 00:43:50,480
+we have the queries the keys which is a concatenation of pk and the keys as they would have been
+
+403
+00:43:50,480 --> 00:43:56,640
+otherwise and the values which is the concatenation of pv and the values as they would have been
+
+404
+00:43:56,640 --> 00:44:03,280
+otherwise without prefix tuning now this statement can actually be rewritten as this and I've skipped
+
+405
+00:44:03,280 --> 00:44:10,240
+a few steps but uh basically it takes on this form where lambda x is a scalar that represents the
+
+406
+00:44:10,240 --> 00:44:16,800
+sum of normalized attention weights on the prefixes and in this formula i and j index values in the
+
+407
+00:44:16,800 --> 00:44:23,440
+vector basically lambda x is a scalar and we rewritten prefix tuning as this form where
+
+408
+00:44:24,080 --> 00:44:29,920
+as attention was for just on this form right with the queries keys and values with prefix
+
+409
+00:44:29,920 --> 00:44:38,400
+tuning we've separated it out into as it is normally attention but also uh the add the added
+
+410
+00:44:38,400 --> 00:44:45,760
+modification with prefix tuning so alternative view of the prefix tuning in the functional
+
+411
+00:44:45,760 --> 00:44:53,440
+form we've been considering is of this form right h takes on one minus lambda x h as it was before
+
+412
+00:44:53,440 --> 00:45:00,080
+plus lambda x time is the modification to h where and delta h is a modification to the original
+
+413
+00:45:00,080 --> 00:45:06,080
+head attention output h through linear interpolation and it's linear interpolation because of these
+
+414
+00:45:06,160 --> 00:45:08,320
+scalars one minus lambda x and lambda x
+
+415
+00:45:12,720 --> 00:45:18,320
+so now we're relating prefix tuning in adapters again we have this function of form for prefix
+
+416
+00:45:18,320 --> 00:45:25,920
+tuning and we have this functional form for adapters now if we define w sub one as this
+
+417
+00:45:25,920 --> 00:45:31,520
+and w sub two as this and f as softmax function well then we can rewrite what we have
+
+418
+00:45:32,080 --> 00:45:37,440
+have the functional form of prefix tuning to this which looks a lot like adapters except that
+
+419
+00:45:37,440 --> 00:45:40,800
+prefix tuning is doing weighted addition because of those lambdas
+
+420
+00:45:48,000 --> 00:45:52,960
+now we have these very sim similar functional forms but there are some key differences
+
+421
+00:45:52,960 --> 00:45:59,120
+one is that prefix tuning uses x to compute the change to h while adapters use h to compute
+
+422
+00:45:59,200 --> 00:46:04,240
+the change to h and so there's a difference there in parallel versus sequential computation
+
+423
+00:46:04,240 --> 00:46:07,840
+and that might be easier to understand if you look at this graphic where in adapters
+
+424
+00:46:08,480 --> 00:46:16,000
+we first pass the inputs x through the plm module to get h and then that h is taken into the second
+
+425
+00:46:16,000 --> 00:46:25,040
+you know adapters branch to compute the new h the new hidden state whereas in prefix tuning
+
+426
+00:46:25,600 --> 00:46:30,400
+we don't pass x through the plm module to go into the second branch it actually is passed
+
+427
+00:46:30,400 --> 00:46:35,360
+right into the second branch so we have basically h as it would have been without prefix tuning and
+
+428
+00:46:35,360 --> 00:46:42,640
+h with prefix tuning and then we can add these together right another difference though is
+
+429
+00:46:42,640 --> 00:46:46,880
+that adapters are more flexible with respect to where they're inserted adapters can modify both
+
+430
+00:46:46,880 --> 00:46:53,120
+attention but also the feed forward net outputs while prefix tuning only modifies the attention
+
+431
+00:46:53,120 --> 00:46:58,720
+output of each head and so you might see that in this transformer block where adapters can be
+
+432
+00:46:58,720 --> 00:47:04,320
+inserted here right after the attention module or adapters can be inserted here right after the
+
+433
+00:47:04,320 --> 00:47:10,640
+feed forward network whereas with prefix tuning we see that the p sub k and the p sub b are only
+
+434
+00:47:11,920 --> 00:47:15,040
+basically changing things within the attention module
+
+435
+00:47:15,120 --> 00:47:24,240
+but now to summarize the differences between prefix tuning adapters and laura which is also
+
+436
+00:47:25,040 --> 00:47:30,960
+similar and relevant uh first let's look at the insertion forms so as we just mentioned adapters
+
+437
+00:47:30,960 --> 00:47:36,480
+are sequential but prefix tuning and even laura is uh parallel and so you might you can see that
+
+438
+00:47:36,480 --> 00:47:45,680
+this graphic for laura as for what representations they modify as we just mentioned adapters can
+
+439
+00:47:45,680 --> 00:47:51,040
+modify both feed forward network part and the attention whereas prefix tuning can only modify
+
+440
+00:47:51,040 --> 00:47:57,600
+the head attention and laura can only modify the keys and the values in attention right so laura
+
+441
+00:47:57,600 --> 00:48:02,640
+again in the transformer block laura modifies here the weights matrix for queries and the
+
+442
+00:48:02,640 --> 00:48:09,120
+weights matrix for keys and then we have these composition functions which we've been looking
+
+443
+00:48:09,120 --> 00:48:13,680
+at uh and there's a new one for laura where basically the composition function for laura
+
+444
+00:48:13,680 --> 00:48:20,640
+looks a lot like adapters but there's the addition of this s hyper parameter basically that scales
+
+445
+00:48:20,640 --> 00:48:25,600
+the change to h and we have the function forms for delta h here
+
+446
+00:48:26,080 --> 00:48:33,760
+now how can these methods be used to formulate new path methods well there are a bunch of different
+
+447
+00:48:34,400 --> 00:48:41,200
+differences right between these methods so we can test and compare which variant of these
+
+448
+00:48:41,200 --> 00:48:47,600
+differences forms better so we can compare parallel versus sequential insertion modifying
+
+449
+00:48:47,600 --> 00:48:51,280
+attention representations versus modifying the feed forward network representations
+
+450
+00:48:51,840 --> 00:48:54,640
+and scaling the composition function or leaving unscaled
+
+451
+00:49:05,520 --> 00:49:10,240
+and so in evaluation these are the data sets they use the x sum data set which is a news
+
+452
+00:49:10,240 --> 00:49:16,240
+article summarization data set english to romanian translation m and li which is a natural language
+
+453
+00:49:16,320 --> 00:49:21,360
+inference data set in sst2 which is a sentiment classification data set and they evaluate on
+
+454
+00:49:21,360 --> 00:49:26,800
+these data sets using these models the large model which is an encoder-decoder generative model
+
+455
+00:49:27,760 --> 00:49:33,280
+for the summarization and translation tasks and reberda base which is just an encoder model for
+
+456
+00:49:33,280 --> 00:49:38,640
+mnli and sst2 tasks which can be shown as just classification tasks
+
+457
+00:49:42,080 --> 00:49:44,880
+so now the first question is sequential or parallel what is better
+
+458
+00:49:46,240 --> 00:49:52,320
+well prefix tuning which uses parallel insertion outperforms sequential attention attention
+
+459
+00:49:52,320 --> 00:50:02,160
+sequential adapters so we see that in this table where the parallel adapters basically
+
+460
+00:50:02,800 --> 00:50:07,760
+do better than the sequential ones and prefix tuning which is a parallel method
+
+461
+00:50:07,760 --> 00:50:09,680
+does better than the sequential adapters as well
+
+462
+00:50:10,320 --> 00:50:19,040
+uh one thing to note is that the number of parameters change is kept comparable using these
+
+463
+00:50:19,040 --> 00:50:24,960
+hyperparameters l and r where r is the bottleneck dimension in the case of lora and adapters
+
+464
+00:50:24,960 --> 00:50:28,000
+and l is the length of the prefix in the case of prefix tuning
+
+465
+00:50:30,880 --> 00:50:36,240
+all right so a parallel adapter from this work is able to beat sequential adapters in all cases
+
+466
+00:50:36,320 --> 00:50:38,640
+the parallel adapter is something that they introduce here
+
+467
+00:50:42,880 --> 00:50:46,480
+okay and second question then is do we modify attention or feed for networks
+
+468
+00:50:47,600 --> 00:50:51,120
+right so some observations is that any method with feed for network
+
+469
+00:50:51,120 --> 00:50:55,600
+modification up forms all the methods with attention modification in all cases
+
+470
+00:50:56,160 --> 00:51:01,360
+and so here's this graphic where we have in red the methods that modify the feed for network
+
+471
+00:51:01,920 --> 00:51:07,680
+and in blue the methods that modify attention including the red methods do better across the
+
+472
+00:51:07,680 --> 00:51:15,440
+number of parameters fine tuned however modifying head attention shows the best results when the
+
+473
+00:51:15,440 --> 00:51:22,880
+parameter budget is very small and so that's shown in this table here where when the number of
+
+474
+00:51:22,880 --> 00:51:28,800
+parameters changed as kept very small actually the the method that modifies the attention forms
+
+475
+00:51:28,800 --> 00:51:33,280
+the best and that's a parallel adapter that modifies attention but also prefix tuning which
+
+476
+00:51:33,280 --> 00:51:43,360
+also only modifies attention does better than these other methods a third question to answer
+
+477
+00:51:43,360 --> 00:51:48,880
+which we've covered is should the composition function be scaled or left unscaled and they
+
+478
+00:51:48,880 --> 00:51:54,080
+find that the scaling composition function is better than the vanilla additive one you just
+
+479
+00:51:54,160 --> 00:52:01,280
+have to find the right s value and so in the table here we have laura with s equals four
+
+480
+00:52:01,280 --> 00:52:06,640
+versus s equals one where one is basically a default and s equals four does better and then
+
+481
+00:52:06,640 --> 00:52:11,680
+you have parallel adapters with s equals four doing the best and a trainable s doing not as good as
+
+482
+00:52:13,040 --> 00:52:17,440
+s equals four but still doing better than parallel adapters in the default where s equals one
+
+483
+00:52:18,720 --> 00:52:23,120
+right so a learning scalar does not give much better results than manually tuning the scalar
+
+484
+00:52:23,120 --> 00:52:31,840
+which is interesting but here's where the sort of the unified view comes where
+
+485
+00:52:31,840 --> 00:52:37,680
+the best design elements can be combined to create an even better parameter efficient fine
+
+486
+00:52:37,680 --> 00:52:42,880
+tuning method so they found that the scaled parallel adapter is the best variant to modify
+
+487
+00:52:42,880 --> 00:52:47,760
+the feed for network they also found that feed for networks can better utilize modifications at
+
+488
+00:52:47,760 --> 00:52:52,960
+larger parameter counts however when the parameter budget is small so only when we want to modify
+
+489
+00:52:53,040 --> 00:52:58,160
+a small number of parameters that actually modifying head attentions with prefix tuning can
+
+490
+00:52:58,160 --> 00:53:03,920
+achieve strong performance right so this paper presents this method the mix and match adapter
+
+491
+00:53:03,920 --> 00:53:10,160
+that combining all of these findings actually attains strong results and we see that in this
+
+492
+00:53:10,160 --> 00:53:16,800
+table here where it is compared against both full model fine tuning a lot of the methods that we've
+
+493
+00:53:16,800 --> 00:53:24,240
+talked about prompt tuning prefix tuning lora parallel adapter which they introduced in this work
+
+494
+00:53:24,960 --> 00:53:31,760
+as well and basically the mix and match adapter which combines a lot of the findings forms the best
+
+495
+00:53:36,160 --> 00:53:40,320
+although compared to full model fine tuning it's a hit or miss so sometimes it'll do better
+
+496
+00:53:40,320 --> 00:53:41,280
+sometimes it'll do worse
+
+497
+00:53:48,000 --> 00:53:50,960
+and so that's interesting right and so concluding that last paper moving on
+
+498
+00:53:51,520 --> 00:53:56,000
+into trying to compare parameter efficient fine tuning and full model fine tuning
+
+499
+00:53:58,000 --> 00:54:02,000
+you know up to this point it looks like full model fine tuning can do better sometimes
+
+500
+00:54:02,000 --> 00:54:06,000
+parameter efficient fine tuning can do better sometimes with this advantage is so what do you
+
+501
+00:54:06,080 --> 00:54:12,080
+pick right and so they provide a number of relevant observations
+
+502
+00:54:13,760 --> 00:54:17,600
+they find that parameter efficient fine tuning methods perform the best and low to medium
+
+503
+00:54:17,600 --> 00:54:22,480
+resource scenarios whereas full model fine tuning does better in high resource scenarios
+
+504
+00:54:22,480 --> 00:54:27,520
+now what does that mean because it is arbitrary so basically to them low resources at most 100
+
+505
+00:54:27,520 --> 00:54:32,720
+data points medium resources at most a thousand data points so ranging from 100 to a thousand
+
+506
+00:54:32,800 --> 00:54:37,840
+in high resource is at most 10 000 realistically anything more than a thousand
+
+507
+00:54:39,520 --> 00:54:46,960
+but in their testing it's 1000 to 10 000 right so half methods do better in low resource full
+
+508
+00:54:46,960 --> 00:54:51,600
+model fine tuning is better in high resource although looking at the table you know in low
+
+509
+00:54:51,600 --> 00:54:58,560
+resource here all the parameter efficient fine tuning methods are leading with medium resource full
+
+510
+00:54:58,560 --> 00:55:03,520
+model fine tuning actually leads in this data set in the other data sets it's path methods that
+
+511
+00:55:03,520 --> 00:55:08,160
+are winning and then in high resource scenarios full model fine tuning does better in two of the
+
+512
+00:55:08,160 --> 00:55:13,040
+data sets but it's still parameter efficient fine tuning methods that do better in the other two
+
+513
+00:55:18,080 --> 00:55:23,360
+now they also show that parameter efficient fine tuning methods are slower to converge in low
+
+514
+00:55:23,360 --> 00:55:29,520
+resource scenarios but faster to converge in high resource scenarios so basically their general
+
+515
+00:55:29,520 --> 00:55:34,560
+advice is that if you have a lot of training data the parameter efficient fine tuning method
+
+516
+00:55:34,560 --> 00:55:38,560
+will be quicker but it won't perform as well and if you don't have a lot of training data
+
+517
+00:55:38,560 --> 00:55:41,760
+the parameter efficient fine tuning method will do better but it will be slower to train
+
+518
+00:55:43,200 --> 00:55:46,080
+which are both considerations if you're training models
+
+519
+00:55:46,800 --> 00:55:56,640
+and so in application hugging face peft supports many of the fine tuning methods we discussed on
+
+520
+00:55:56,640 --> 00:56:01,760
+modern models out of the box so they've already been shown to work with these methods and really
+
+521
+00:56:01,760 --> 00:56:06,800
+with some manual modification configuration these models or these methods can be used with any models
+
+522
+00:56:09,200 --> 00:56:15,760
+right or most models so here's a table where they've shown sort of what they've been able to do
+
+523
+00:56:16,080 --> 00:56:23,120
+and so with mistro models or llama models you know these methods have been shown to work but with
+
+524
+00:56:23,680 --> 00:56:29,200
+again with configuration most models will work with the parameter efficient fine tuning method you
+
+525
+00:56:29,200 --> 00:56:37,200
+choose and it's already been implemented thank you that concludes my presentation
+

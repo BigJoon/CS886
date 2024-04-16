@@ -1,0 +1,1744 @@
+1
+00:00:00,000 --> 00:00:10,160
+Hello everyone, my name is Daniel Yu, this is lecture 21, and in this presentation we'll
+
+2
+00:00:10,160 --> 00:00:16,240
+talk about large language models and tool augmentation.
+
+3
+00:00:16,240 --> 00:00:21,880
+So to give us a little bit of motivation, we've seen that large language models excel at natural
+
+4
+00:00:21,880 --> 00:00:27,720
+language tasks, but language models also show that they have many inherent limitations.
+
+5
+00:00:28,160 --> 00:00:35,240
+So first of all, because LLMs are trained with corpus of texts relevant up to a certain time,
+
+6
+00:00:35,240 --> 00:00:41,080
+there are no access to up-to-date information. There are also many research that shows that
+
+7
+00:00:41,080 --> 00:00:49,560
+large language models are prone to fat hallucinations. They are also very bad at multi-step
+
+8
+00:00:49,560 --> 00:00:57,720
+reasoning, and they lack mathematical skills for precise calculations. Moreover, they are
+
+9
+00:00:57,720 --> 00:01:03,560
+unaware of the progression of time, so they are incapable of working with time-sensitive tasks.
+
+10
+00:01:05,640 --> 00:01:11,080
+Now, of course, some of these limitations might be partially solved by scaling up the model further,
+
+11
+00:01:11,640 --> 00:01:20,280
+but a much simpler solution and a much more popular solution is to overcome LLM limitations
+
+12
+00:01:20,280 --> 00:01:28,520
+with the use of external tools. External tools in this case refers to limited use tools such as
+
+13
+00:01:28,520 --> 00:01:36,440
+calculators, calendar, or even the program interpreter. It can also include a search engine
+
+14
+00:01:36,520 --> 00:01:43,880
+API, or an external database for expert knowledge, and they can be used for retrieval.
+
+15
+00:01:48,760 --> 00:01:53,240
+Now, in the modern days, we have the convenience of accessing these tools
+
+16
+00:01:53,800 --> 00:02:00,200
+with data frameworks such as LamaIndex. LamaIndex provides the interface between LLMs
+
+17
+00:02:00,280 --> 00:02:08,040
+and external tools or documents. In this case, LLM index actually has an indexing function
+
+18
+00:02:08,040 --> 00:02:16,920
+that allows us to easily retrieve documents or APIs from external libraries. It has features
+
+19
+00:02:16,920 --> 00:02:23,480
+that allows us to access structured databases or unstructured documents such as raw files,
+
+20
+00:02:23,480 --> 00:02:30,920
+or maybe semi-structured databases such as vector stores, or programmatic data such as application
+
+21
+00:02:30,920 --> 00:02:43,000
+APIs. And for the outline of this presentation, we will cover six research papers. I will be
+
+22
+00:02:43,000 --> 00:02:49,320
+covering the first three, two former art and agent bench, and Mohamed will be covering the last three.
+
+23
+00:02:49,480 --> 00:02:57,240
+And these six papers all refers to the approaches that we can use fine-tune
+
+24
+00:02:57,800 --> 00:03:02,120
+prompt or benchmark large language model augmented with external tools.
+
+25
+00:03:06,760 --> 00:03:14,680
+The first paper we talk about is ToolFormer. It is one of the first papers that discusses fine-tuning
+
+26
+00:03:14,680 --> 00:03:24,760
+model with the use of tools. To begin, the standard approach of tool use is using specific tools for
+
+27
+00:03:24,760 --> 00:03:30,680
+specialized language model. But usually, this approach requires providing large amounts of
+
+28
+00:03:30,680 --> 00:03:37,320
+demonstration of tool use, or we can use only a limited amount of tools for a domain-specific
+
+29
+00:03:37,320 --> 00:03:46,440
+language model. Now, obviously, these types of tool use come with the issues of having high costs
+
+30
+00:03:46,440 --> 00:03:52,920
+for large amounts of human annotations. If we use only a restricted amount of tools, then the large
+
+31
+00:03:52,920 --> 00:03:59,800
+language model lacks generality. And in this case, prompts needs to be tailored to specific task or
+
+32
+00:03:59,800 --> 00:04:09,320
+specific tools. To solve this issue, the authors of this paper developed the methods of ToolFormer.
+
+33
+00:04:10,440 --> 00:04:17,160
+First of all, ToolFormer gives models the ability to use APIs that have access to external database.
+
+34
+00:04:17,960 --> 00:04:24,920
+But more importantly, ToolFormer is a methods of fine-tuning language models so that the model
+
+35
+00:04:24,920 --> 00:04:32,440
+itself can decide whether it will use a specific tools and when and how to use the available tools.
+
+36
+00:04:34,120 --> 00:04:41,560
+Now, this is beneficial for the large language model because not only the large language models
+
+37
+00:04:41,560 --> 00:04:47,720
+has more tools to use, it's also because human intuition may not always be correct.
+
+38
+00:04:48,440 --> 00:04:54,920
+And the tools that humans find useful in a particular scenario may not be the tool that the
+
+39
+00:04:54,920 --> 00:05:02,440
+model finds useful. Therefore, in ToolFormer, the use of tools should be learned in a self-supervised
+
+40
+00:05:02,440 --> 00:05:08,440
+manner with our large amounts of human annotations showing it what to do. The approach of ToolFormer
+
+41
+00:05:08,440 --> 00:05:12,120
+should also not hurt the model's core language ability.
+
+42
+00:05:12,520 --> 00:05:18,920
+For the approach of ToolFormer, let's say we want to equip a language model M with the ability to use
+
+43
+00:05:18,920 --> 00:05:28,120
+different tools from API costs. The idea here is that with just a handful of human examples of how the
+
+44
+00:05:28,120 --> 00:05:35,560
+APIs can be used, we can use in-context learning to let the language model M generalize and
+
+45
+00:05:36,200 --> 00:05:43,800
+annotate a large dataset with the potential use of API costs. And then we can determine which
+
+46
+00:05:43,800 --> 00:05:49,560
+of these API costs actually will help the model predict future tokens and then fine-tune a model
+
+47
+00:05:49,560 --> 00:06:00,040
+on the API costs for which it finds useful. So in this particular case, API call is represented
+
+48
+00:06:00,040 --> 00:06:10,440
+by a pairs, C, which is AC, IC. And AC is the name of the API and IC is the input to the API.
+
+49
+00:06:11,960 --> 00:06:17,240
+Now, inputs and outputs of API calls are represented as linearized text sequence,
+
+50
+00:06:18,120 --> 00:06:26,440
+EC or ECR. If the API call generator responds, the response has to be a single text sequence,
+
+51
+00:06:27,400 --> 00:06:33,400
+and the response will be concatenated into the text sequence. And in this text sequence,
+
+52
+00:06:34,040 --> 00:06:39,320
+API, the NAPI, and the maps to symbols are all just special tokens.
+
+53
+00:06:43,240 --> 00:06:49,560
+Now, in order to augment a plaintext dataset, let's say we're given a plaintext dataset C and
+
+54
+00:06:49,560 --> 00:06:56,920
+we try to augment it to C star with API costs, we can do the following. First, we use a large
+
+55
+00:06:56,920 --> 00:07:04,040
+language model M to sample a large amount of potential API costs. Then we execute these API
+
+56
+00:07:04,040 --> 00:07:09,320
+costs and filter out the result that doesn't help the language model to predict future tokens.
+
+57
+00:07:11,240 --> 00:07:16,760
+And finally, we merge the API costs that remains for different types of tools.
+
+58
+00:07:17,480 --> 00:07:28,440
+Here is an example of the filtering process. So let's say we start with an example in the dataset
+
+59
+00:07:29,080 --> 00:07:34,680
+where the text is Pittsburgh is known as the Still City. This is the original text in the dataset.
+
+60
+00:07:35,240 --> 00:07:43,000
+And from here, we ask the language model to sample a bunch of API costs that may potentially help
+
+61
+00:07:43,320 --> 00:07:51,240
+the language model to generate the centers. So here they samples a bunch of questions that they can
+
+62
+00:07:51,960 --> 00:07:59,160
+use in a question and answering API. And then we execute all these API costs to get an actual answer.
+
+63
+00:08:00,440 --> 00:08:08,520
+Then we check the loss function related to the API called plaintext. And we use some
+
+64
+00:08:08,520 --> 00:08:14,440
+self-supervised criterion to check whether we actually want to keep this API costs by whether
+
+65
+00:08:14,440 --> 00:08:21,240
+it's helpful for the language model to generate this text. And then for the API costs that remains,
+
+66
+00:08:21,240 --> 00:08:28,280
+we will see we will augment the linearized text sequence of API costs into the original text
+
+67
+00:08:28,360 --> 00:08:30,120
+and therefore augmenting this example.
+
+68
+00:08:35,000 --> 00:08:41,480
+Now to be specific, for each API, we write a prompt PX that encourages the language model
+
+69
+00:08:41,480 --> 00:08:47,560
+to annotate an example X with API costs. This example on the right is one of such prompts
+
+70
+00:08:48,200 --> 00:08:57,000
+where you have a bunch of examples demonstration in the beginning. And then we just concatenate X
+
+71
+00:08:58,280 --> 00:09:08,520
+as an input to the prompt. Now, given this, we will sample K candidates positions for doing API
+
+72
+00:09:08,520 --> 00:09:15,000
+costs by computing the probability that the next token is the special API token. That's why we
+
+73
+00:09:15,000 --> 00:09:24,520
+computed this probability PI for a particular position I in the text example. And then let's say
+
+74
+00:09:24,600 --> 00:09:32,680
+we're given a sampling threshold tau. This is a positive number. And then we keep all positions
+
+75
+00:09:32,680 --> 00:09:38,520
+I for which the probability of generating an API token is greater than the threshold.
+
+76
+00:09:39,160 --> 00:09:46,840
+This I is the set of candidate positions for API costs. Therefore, for every I as a candidate
+
+77
+00:09:46,840 --> 00:09:56,200
+position, we'll sample up to M API costs, see a C1 I all the way to CMI. These API costs are
+
+78
+00:09:56,200 --> 00:10:07,080
+generated by the original language model M. Now, after we execute all the sample API costs,
+
+79
+00:10:07,080 --> 00:10:13,800
+we want to filter out API costs that do not provide benefits or provide more harm than benefits
+
+80
+00:10:14,760 --> 00:10:20,520
+to generation. The way we do that is that we will define a self supervised loss Li of Z.
+
+81
+00:10:21,560 --> 00:10:29,160
+Here, Z is just the linearized sequence of API costs. So this probability refers to the
+
+82
+00:10:30,040 --> 00:10:39,480
+probability of generating XJ, given the original prefix X1 to J minus one, and then a potential
+
+83
+00:10:39,480 --> 00:10:47,640
+API called Z. Now, let's say we're given a sequence of weights. This Li of Z computes the weighted
+
+84
+00:10:47,640 --> 00:10:57,880
+cross entropy loss for M. And for the weight function, authors of this paper use this weight
+
+85
+00:10:57,880 --> 00:11:08,680
+function. This is a piecewise linear function. But more importantly is that WT, the mass of the WTs
+
+86
+00:11:08,680 --> 00:11:16,040
+are more concentrated when T is close to zero. And it would just decrease when T gets further away.
+
+87
+00:11:16,680 --> 00:11:22,760
+In fact, when T is five, this function will be zero. This ensures that the API costs happen
+
+88
+00:11:22,760 --> 00:11:26,680
+close to where the API outputs is actually helpful for generation.
+
+89
+00:11:32,120 --> 00:11:37,160
+Now, in order to filter the API costs, we calculate the weighted loss of having
+
+90
+00:11:37,160 --> 00:11:43,880
+and not having the results of API costs prefix. One of the things we calculate is
+
+91
+00:11:44,680 --> 00:11:52,200
+L plus i. This is just a loss when we include a particular sample API costs.
+
+92
+00:11:53,640 --> 00:12:02,520
+L minus i is calculated as the minimum of the loss of epsilon and the loss of
+
+93
+00:12:03,480 --> 00:12:10,600
+using CI API call, but returning epsilon result. Here epsilon is just the empty string.
+
+94
+00:12:12,120 --> 00:12:20,600
+So these two compares the loss of the model when you include a sample API cost or when
+
+95
+00:12:20,600 --> 00:12:25,560
+it does not include a sample API cost. Now, given a filtering threshold tau of F,
+
+96
+00:12:25,560 --> 00:12:29,320
+we only keep API costs that reduce the loss by at least the threshold.
+
+97
+00:12:33,000 --> 00:12:40,680
+After filtering, we merge the remaining API costs and interleave them with the original
+
+98
+00:12:40,680 --> 00:12:50,760
+inputs. So you can see that from the examples on the right. When you make sure that an API cost
+
+99
+00:12:50,760 --> 00:12:57,560
+will be helpful for generation, you would augment by inserting them into the original text.
+
+100
+00:12:58,520 --> 00:13:05,960
+And with this method, we have made the data set C star that is augmented with API costs.
+
+101
+00:13:06,760 --> 00:13:12,360
+The final step is to fine tune the language model M with the augmented data set C star.
+
+102
+00:13:13,240 --> 00:13:18,760
+Doing this will allow the additional API costs inserted help M predict future tokens.
+
+103
+00:13:19,480 --> 00:13:26,920
+Now, for inference, whenever it encounters the maps to function, it will
+
+104
+00:13:27,720 --> 00:13:35,400
+indicates that it expects some response from the API costs. Therefore, the LLM pauses generation,
+
+105
+00:13:37,000 --> 00:13:42,680
+execute the appropriate API costs for a response, and then concatenate that response into the
+
+106
+00:13:42,680 --> 00:13:46,520
+generation, and then continue decoding with the generated response.
+
+107
+00:13:48,680 --> 00:13:53,160
+This is the approach and or say the constructions of two former.
+
+108
+00:13:55,640 --> 00:14:03,160
+Now, the authors of this paper has done a few experiments in order to benchmark the effectiveness
+
+109
+00:14:03,160 --> 00:14:08,920
+of this approach. In order to do that, they explored the following five tools in an attempt to
+
+110
+00:14:09,480 --> 00:14:15,880
+address the different shortcomings of language models. The first one is a question answering tool.
+
+111
+00:14:17,080 --> 00:14:25,160
+This is given by a secondary language model Atlas, which is a retrieval augmented generated
+
+112
+00:14:25,160 --> 00:14:31,800
+model that is used to answer simple factual questions. And then the second tool is Wikipedia
+
+113
+00:14:31,800 --> 00:14:46,040
+search. This is an engine that when given a search term returns a short text snippet from Wikipedia.
+
+114
+00:14:47,880 --> 00:14:52,520
+And then the calculator pretty straightforward is just perform simple arithmetic operation.
+
+115
+00:14:53,480 --> 00:15:01,880
+The calendar when given a when when we queried API with no inputs, it just returns the current date.
+
+116
+00:15:03,080 --> 00:15:09,400
+And finally, the machine translation system is also given by a secondary language model.
+
+117
+00:15:10,120 --> 00:15:16,440
+This is called an LLB. It's a 600 million parameter language model, and it can translate
+
+118
+00:15:16,440 --> 00:15:20,120
+from any of the 200 languages available back to English.
+
+119
+00:15:23,080 --> 00:15:31,400
+For the experimental setup, we use a subsets of CC net as our large language modeling data set C.
+
+120
+00:15:32,280 --> 00:15:41,640
+And we use GPDJ as the language model M. In order to reduce computational cost to two former,
+
+121
+00:15:41,640 --> 00:15:46,680
+we use some manual heuristics for some API to get a subsets of C.
+
+122
+00:15:47,080 --> 00:15:55,000
+For example, we will use calculator tools, if only let's say that there are three numbers in a window
+
+123
+00:15:55,000 --> 00:16:00,280
+of 100 tokens. Otherwise, we will remove this tools from its use.
+
+124
+00:16:02,280 --> 00:16:10,680
+Also, in order to make sure models will call API tools more often during inference, we'll start an API call whenever API
+
+125
+00:16:10,680 --> 00:16:17,000
+token is one of the key most likely token. Now, here are the baseline model we compare with.
+
+126
+00:16:17,000 --> 00:16:22,840
+First of all, GPDJ, which is the original base GPDJ model without fine tuning.
+
+127
+00:16:22,840 --> 00:16:32,200
+GPDJ plus CC is GPDJ fine tuned on the subsets of CC net without any API calls.
+
+128
+00:16:32,920 --> 00:16:38,920
+GPDJ fine tuned on the subsets of CC net without any API calls.
+
+129
+00:16:40,120 --> 00:16:44,600
+Two former is GPDJ fine tuned on the augmented data set C star.
+
+130
+00:16:44,600 --> 00:16:49,160
+And finally, two former disabled is GPDJ fine tuned on C star.
+
+131
+00:16:49,160 --> 00:16:53,880
+But during inference, the API calls are disabled.
+
+132
+00:16:54,680 --> 00:16:59,000
+This is done by manually setting the probability of the API token to zero.
+
+133
+00:17:02,440 --> 00:17:08,680
+Now, for the experiments on the benchmark, we use a bunch of downstream tasks and evaluate the
+
+134
+00:17:08,680 --> 00:17:15,720
+zero shot performance. The zero shot setting here is used because we don't want to tell
+
+135
+00:17:15,720 --> 00:17:21,000
+the large language model which tools to use in events so that the language model can decide for
+
+136
+00:17:21,000 --> 00:17:29,000
+itself. The first set of benchmarks is Lama. This is originally used for mass language modeling.
+
+137
+00:17:29,880 --> 00:17:37,320
+And in the data set squad, Google RE and REX, the task here is to complete
+
+138
+00:17:37,320 --> 00:17:44,040
+short statement with missing facts. Now, two former here is prevented from using Wikipedia
+
+139
+00:17:44,040 --> 00:17:51,320
+search APIs because a lot of the statements in these data sets are obtained directly from Wikipedia.
+
+140
+00:17:53,320 --> 00:17:57,560
+But even in this case, two former still outperform the baseline models.
+
+141
+00:17:57,560 --> 00:18:01,160
+As you can see from the table and the underlined accuracies.
+
+142
+00:18:05,000 --> 00:18:15,480
+Now, for the math data sets, we use the ASDIV, SV, AMP, and MAWPS. These are just all math
+
+143
+00:18:15,480 --> 00:18:24,120
+word problem. And again, we use a zero shot settings because we may not be necessarily using
+
+144
+00:18:24,120 --> 00:18:29,320
+only calculators for math word problem. We could be also, the language model may
+
+145
+00:18:29,320 --> 00:18:38,920
+decide to use maybe a question answering API. Now, we allow the models to make API calls.
+
+146
+00:18:40,280 --> 00:18:45,720
+If we allow the models to make API calls, it more than doubles their performance. This means that
+
+147
+00:18:45,720 --> 00:18:53,400
+two former can really solve some of these problems related to accurate computation and reasoning.
+
+148
+00:18:54,840 --> 00:19:02,760
+And the next set of data sets we look at is web questions, natural questions, and trivial QA.
+
+149
+00:19:03,400 --> 00:19:08,840
+These contains common sense questions. We evaluate the performance by checking whether
+
+150
+00:19:08,840 --> 00:19:14,040
+the first 20 words predicted by a model contains the correct answer. And in here,
+
+151
+00:19:14,040 --> 00:19:22,200
+the question answering API is disabled for two former. Because again, this using this API will be
+
+152
+00:19:22,840 --> 00:19:26,840
+a very direct approach. And we want to test the language model's
+
+153
+00:19:27,960 --> 00:19:32,920
+AMP's ability, not the ability of the secondary language model atlas.
+
+154
+00:19:36,200 --> 00:19:40,920
+This is its performance. As you can see, there are also slight increase
+
+155
+00:19:41,960 --> 00:19:49,720
+with two former on all three benchmarks. Oh, for a more challenging task, we will evaluate
+
+156
+00:19:49,720 --> 00:19:58,280
+multi-lingual QA data set. These data sets can take six languages, such as Spanish, German,
+
+157
+00:19:58,280 --> 00:20:07,160
+Hindi, Vietnamese, Chinese, and Arabic. We evaluate the two former and all baseline models
+
+158
+00:20:07,160 --> 00:20:12,920
+on this task, and evaluate the percentage of times the model's generation contains the correct
+
+159
+00:20:12,920 --> 00:20:20,280
+answer. Now, interesting phenomena happens in this table. Using API calls actually improve
+
+160
+00:20:20,280 --> 00:20:26,840
+two former's performance, but two former doesn't consistently outperform the base GPTJ models.
+
+161
+00:20:27,480 --> 00:20:35,880
+And one of the main reason or explanation is that fine-tuning on the subsets of CCNet
+
+162
+00:20:36,760 --> 00:20:47,560
+actually deteriorate performance. Now, we look at temporal data sets, such as
+
+163
+00:20:47,560 --> 00:20:54,120
+tempLama and data set. These are both data sets where the answer to the question changes with time.
+
+164
+00:20:54,840 --> 00:21:00,680
+More specifically, tempLama, it contains questions about facts, such as who is the head
+
+165
+00:21:00,680 --> 00:21:04,600
+of government in New York City. Day set data set, on the other hand,
+
+166
+00:21:05,400 --> 00:21:10,840
+contains questions regarding dates and duration, such as what day of the week it is 10 days ago.
+
+167
+00:21:12,280 --> 00:21:19,160
+So interestingly, both data set had improved performance with two former, but upon closer
+
+168
+00:21:19,160 --> 00:21:26,840
+evaluation, tempLama's increase in performance is not attributed to the calendar, is actually
+
+169
+00:21:26,920 --> 00:21:35,880
+attributed to Wikipedia search plus QA, because of how the information of time is related to
+
+170
+00:21:35,880 --> 00:21:43,240
+facts about the common world. On the other hand, there is a significant improvements in day set,
+
+171
+00:21:43,800 --> 00:21:47,320
+and this is attributed to the use of calendar tools.
+
+172
+00:21:48,280 --> 00:21:57,800
+We also wanted to see whether fine-tuning on two former actually deteriorates the language
+
+173
+00:21:57,800 --> 00:22:07,000
+original, the language model's original language ability. Therefore, there has been an experiment
+
+174
+00:22:07,000 --> 00:22:15,480
+made that compares the proplexity of different base models on wiki text and another subsets
+
+175
+00:22:15,480 --> 00:22:21,320
+of ccinet that is different from the subset that was originally used for the fine-tuning.
+
+176
+00:22:22,440 --> 00:22:27,000
+So we want to ensure that the language model's performance does not deteriorate,
+
+177
+00:22:27,560 --> 00:22:32,840
+and as you can see from the table, proplexity doesn't change that much.
+
+178
+00:22:35,480 --> 00:22:40,840
+And finally, there are experiments that test how the performance scales with the size of the
+
+179
+00:22:40,920 --> 00:22:48,040
+language model. So for this experiment, we have used the same experimental setup for
+
+180
+00:22:48,040 --> 00:22:55,560
+different parameter models in the GPT-2 family. And if you compare the curve of two former and
+
+181
+00:22:55,560 --> 00:23:03,640
+two former disabled in the below three diagram, we see that the ability to use tool only emerges
+
+182
+00:23:03,640 --> 00:23:15,480
+at around 775 million parameter models. So this is it about two former, and next we will talk about
+
+183
+00:23:15,480 --> 00:23:19,960
+art, which stands for automatic reasoning and to use.
+
+184
+00:23:24,280 --> 00:23:30,680
+For the motivation of art, we've seen that in context learning allows large language models
+
+185
+00:23:30,680 --> 00:23:35,880
+to quickly adapt to new tasks using natural language instructions and a few demonstrations.
+
+186
+00:23:37,240 --> 00:23:42,680
+However, there are also severe performance limitations around multi-step reasoning,
+
+187
+00:23:42,680 --> 00:23:45,480
+mathematical problem solving, and other complex tasks.
+
+188
+00:23:46,920 --> 00:23:52,600
+While there are variants of prompting methods such as auto-ching of thought and least to most
+
+189
+00:23:52,600 --> 00:23:57,560
+prompting that we've seen, these can mitigate issues involving multi-step reasoning. But for
+
+190
+00:23:57,560 --> 00:24:04,360
+this presentation, we try to incorporate the use of tools into the model. That's why we introduce
+
+191
+00:24:04,360 --> 00:24:11,640
+art, which is a framework that try to resolve the issue by automatically generate
+
+192
+00:24:12,440 --> 00:24:22,440
+decompositions of intermediate reasoning steps for instances of new tasks. While it automatically
+
+193
+00:24:22,440 --> 00:24:25,880
+use the appropriate tools at each of the intermediate steps.
+
+194
+00:24:29,320 --> 00:24:34,760
+In the art framework, we provide the large language models with demonstrations of how
+
+195
+00:24:34,760 --> 00:24:42,920
+to decompose several related tasks and how to use any tools from a tool library. We will see later
+
+196
+00:24:42,920 --> 00:24:49,080
+that the composition of tasks and the related tasks are given by a structured query language
+
+197
+00:24:49,720 --> 00:24:56,520
+so that we can use it to parse intermediate steps. But overall, art is a framework that encourages
+
+198
+00:24:56,520 --> 00:25:04,280
+the model to generalize decomposed new tasks, select and use tools. On the right hand side,
+
+199
+00:25:04,280 --> 00:25:11,320
+we can see examples of such a process. And at the end of the stage, we can also see that
+
+200
+00:25:12,280 --> 00:25:18,200
+if there is a mistake in the decomposition of reasoning, it also allows the user to fix any
+
+201
+00:25:18,200 --> 00:25:25,160
+mistakes by adding new tools or updating the task library. We'll see more about this later.
+
+202
+00:25:30,600 --> 00:25:36,760
+Okay, so art is actually a framework that builds on both the idea of chain of thought and auto
+
+203
+00:25:36,760 --> 00:25:45,000
+chain of thought. If you don't know auto chain of thought, it's like chain of thought. But the
+
+204
+00:25:45,000 --> 00:25:51,720
+demonstrations are automatically constructed by the large language model by sampling different
+
+205
+00:25:51,720 --> 00:25:56,280
+questions and generating their respective reasoning chain and use them as an example.
+
+206
+00:25:58,280 --> 00:26:04,440
+Art has the advantage that it enables cross task demonstration and it improves
+
+207
+00:26:04,440 --> 00:26:11,240
+accuracies of intermediate reasoning steps. Art doesn't require any additional training
+
+208
+00:26:11,240 --> 00:26:17,880
+or two specific prompts. User can replace the underlying large language model or add new tools
+
+209
+00:26:17,880 --> 00:26:25,960
+if they find useful. On the right is a table of what kind of feature each of these tools or
+
+210
+00:26:25,960 --> 00:26:37,880
+approach uses. As you can see, COT has multi step reasoning as a feature. And then auto COT
+
+211
+00:26:37,880 --> 00:26:43,480
+uses less supervision because it generates its demonstration automatically. Two former
+
+212
+00:26:43,480 --> 00:26:48,120
+enables the use of tool and art claims to have all six features.
+
+213
+00:26:54,760 --> 00:27:00,760
+Now we take a look at an overview of this framework in its core. Art uses a frozen
+
+214
+00:27:00,760 --> 00:27:06,200
+large language model to decompose instances of a new task into multiple steps without supervision.
+
+215
+00:27:07,000 --> 00:27:14,760
+In the first stage, we will do prompt building. So in prompt building, art retrieves similar task
+
+216
+00:27:14,760 --> 00:27:19,960
+from a task library and adds instances of those tasks as demonstration in the prompt.
+
+217
+00:27:22,440 --> 00:27:29,160
+A demonstration in a task library is written in a custom format. This custom format is called
+
+218
+00:27:29,160 --> 00:27:36,520
+parsing expression in grammar. This grammar helps break down every task instance into a sequence of
+
+219
+00:27:36,520 --> 00:27:42,760
+sub steps. Some of these sub steps contain symbols corresponding to the use of tools.
+
+220
+00:27:44,120 --> 00:27:51,080
+In this paper, the author also refers to the compositions as programs. This is because
+
+221
+00:27:51,960 --> 00:27:58,440
+sequential reasoning steps and symbolic calls are a resemblance to conventional programs with
+
+222
+00:27:58,520 --> 00:28:08,440
+function costs. The next stage is generation. During generation time, the large language
+
+223
+00:28:08,440 --> 00:28:16,360
+model writes its own program. And art will pause this generation if it encounters a tool call
+
+224
+00:28:16,360 --> 00:28:21,640
+in the generated text. It calls the tool, integrates the tools output back to the program,
+
+225
+00:28:21,640 --> 00:28:28,840
+and the LLM continues to coding. The final optional stage is for human feedback,
+
+226
+00:28:29,480 --> 00:28:36,920
+which humans can find any mistakes or error within the reasoning steps and then adds the
+
+227
+00:28:36,920 --> 00:28:42,840
+composition demonstration to the task library or edit the tools in the tool library in order to
+
+228
+00:28:42,840 --> 00:28:46,760
+fix them and improve performance on a particular task of interest.
+
+229
+00:28:51,240 --> 00:28:54,520
+Here is an example of everything we talked about in the previous outline.
+
+230
+00:28:55,800 --> 00:29:01,640
+On the left hand side, this shows a few examples of tasks from the task library.
+
+231
+00:29:02,760 --> 00:29:11,640
+These examples or these tasks will be used for the LLM for potential cross-task generalization
+
+232
+00:29:11,640 --> 00:29:21,400
+of the compositions. This example is an arithmetic question, and it shows
+
+233
+00:29:22,360 --> 00:29:29,000
+how to generate a decomposition to solve a calculation of questions like this. The bottom
+
+234
+00:29:29,000 --> 00:29:41,560
+example is a task from the anachromism. It means that to check whether objects or events
+
+235
+00:29:41,560 --> 00:29:48,600
+happen in their respective era. On the right hand side is an example of a task from the
+
+236
+00:29:48,600 --> 00:29:56,680
+physics question answering dataset. It asks for a classical mechanic questions, and the LLM here
+
+237
+00:29:56,680 --> 00:30:03,560
+decomposes the questions by first using a search engine to find the appropriate physical formula,
+
+238
+00:30:03,560 --> 00:30:10,840
+and then it asks a code generation tools to generate the code to execute this formula.
+
+239
+00:30:10,840 --> 00:30:16,120
+Finally, a Python program to substitute the correct parameters and answer the questions
+
+240
+00:30:16,120 --> 00:30:25,640
+in the end. In the task library of art, it has programs for a small seed set of tasks from Big
+
+241
+00:30:25,640 --> 00:30:32,440
+Bench. Big Bench is a benchmark that measures the capabilities and limitations of language model.
+
+242
+00:30:32,440 --> 00:30:38,600
+It contains problems such as traditional natural language processing problems, mathematics,
+
+243
+00:30:38,680 --> 00:30:45,400
+common sense reasoning, and questions answering. In order to evaluate these benchmarks,
+
+244
+00:30:46,040 --> 00:30:52,120
+we grouped the five most used skills in this benchmark. The first one being arithmetic,
+
+245
+00:30:52,120 --> 00:31:01,080
+which is simply solving algebra problems, code generations, and the skill to execute
+
+246
+00:31:01,080 --> 00:31:08,200
+mostly Python program. The next skill is search and question decomposition.
+
+247
+00:31:09,240 --> 00:31:14,840
+Then we have freeform reasoning, which is to explain step-by-step reasoning in natural language.
+
+248
+00:31:15,480 --> 00:31:22,280
+Finally, we have string operation, which is the skill of reformatting and editing strings and more.
+
+249
+00:31:24,040 --> 00:31:30,120
+In the task library, we select two to four tasks from every group. There was a total of 15 tasks
+
+250
+00:31:30,120 --> 00:31:36,920
+chosen by these five groups. We write a program for, let's say, a few examples from each task.
+
+251
+00:31:40,440 --> 00:31:44,040
+The program includes the potential cause to external tools.
+
+252
+00:31:48,440 --> 00:31:54,120
+Now we talk about parsing expression grammar. This is a custom query language used to represent
+
+253
+00:31:54,760 --> 00:32:00,200
+the decomposed reasoning steps and trying to incorporate function calls to external tools.
+
+254
+00:32:02,040 --> 00:32:08,280
+Each of the program consists of a series of nodes. The first node is always an input node.
+
+255
+00:32:08,280 --> 00:32:13,400
+The input node contains the task name, the instruction describing a task,
+
+256
+00:32:13,400 --> 00:32:20,440
+and input for a particular instance of the task. Input node is then followed by a bunch of
+
+257
+00:32:20,440 --> 00:32:26,520
+sub-step nodes. Sub-step nodes are all labeled by query answer pairs, such as these.
+
+258
+00:32:27,960 --> 00:32:33,240
+In a query answer pair, the query entries contain, first of all, the name of the task,
+
+259
+00:32:33,880 --> 00:32:43,480
+and then it was followed by the input to the task. The answer entry, AI, contains either the
+
+260
+00:32:43,480 --> 00:32:49,240
+generated output given by the task or the result of using external tools.
+
+261
+00:32:52,040 --> 00:32:58,520
+The program then ends with a dummy sub-task, where the query is just a special symbol end of query,
+
+262
+00:32:59,160 --> 00:33:02,200
+and the answer field contains the final answer.
+
+263
+00:33:04,920 --> 00:33:09,000
+For task retrieval, let's say we're given a new task.
+
+264
+00:33:09,960 --> 00:33:14,760
+Art then retrieves a number of tasks from the task library
+
+265
+00:33:14,760 --> 00:33:19,800
+to construct a dynamic multitask prompt that was used for demonstrations.
+
+266
+00:33:21,240 --> 00:33:27,560
+Now, from here, the paper explored two strategies on how to retrieve similar tasks.
+
+267
+00:33:28,680 --> 00:33:34,600
+The first strategy is task cluster-based. This will work when there are a lot of labeled
+
+268
+00:33:34,600 --> 00:33:41,320
+examples on a new task. So what it does is it iterates over all five groups and select a field
+
+269
+00:33:41,320 --> 00:33:47,960
+task program from each group to compose the prompt. Then the task cluster with the highest
+
+270
+00:33:47,960 --> 00:33:57,720
+performance on the labeled example is chosen. The second approach is LLM similarity-based.
+
+271
+00:33:58,520 --> 00:34:05,480
+This approach is a little bit more involved. What it does is it crafts a field-shot prompt
+
+272
+00:34:05,480 --> 00:34:13,320
+with task pairs between each group of skills. Each task includes a name, an instruction,
+
+273
+00:34:13,320 --> 00:34:22,040
+and a few IO examples. Then for every pair, we use the in-contact learning abilities of LLM to
+
+274
+00:34:22,040 --> 00:34:31,160
+provide labels of either similar or not-similars. Now, at runtime, what we'll do is we have the
+
+275
+00:34:31,160 --> 00:34:38,280
+test task and we pair it with every task in the task library. Then utilizing the in-contact
+
+276
+00:34:38,280 --> 00:34:46,200
+learning ability of the original LLM, we want the LLM to also apply labels of similar and not
+
+277
+00:34:46,200 --> 00:34:54,280
+similar to these new pairs of tasks. Then we will rank on the probabilities of having
+
+278
+00:34:54,280 --> 00:35:06,520
+similar label and choose the highest ranked task in order to be used inside the prompts of the new
+
+279
+00:35:06,520 --> 00:35:20,200
+tasks. In the R2 library, we remark that in the parsing expression grammar, if a task name
+
+280
+00:35:20,200 --> 00:35:28,600
+matches the name of a tool, we will incorporate the result of this external tool in this intermediate
+
+281
+00:35:28,600 --> 00:35:34,920
+steps. For example, in this paper, the two libraries are seeded with the following example tools.
+
+282
+00:35:36,520 --> 00:35:43,320
+The first one is a search tool. This tool uses the SERP API and it provides an API for
+
+283
+00:35:43,320 --> 00:35:51,800
+Google search. The corresponding query entry has a task name given by search and then the
+
+284
+00:35:51,800 --> 00:36:00,520
+arguments is the search query. In the code generation tool, we use the codex model. The
+
+285
+00:36:00,520 --> 00:36:08,360
+corresponding entry is a task name is generate Python code and then the argument is a generation
+
+286
+00:36:08,360 --> 00:36:18,360
+instruction written in natural language. The third tool is code execution where we run Python code in
+
+287
+00:36:18,360 --> 00:36:24,680
+a virtual environment. This virtual environment will have arithmetic symbolic and scientific
+
+288
+00:36:24,680 --> 00:36:34,840
+computing package already pre-installed. The query will have code execute as its task name and then
+
+289
+00:36:34,840 --> 00:36:42,200
+the body of the code as its argument or in most cases, the body of the code will be just the answer
+
+290
+00:36:43,080 --> 00:36:46,280
+will be just the result of the code generation tool.
+
+291
+00:36:47,000 --> 00:36:56,520
+Finally, we talk about the stage where it's optional for human to provide feedback
+
+292
+00:36:57,160 --> 00:37:03,400
+to the reasoning traces and the outputs of art. Well, first of all, since art does not require
+
+293
+00:37:03,400 --> 00:37:10,760
+additional fine-tuning, user can incorporate feedback into the framework by editing the task or the
+
+294
+00:37:10,760 --> 00:37:19,240
+tool library. The diagram here shows an example where the user corrects a specific program by
+
+295
+00:37:19,240 --> 00:37:26,920
+including additional steps and then adding this program to the task library. In part A, users
+
+296
+00:37:27,880 --> 00:37:34,360
+edit the program by adding two sub steps. The first step is to round the answer to the nearest
+
+297
+00:37:34,360 --> 00:37:43,320
+integer and then we add a unit of measurement to the answer. This corrects or refined the answer to
+
+298
+00:37:43,320 --> 00:37:52,120
+the questions. Part B, the user implements a tool for lookup of common words in the dictionaries.
+
+299
+00:37:55,160 --> 00:38:01,240
+And here in these examples, the user interferes with the compositions of tasks,
+
+300
+00:38:02,200 --> 00:38:08,520
+but the generation performed at the generation performed at every step is still performed by
+
+301
+00:38:08,520 --> 00:38:14,760
+the large language models. In this example, human feedbacks are seen as a form of debugging
+
+302
+00:38:15,560 --> 00:38:23,160
+where user edit the programs instead of creating the programs. Also because human expert knowledge
+
+303
+00:38:23,160 --> 00:38:30,360
+are used, these simple operations can very easily improve the performance on the target task.
+
+304
+00:38:31,480 --> 00:38:39,640
+Now, in order to test the performance of art, here we have the experimental setup,
+
+305
+00:38:40,680 --> 00:38:46,760
+in which case in addition to the 15 tasks from the task library, we also evaluate art
+
+306
+00:38:46,760 --> 00:38:55,000
+on 19 additional tasks from the big bench benchmark. We also evaluate art on the MMLU
+
+307
+00:38:55,000 --> 00:39:04,200
+benchmark. Here MMLU refers to massive multitask language understanding. And we further evaluate
+
+308
+00:39:05,800 --> 00:39:12,520
+a subset of tasks used in two former. This help us compare the approaches using tools
+
+309
+00:39:12,520 --> 00:39:19,240
+with fine tuning versus in-contact learning. The first in LLMU uses a struct GPT and the
+
+310
+00:39:19,240 --> 00:39:27,400
+cogeneration tool is OpenAI codecs. Here in the examples, we use two demonstration programs
+
+311
+00:39:27,400 --> 00:39:31,800
+from each task, and we will report the performance average over five runs.
+
+312
+00:39:35,080 --> 00:39:38,280
+Here we also introduce some baseline approach for this experiment.
+
+313
+00:39:39,560 --> 00:39:46,280
+In the few shot baseline, we will just prompt the LLM with input output pairs with no intermediate
+
+314
+00:39:46,280 --> 00:39:51,880
+steps. And we will use three to five examples depending on which benchmark is being used.
+
+315
+00:39:53,160 --> 00:39:58,920
+Auto chain of thought is also compared, which auto chain of thought automatically generate
+
+316
+00:39:58,920 --> 00:40:04,520
+multi-step reasoning in natural language. This baseline doesn't include the user tools.
+
+317
+00:40:05,880 --> 00:40:14,040
+Then there is art tool. This is art, but the tool library is turned off. So it should be art minus
+
+318
+00:40:14,040 --> 00:40:23,320
+two here. And finally GPT-3 best, which shows the result of the best published GPT-3 and codecs
+
+319
+00:40:23,320 --> 00:40:29,800
+with multi-step decomposition and tool use. Here the compositions are given by a few
+
+320
+00:40:29,800 --> 00:40:41,560
+additional human supervision. Here is the results on art and all the baseline models
+
+321
+00:40:41,560 --> 00:40:49,480
+on the task library. As you can see on the right hand side, the five color coded groups
+
+322
+00:40:50,280 --> 00:40:55,480
+refers to the five skills and tasks within each of these skills.
+
+323
+00:40:56,600 --> 00:41:02,600
+As we can see, because art uses the task library, it should naturally perform well,
+
+324
+00:41:02,600 --> 00:41:12,920
+and as we can see in this table that they do. And these delta with art rows actually
+
+325
+00:41:14,120 --> 00:41:21,640
+shows us some of the improvements of accuracies when using art compared with other baseline models.
+
+326
+00:41:22,120 --> 00:41:34,360
+Here are the results on the big bench task. And these are the similar groupings of tasks
+
+327
+00:41:34,920 --> 00:41:47,000
+into five categories of skills. Here are the results on the MMLU task. And this time the task
+
+328
+00:41:47,000 --> 00:41:53,080
+only contains two groups of skills, but it still has a pretty straightforward increase in performance.
+
+329
+00:41:55,880 --> 00:42:01,880
+Here we also evaluate the performance on additional benchmarks. First of all, here we have
+
+330
+00:42:03,240 --> 00:42:08,520
+the performance of art compared to two former. As we can see on most of the benchmarks,
+
+331
+00:42:09,480 --> 00:42:17,160
+art has an improved accuracy. Although the comparison here is not really exact because
+
+332
+00:42:17,160 --> 00:42:24,440
+two former uses a smaller GBTJ model and art here uses a more performant frozen LN.
+
+333
+00:42:26,440 --> 00:42:33,080
+We also try to improve art with self-consistency. Here the self-consistency
+
+334
+00:42:33,720 --> 00:42:39,640
+is the majority vote over 15 generations. And as we can see, although not too much
+
+335
+00:42:40,520 --> 00:42:49,560
+self-consistency does improve the performance of art by a little over all these potential tasks.
+
+336
+00:42:54,600 --> 00:42:59,160
+Finally, the author also examined adding human feedback to both
+
+337
+00:42:59,880 --> 00:43:06,040
+chain of thought style reasoning and art reasoning. In both cases, editing the program leads to a
+
+338
+00:43:06,040 --> 00:43:13,880
+significant gains in task performance, which is expected because it has human determinations.
+
+339
+00:43:15,320 --> 00:43:22,280
+On the right hand side, we show some examples of corrected error. Here, I think one of the
+
+340
+00:43:22,280 --> 00:43:29,480
+authors just randomly select five instances of the model generator program that gives an error
+
+341
+00:43:29,480 --> 00:43:38,680
+and then correct them respectively. Here, C is just a correct errors in a sub step. A means
+
+342
+00:43:38,680 --> 00:43:46,280
+adding missing sub steps and T is just defined a new tool or new demonstrations as a feedback.
+
+343
+00:43:46,920 --> 00:43:57,400
+Okay, this concludes the art paper. And finally, for the next paper, we will take a bit of a detour
+
+344
+00:43:57,400 --> 00:44:04,200
+and consider large language model as an agent. And we'll see that these agent will requires
+
+345
+00:44:04,200 --> 00:44:13,800
+the use of two as an ability. Because LLMs can do more than natural language tasks,
+
+346
+00:44:13,800 --> 00:44:19,000
+they are also capable of making decisions and executing instructions.
+
+347
+00:44:19,640 --> 00:44:24,920
+Thus, there has been an urgent need to evaluate LLMs as agents in an interactive environment.
+
+348
+00:44:26,440 --> 00:44:35,160
+Most of the agent benchmarks on LLMs focus on just a single environment. And there has been a
+
+349
+00:44:35,160 --> 00:44:42,200
+lack of systematic and standard benchmark to reflect the abilities of LLMs as an agent
+
+350
+00:44:42,200 --> 00:44:50,040
+in most practical use cases. Therefore, the authors of this paper proposed agent bench
+
+351
+00:44:50,760 --> 00:44:57,640
+as a comprehensive benchmark that evaluates LLMs as agents across eight different environments.
+
+352
+00:45:02,600 --> 00:45:08,360
+Although many improved strategies are proposed, this paper evaluates LLMs with the most
+
+353
+00:45:08,360 --> 00:45:15,560
+primitive chain of thought prompting. Because chain of thought is easiest, it's cheapest,
+
+354
+00:45:15,560 --> 00:45:22,760
+and it's also the most common way for people to deploy LLMs as an agent. This paper also offered
+
+355
+00:45:22,760 --> 00:45:31,960
+an integrated toolkits that enable customization of the of the benchmarks for model assessments.
+
+356
+00:45:31,960 --> 00:45:35,960
+This toolkit is currently openly available to the research community.
+
+357
+00:45:36,840 --> 00:45:46,840
+Now, to look at the eight different environments within agent bench, we will note that these
+
+358
+00:45:46,840 --> 00:45:51,640
+environments are categorized by three types of grounding, a code game and web.
+
+359
+00:45:53,640 --> 00:45:59,800
+First of all, we look at the code grounded environment. Now, since LLMs can generate
+
+360
+00:45:59,800 --> 00:46:05,480
+high quality code, we want to evaluate their ability to assist human interaction with computer
+
+361
+00:46:05,480 --> 00:46:14,360
+interface. The first of these benchmark is the operating system benchmark. So now we're given
+
+362
+00:46:15,080 --> 00:46:20,600
+an LLM the ability to access and manipulate operating system in a virtual machines terminal.
+
+363
+00:46:21,400 --> 00:46:28,200
+The LLM will be given a task such as find the total numbers of files inside a particular
+
+364
+00:46:28,200 --> 00:46:36,040
+directory. Then the LLM will generate text based instructions. For this particular case,
+
+365
+00:46:36,040 --> 00:46:41,640
+it will be any valid batch commands to interact with the system. And the final observation will
+
+366
+00:46:41,640 --> 00:46:50,360
+be the system standard output. So for this task, we use a success rate as the performance metric.
+
+367
+00:46:51,320 --> 00:46:59,640
+We also have the database environment, which examines LLM's ability to operate and
+
+368
+00:46:59,640 --> 00:47:06,680
+examine real databases via SQL. In here, for example, there will be LLM will be given a task
+
+369
+00:47:06,680 --> 00:47:13,400
+such as what was the total numbers of metals won by the United States when it was given a table
+
+370
+00:47:13,400 --> 00:47:21,720
+of Olympic medal counts. Then the LLM will generate SQL commands in order to get the final result.
+
+371
+00:47:22,920 --> 00:47:30,440
+We also had a knowledge graph environment. The problem here is to require the agent to
+
+372
+00:47:30,440 --> 00:47:38,120
+make decision with incomplete information and manage uncertainty. Because the LLMs can only
+
+373
+00:47:38,120 --> 00:47:46,200
+operate on a partial subset of these graphs. Therefore, it tests the language model's ability
+
+374
+00:47:46,200 --> 00:47:53,480
+for planning and to using such as interacting with the knowledge graph interface. For knowledge
+
+375
+00:47:53,480 --> 00:48:00,760
+graph reasoning, we will adopt the F1 square theorem. The next grounding we look at is the
+
+376
+00:48:00,760 --> 00:48:07,480
+game grounded environment. Here we will evaluate the agent's ability to design strategies for
+
+377
+00:48:07,480 --> 00:48:15,560
+playing game, make reasonable choices and follow instructions. Here the fourth environment, it's
+
+378
+00:48:15,560 --> 00:48:22,840
+digital card games. In digital card games, there will be like a lot of cards and there will be an
+
+379
+00:48:22,840 --> 00:48:30,200
+abundant text description of cards. So the model need to utilize this context and we will evaluate
+
+380
+00:48:30,200 --> 00:48:39,400
+the model's ability to understand game rules, operate and evaluate its ability to make strategic
+
+381
+00:48:39,400 --> 00:48:49,720
+decisions. The next game environment is lateral thinking puzzle. This task evaluates the LLMs
+
+382
+00:48:49,720 --> 00:48:57,320
+ability to deduce facts from unconventional perspective and explore new ideas. So in particular,
+
+383
+00:48:57,880 --> 00:49:03,800
+in lateral thinking puzzle, there will be a host giving an obscure description of a scene,
+
+384
+00:49:04,440 --> 00:49:10,840
+such as a man slipped with the lights off and next morning he suicides after opening windows.
+
+385
+00:49:10,840 --> 00:49:20,760
+And why is that? Then the LLM agent will try to ask questions with binary answers such as did he
+
+386
+00:49:20,760 --> 00:49:30,520
+suicide out of guilt or are the windows he opened in the room he slips in? Well, the host will then
+
+387
+00:49:30,520 --> 00:49:37,880
+answer yes, no or irrelevant and with this information, the LLMs tries to discover the
+
+388
+00:49:37,880 --> 00:49:46,440
+true plot under this obscure description. Now to evaluate the performance, the true plot is divided
+
+389
+00:49:46,440 --> 00:49:52,680
+into several bullet points and the performance of LLM is evaluated by the progress of the game.
+
+390
+00:49:54,680 --> 00:50:01,320
+Next environment is householding. This benchmark takes place in ALF world. This is an interactive
+
+391
+00:50:01,320 --> 00:50:06,600
+environment taking place inside a household and it's completely text based instructions.
+
+392
+00:50:07,800 --> 00:50:14,920
+So for example, we will ask the LLM to perform tasks like clean some soap bar and put it on a
+
+393
+00:50:14,920 --> 00:50:24,520
+countertop. Then the LLM will generate a sequence of text instructions guiding an agent to navigate
+
+394
+00:50:24,520 --> 00:50:34,840
+the household and perform the following jobs. The performance of this in the performance is evaluated
+
+395
+00:50:34,840 --> 00:50:46,360
+by success rate. The next, the final grounding is the web grounded environment where we evaluate
+
+396
+00:50:46,360 --> 00:50:53,720
+an LLM's ability to navigate through web pages. Task in this categories will be presented with a
+
+397
+00:50:53,720 --> 00:51:02,360
+GUI web page, but because LLMs are text based, they will be given HTML elements. So the available
+
+398
+00:51:02,360 --> 00:51:09,480
+actions of an LLM in these tasks will be to choose one of the HTML elements in the web page,
+
+399
+00:51:09,480 --> 00:51:18,440
+click or type a word, search an answer and select a certain options. The two task here is web shopping
+
+400
+00:51:19,400 --> 00:51:24,680
+which the task is to look for a particular product with a particular description and the
+
+401
+00:51:25,560 --> 00:51:32,680
+objective is to go to a web page with this product. And finally, the web browsing task
+
+402
+00:51:33,720 --> 00:51:37,560
+is to navigate web pages with a particular objectives.
+
+403
+00:51:42,200 --> 00:51:50,440
+Now in order to test all these benchmarks, the author evaluate 27 API based LLMs and open source
+
+404
+00:51:50,440 --> 00:51:57,160
+LLMs with these benchmarks. The interaction history between LLMs and the environment are
+
+405
+00:51:57,160 --> 00:52:08,680
+given as prompts. Here is a table of scores achieved across all benchmarks and all LLMs.
+
+406
+00:52:10,760 --> 00:52:16,840
+You can see that on some of these challenging benchmarks, top language models are capable
+
+407
+00:52:16,840 --> 00:52:24,840
+of dealing with real world interactions. For example, GPT-4 has the best performance
+
+408
+00:52:26,120 --> 00:52:32,120
+out of with six of the eighths of the datasets in Agent Bench. Following GPT-4,
+
+409
+00:52:34,120 --> 00:52:46,440
+Claude2, Claude and GPT-3.5 Turbo has also decent scores. Other API based LLMs will have poor
+
+410
+00:52:46,440 --> 00:52:53,480
+performance, but most of them can solve quite a few percent of problems within each of the
+
+411
+00:52:53,480 --> 00:53:01,320
+environment. Open source LLMs on the other hand, commonly fails to solve some of the problems
+
+412
+00:53:03,240 --> 00:53:11,880
+such as knowledge graph. Most of them were failing the task. Digital card game and also
+
+413
+00:53:11,880 --> 00:53:21,800
+household problems they have difficulty with. This identify most open source language model as
+
+414
+00:53:22,520 --> 00:53:26,680
+to be incapable as being an agent in the real world environment.
+
+415
+00:53:29,720 --> 00:53:39,960
+And here are two more graphs representing the performance of LLMs across the 27 LLMs.
+
+416
+00:53:42,600 --> 00:53:50,040
+And on the graph on the right hand side, it actually displays the overall scores of LLMs as
+
+417
+00:53:50,040 --> 00:53:59,400
+agents in the Agent Bench benchmark. Now, to further identify the reasons of failures in some
+
+418
+00:53:59,400 --> 00:54:06,440
+of these LLMs, we categorize LLM agents finish reason into five different types. First of all,
+
+419
+00:54:07,000 --> 00:54:13,000
+if it's completed, it'll be written as completed. But there are also four failure reasons.
+
+420
+00:54:13,720 --> 00:54:19,240
+First of all, contact limit exceeded. It happens when the interaction history
+
+421
+00:54:19,800 --> 00:54:27,000
+exceeds the LLMs maximum context links. So the interaction history was too long
+
+422
+00:54:27,720 --> 00:54:34,360
+to be used as an input. We also had invalid format. This happens when the agent
+
+423
+00:54:34,360 --> 00:54:42,760
+don't follow the format instruction. Invalid action happens when it follows the format
+
+424
+00:54:42,760 --> 00:54:52,200
+instructions, but the action it chosen is invalid. Finally, task limit exceeded happens when
+
+425
+00:54:52,840 --> 00:54:59,800
+an agent cannot solve a problem after a predefined finite amounts of maximum interactions.
+
+426
+00:55:00,760 --> 00:55:07,640
+This happened when the generation of the LLM gets inside an infinite loop. So it could happen
+
+427
+00:55:07,640 --> 00:55:12,760
+when the agent keep repeating the same action that gets nowhere.
+
+428
+00:55:16,040 --> 00:55:25,880
+And finally, here is a table showing the most common reasons for LLMs to fail across all
+
+429
+00:55:25,880 --> 00:55:32,600
+eight different environments. Most of the LLM agents fails to solve challenging tasks in a given
+
+430
+00:55:32,600 --> 00:55:40,520
+time or falls into repeated generation. For example, in the knowledge graph benchmark and the
+
+431
+00:55:41,320 --> 00:55:48,200
+lateral thinking puzzle benchmark, most many of the LLM fails because task limit exceeded.
+
+432
+00:55:49,080 --> 00:55:58,920
+And for database and in a digital card game, many LLM fails because it provides instruction
+
+433
+00:55:58,920 --> 00:56:06,200
+with invalid format. Any LLMs that fails with invalid format or invalid action are usually
+
+434
+00:56:06,200 --> 00:56:14,680
+caused by LLMs inability to follow instructions. And if LLM fails a lot with task limit exceeded,
+
+435
+00:56:14,760 --> 00:56:19,320
+it indicates that the LLM has weak multi-term decision abilities.
+
+436
+00:56:20,600 --> 00:56:26,760
+And this concludes the presentation of Agent Bench.
+

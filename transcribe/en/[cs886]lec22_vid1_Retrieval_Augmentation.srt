@@ -1,0 +1,968 @@
+1
+00:00:00,960 --> 00:00:06,160
+Hello and welcome to my talk about retrieval augmentation. My name is Joel Rorseth and I'm
+
+2
+00:00:06,160 --> 00:00:11,200
+a computer science student at the University of Waterloo. Today I'll be presenting two papers
+
+3
+00:00:11,200 --> 00:00:18,000
+about retrieval augmented generation as part of the Winter 2024 course CS886, Recent Advances
+
+4
+00:00:18,000 --> 00:00:23,760
+and Foundation Models, instructed by Dr. Wenhu Chen. Without further ado, let's get to it.
+
+5
+00:00:25,520 --> 00:00:29,360
+The common theme about these two papers I'll be presenting is their approach to retrieval
+
+6
+00:00:29,360 --> 00:00:34,480
+augmentation, which is they try to jointly fine-tune a retriever and language model.
+
+7
+00:00:35,920 --> 00:00:40,800
+Going in chronological order, the first paper we'll present is retrieval augmented generation
+
+8
+00:00:40,800 --> 00:00:48,240
+for knowledge-intensive NLP tasks, published in 2020. Let's review some key terminology. The authors
+
+9
+00:00:48,240 --> 00:00:53,440
+refer to knowledge-intensive tasks, which are those that require external knowledge in order to do.
+
+10
+00:00:53,440 --> 00:00:59,920
+The authors also refer to parametric and non-parametric memory. Parametric memory means
+
+11
+00:00:59,920 --> 00:01:05,920
+knowledge that is stored in models and pre-trained weights. Non-parametric memory refers to knowledge
+
+12
+00:01:05,920 --> 00:01:12,880
+that is stored in databases, retrieval systems, otherwise external. Hybrid memory are approaches
+
+13
+00:01:12,880 --> 00:01:19,520
+that combine parametric and non-parametric, such as realm. In this paper, the authors are motivated
+
+14
+00:01:19,520 --> 00:01:25,120
+to propose a hybrid approach, specifically for sequence-to-sequence models. They note several
+
+15
+00:01:25,120 --> 00:01:29,280
+weaknesses of parametric memory, such as the fact that it's difficult to update or expand,
+
+16
+00:01:29,920 --> 00:01:34,880
+it can't be inspected directly, and of course, as we know, with their use in language models,
+
+17
+00:01:34,880 --> 00:01:40,240
+it can lead to hallucinations. On the other hand, non-parametric memory doesn't have these issues.
+
+18
+00:01:40,960 --> 00:01:45,600
+Non-parametric knowledge is easy to update or expand, and we can inspect it directly.
+
+19
+00:01:46,560 --> 00:01:50,000
+At least at the time of this writing, hybrid approaches were somewhat limited,
+
+20
+00:01:50,000 --> 00:01:55,200
+they had only explored open-domain extractive QA, and hadn't yet been adapted for sequence-to-sequence
+
+21
+00:01:55,200 --> 00:02:00,720
+models, hence the motivation to develop a specific hybrid approach for sequence-to-sequence models.
+
+22
+00:02:02,320 --> 00:02:07,040
+The solution that the authors propose is a fine-tuning strategy named retrieval augmented
+
+23
+00:02:07,040 --> 00:02:13,040
+generation, RAG for short. Their architecture consists of three components, a pre-trained
+
+24
+00:02:13,120 --> 00:02:19,120
+sequence-to-sequence transformer, which they use BART, a pre-trained neural retriever, in which they
+
+25
+00:02:19,120 --> 00:02:25,680
+use dense passage retriever, DPR, and a dense vector index, in this case, they've indexed Wikipedia.
+
+26
+00:02:26,480 --> 00:02:29,680
+There is an assumption that these models have already been trained enough so that they have
+
+27
+00:02:29,680 --> 00:02:36,080
+the ability to access knowledge. The RAG architecture boils down to two main components,
+
+28
+00:02:36,080 --> 00:02:40,720
+the retriever, which is the non-parametric memory, and the generator, which is the parametric.
+
+29
+00:02:41,600 --> 00:02:45,440
+Here we have mathematical definitions of the probability distributions for each.
+
+30
+00:02:46,400 --> 00:02:52,960
+The retriever, p sub eta, gives the top k truncated distribution over potentially predicted
+
+31
+00:02:52,960 --> 00:02:59,840
+text passages, z, given the query x. The generator, on the other hand, p sub theta,
+
+32
+00:03:00,400 --> 00:03:06,880
+gives the probability for the next token predicted, given previous tokens, the query x,
+
+33
+00:03:06,880 --> 00:03:13,760
+and passage retrieved by the retriever, z. The authors actually propose two variants of their
+
+34
+00:03:13,760 --> 00:03:20,880
+RAG model, RAG sequence and RAG token. With RAG sequence, they retrieve one document up front
+
+35
+00:03:20,880 --> 00:03:26,400
+and use that to generate the entire sequence. With RAG token, they use potentially a different
+
+36
+00:03:26,400 --> 00:03:32,560
+document to generate each token in the final sequence. Here we have the mathematical distributions
+
+37
+00:03:32,560 --> 00:03:38,240
+for each of these two generator variants. In the case of RAG sequence, we see that we
+
+38
+00:03:38,240 --> 00:03:44,400
+marginalize these probabilities over each of the top k documents. So for each top k document in
+
+39
+00:03:44,400 --> 00:03:50,080
+isolation, we generate a probability for the entire output sequence. But then in the case of RAG
+
+40
+00:03:50,080 --> 00:03:56,080
+token, we see that this product moves to the beginning of the equation, which means that now,
+
+41
+00:03:56,080 --> 00:04:00,880
+for each token, we can marginalize over each of these top k documents and just generate the
+
+42
+00:04:00,880 --> 00:04:07,040
+distribution for the next output token one at a time. So let's discuss the implementation,
+
+43
+00:04:07,040 --> 00:04:12,800
+starting with the encoding. The retriever is DPR, as mentioned earlier, which under the hood
+
+44
+00:04:12,800 --> 00:04:18,560
+uses BERT to encode query and document. Then the similarity between those two is computed
+
+45
+00:04:18,560 --> 00:04:24,160
+using maximum inner product search, MIPS. The generator is just a BERT large model,
+
+46
+00:04:24,160 --> 00:04:29,520
+which has 400 million parameters. The input query and retrieved document are simply concatenated,
+
+47
+00:04:29,520 --> 00:04:33,280
+nothing fancy like some of the newer RAG and prompt engineering techniques of today.
+
+48
+00:04:34,560 --> 00:04:40,000
+The decoding, which is how we determine the next token, is a little bit more nuanced. In the case
+
+49
+00:04:40,000 --> 00:04:45,280
+of RAG token, we can just plug this probability distribution into a standard beam decoder. But
+
+50
+00:04:45,280 --> 00:04:51,040
+in the case of RAG sequence, it doesn't really break into a per token likelihood. So we can't
+
+51
+00:04:51,040 --> 00:04:55,360
+just run a single beam search while the authors propose just to run a beam search for each of
+
+52
+00:04:55,360 --> 00:05:00,080
+the documents that are retrieved. The fine tuning implementation is relatively
+
+53
+00:05:00,080 --> 00:05:05,120
+straightforward. They jointly fine tune both the retriever and the generator. Specifically,
+
+54
+00:05:05,120 --> 00:05:10,560
+they update the retriever query encoder and the generator, but they don't update the retriever's
+
+55
+00:05:10,560 --> 00:05:15,280
+document encoder. This is simply because they didn't find it necessary to achieve strong
+
+56
+00:05:15,280 --> 00:05:20,800
+performance, and because it's relatively expensive. The fine tuning data that they use
+
+57
+00:05:20,880 --> 00:05:25,040
+are a collection of pairs x and y, which will be defined in the experiment section.
+
+58
+00:05:26,240 --> 00:05:32,560
+The objective function is a simple minimization of a negative log probability done using stochastic
+
+59
+00:05:32,560 --> 00:05:39,440
+gradient descent and the atom optimizer. Here we have a nice diagram to summarize things visually.
+
+60
+00:05:39,440 --> 00:05:45,360
+We can see that the retriever flows into the generator, and then we back propagate through
+
+61
+00:05:45,360 --> 00:05:49,600
+the generator and the retriever's query encoder queue in this diagram.
+
+62
+00:05:51,120 --> 00:05:55,840
+So let's move on to discussing the experiment and talk about first the retrieval setup.
+
+63
+00:05:56,640 --> 00:06:02,880
+The authors use the Wikipedia dump from December 2018, and after using 100 word chunks,
+
+64
+00:06:02,880 --> 00:06:08,480
+they have 21 million documents that they choose to index. The index process itself is pretty
+
+65
+00:06:08,480 --> 00:06:14,160
+straightforward. They use a BERT model to encode each of the documents, and that gives them embeddings.
+
+66
+00:06:14,160 --> 00:06:21,680
+The embeddings are inserted into a MIPS index using FICE. They also use hierarchical navigable
+
+67
+00:06:21,680 --> 00:06:26,960
+small world for faster retrieval, and the retrieval itself, while during training,
+
+68
+00:06:26,960 --> 00:06:32,880
+they use either 5 or 10 documents for K, and during testing, they set K using the depth data.
+
+69
+00:06:35,120 --> 00:06:38,480
+In the experiment, the authors test their method with four different tasks.
+
+70
+00:06:39,120 --> 00:06:45,840
+Open domain QA, abstractive QA, jeopardy question generation, and fact verification.
+
+71
+00:06:47,360 --> 00:06:52,800
+Starting with the open domain QA task, of course, the objective with this is to task their method
+
+72
+00:06:52,800 --> 00:06:58,400
+with answering objective factual questions. They actually have four different QA data sets that
+
+73
+00:06:58,400 --> 00:07:03,200
+they're evaluating on separately. The setup is that they use each of these question answer
+
+74
+00:07:03,200 --> 00:07:07,680
+pairs from these data sets in order to find two of the models, and the baselines they compare
+
+75
+00:07:07,680 --> 00:07:13,360
+against are open book models which have access to external knowledge and some closed book models
+
+76
+00:07:13,360 --> 00:07:18,640
+that don't have any access to external knowledge. The metric used is exact match, meaning that
+
+77
+00:07:18,640 --> 00:07:22,000
+the answer generated has to be an exact match to the goal ground truth.
+
+78
+00:07:23,920 --> 00:07:28,800
+So RAG has quite strong performance on this QA task. You can see in the bottom two rows that RAG
+
+79
+00:07:28,800 --> 00:07:33,520
+token and RAG sequence improve on the closed and open book methods by quite a few points.
+
+80
+00:07:34,080 --> 00:07:38,640
+In the answer to why is quite simple. It's because RAG can generate answers regardless of
+
+81
+00:07:38,640 --> 00:07:43,840
+whether or not the documents that it retrieves actually contain the answer. If the answer isn't
+
+82
+00:07:43,840 --> 00:07:48,560
+in the documents, then other documents can provide useful information that might even
+
+83
+00:07:48,560 --> 00:07:54,400
+lead to an answer. In general, RAG combines the best of both worlds. It can combine the benefits
+
+84
+00:07:54,400 --> 00:07:58,720
+of open and closed book, which is why we see an improvement in performance here.
+
+85
+00:07:59,680 --> 00:08:06,160
+Moving to task two, abstract of QA is the focus here, specifically natural language generation,
+
+86
+00:08:06,160 --> 00:08:11,760
+NLG. The data set they used to test this is MS Marko NLG task version 2.1,
+
+87
+00:08:12,320 --> 00:08:17,680
+which is a large data set of questions, each having 10 gold search engine passages from
+
+88
+00:08:17,680 --> 00:08:23,280
+which a full sentence answer is annotated. Then for the setup, they fine tune using
+
+89
+00:08:23,280 --> 00:08:29,360
+XY pairs that are question answer pairs. Specifically, they force RAG to rely on parametric
+
+90
+00:08:29,360 --> 00:08:34,240
+knowledge more by ignoring these goal passages that are provided in the MS Marko data set.
+
+91
+00:08:35,040 --> 00:08:39,040
+The baselines they compare against are BART and the state of the art performance,
+
+92
+00:08:39,040 --> 00:08:45,520
+and they use two different metrics, blue and rouge. For this NLG task, RAG actually approaches
+
+93
+00:08:45,520 --> 00:08:49,760
+state of the art. And all of this is considering the fact that the state of the art approaches
+
+94
+00:08:49,760 --> 00:08:54,320
+have access to the goal passages, which are required in order to determine some answers.
+
+95
+00:08:54,880 --> 00:08:59,760
+And not all the questions are answerable from just the Wikipedia data that RAG has access to
+
+96
+00:08:59,760 --> 00:09:04,640
+in these experiments. And nonetheless, we are approaching state of the art as indicated in the
+
+97
+00:09:04,640 --> 00:09:11,600
+table here, and RAG is outperforming BART pretty consistently. The third task being evaluated
+
+98
+00:09:11,600 --> 00:09:16,880
+is jeopardy question generation. So what is a jeopardy question? It's a factual statement
+
+99
+00:09:16,880 --> 00:09:23,760
+that prompts an exact answer. An example is, in 1986, Mexico scored as the first country to host
+
+100
+00:09:23,760 --> 00:09:28,560
+this international sports competition twice. The answer, of course, is the World Cup.
+
+101
+00:09:29,760 --> 00:09:35,440
+The task here for the RAG model is to generate these jeopardy questions, condition on answer
+
+102
+00:09:35,440 --> 00:09:41,280
+entities. So the fine tuning setup is actually flipped from the other QA settings. So from the
+
+103
+00:09:41,280 --> 00:09:47,440
+answer, we're trying to predict the question. So we have answer question pairs. They use a search QA
+
+104
+00:09:47,440 --> 00:09:52,960
+data set, which is just a pretty general QA data set. The baseline method is BART once again,
+
+105
+00:09:52,960 --> 00:09:59,840
+and they're using two metrics, blue and a different variant of blue. So we see that once again,
+
+106
+00:09:59,840 --> 00:10:05,600
+on this task, RAG is performing quite strongly. RAG token actually outperforms both RAG sequence
+
+107
+00:10:05,600 --> 00:10:10,400
+and BART. This is probably because RAG token can pull from multiple different documents.
+
+108
+00:10:10,400 --> 00:10:14,800
+And of course, both RAG approaches retain their advantage in being able to use both
+
+109
+00:10:14,800 --> 00:10:20,480
+the retriever and the generator to complete these questions. They actually run a separate
+
+110
+00:10:20,480 --> 00:10:26,240
+experiment where they ask human evaluators to compare RAG and BART. And they found that the
+
+111
+00:10:26,240 --> 00:10:31,680
+human evaluators prefer RAG. Specifically, they found that the generations are more factual and
+
+112
+00:10:31,680 --> 00:10:38,240
+they're more specific. The final task in these experiments is fact verification. And what this
+
+113
+00:10:38,240 --> 00:10:44,480
+means is the model must classify whether a claim is true, false or unverifiable. They actually
+
+114
+00:10:44,480 --> 00:10:48,800
+have two different approaches that they test, a three-way and two-way classification. In the
+
+115
+00:10:48,800 --> 00:10:54,640
+case of three-way, the label or class as they refer to it can be either supports, refutes,
+
+116
+00:10:54,640 --> 00:11:00,880
+or not enough info. The two-way classification is just supports or refutes. They use a data set
+
+117
+00:11:00,880 --> 00:11:06,320
+called FEVER, which is a data set of claims and evidence annotations for these claims that uses
+
+118
+00:11:06,400 --> 00:11:12,720
+Wikipedia data. They can construct fine-tuning samples using the claim and class pairs from
+
+119
+00:11:12,720 --> 00:11:18,160
+this data. Each class is mapped to a unique output token. And then, similar to the natural
+
+120
+00:11:18,160 --> 00:11:22,640
+language generation task, we simply ignore the evidence annotations to make the challenge a
+
+121
+00:11:22,640 --> 00:11:28,000
+little bit more for RAG. They use two baselines, BART, and the state-of-the-art performance.
+
+122
+00:11:28,560 --> 00:11:31,440
+And the metric is just the label accuracy on this classification.
+
+123
+00:11:31,440 --> 00:11:38,320
+The RAG scores in this approach and the table on the left are actually quite good. They're
+
+124
+00:11:38,320 --> 00:11:42,080
+approaching the state-of-the-art, not quite state-of-the-art, but only a couple points off.
+
+125
+00:11:42,800 --> 00:11:46,960
+This is pretty impressive considering that the state-of-the-art methods do have access to that
+
+126
+00:11:46,960 --> 00:11:52,560
+gold evidence annotation from the FEVER data set and that these state-of-the-art methods use complex
+
+127
+00:11:52,560 --> 00:11:57,840
+pipelines that are trained with supervision. So nonetheless, RAG scores are approaching state-of-the-
+
+128
+00:11:57,840 --> 00:12:02,800
+art. The authors also make a note that there is high overlap between the RAG documents that are
+
+129
+00:12:02,800 --> 00:12:08,400
+retrieved and this gold evidence. So this concludes our discussion of the first paper.
+
+130
+00:12:08,400 --> 00:12:14,800
+Now we'll move on to the second paper called Replug. The full title of this paper is Replug,
+
+131
+00:12:14,800 --> 00:12:20,160
+Retrieval Augmented Black Box Language Models Published Very Recently in 2023.
+
+132
+00:12:21,520 --> 00:12:26,240
+The key difference in this paper, as compared to the previous one and previous RAG papers,
+
+133
+00:12:26,240 --> 00:12:31,680
+is the focus on black box language models. The issue that they point out to motivate this paper
+
+134
+00:12:31,680 --> 00:12:36,960
+is that fine-tuning language models with retrieval requires so-called white box access,
+
+135
+00:12:36,960 --> 00:12:41,840
+which means we need access to the language model parameters in order to be able to fine-tune them.
+
+136
+00:12:42,960 --> 00:12:49,200
+And in practice, many popular large language models, such as ChatGBT or Gemini, are only
+
+137
+00:12:49,200 --> 00:12:55,360
+accessible via an API. So we can't get any of that sort of data. We certainly can't fine-tune or
+
+138
+00:12:55,360 --> 00:13:02,320
+access model parameters in a lot of cases. This is where Replug comes in. The focus of Replug
+
+139
+00:13:02,320 --> 00:13:07,600
+specifically is retrieval augmentation in the black box setting. Black box meaning that we
+
+140
+00:13:07,600 --> 00:13:13,280
+don't have any assumption of access to model parameters. So the language model specifically
+
+141
+00:13:13,280 --> 00:13:18,240
+is a black box. The retriever could be a black box, but it's optionally tunable and they'll
+
+142
+00:13:18,240 --> 00:13:24,560
+discuss a variant of their method to address this potential trainability. But how does it work?
+
+143
+00:13:24,560 --> 00:13:30,240
+Well first, Replug gets documents from a retriever, it then pre-pens these documents to the
+
+144
+00:13:30,240 --> 00:13:33,680
+original language model input, and then it feeds this to the language model.
+
+145
+00:13:35,840 --> 00:13:39,680
+Let's dive into the implementation of this architecture, starting with retrieval.
+
+146
+00:13:40,480 --> 00:13:47,200
+We're given a corpus of m documents, d, and an input context or query, x. The output of the
+
+147
+00:13:47,200 --> 00:13:52,960
+retrieval model is the k documents in d that are most relevant to x, denoted as d prime.
+
+148
+00:13:52,960 --> 00:13:59,680
+We'll sometimes refer to this as the top k documents in d. So how do we determine these
+
+149
+00:13:59,680 --> 00:14:05,120
+documents? Well, we pre-compute an embedding for each document, d, when we construct a
+
+150
+00:14:05,120 --> 00:14:11,440
+FICE index, just like in the last paper. We encode the input x to obtain an embedding,
+
+151
+00:14:12,000 --> 00:14:18,080
+then we simply find the top k most similar documents to x using a cosine similarity function,
+
+152
+00:14:18,080 --> 00:14:24,160
+denoted as s. When implementing the language model, or the generator as it was referred to
+
+153
+00:14:24,160 --> 00:14:28,560
+in the previous paper, there is a bit of a question. If you recall, we said that we were going to
+
+154
+00:14:28,560 --> 00:14:35,360
+pre-pend these k documents to the input text x. But the real question is, will all of these k
+
+155
+00:14:35,360 --> 00:14:41,200
+documents fit? Let's define a bit of terminology here. The context window is the input text for
+
+156
+00:14:41,200 --> 00:14:45,520
+language model, and the size of this context window is the number of tokens that can fit in it.
+
+157
+00:14:46,080 --> 00:14:50,880
+But the problem is that the context window, which is a fixed size, may not fit k documents.
+
+158
+00:14:51,440 --> 00:14:56,080
+The context size varies by language model. The size of each document could vary,
+
+159
+00:14:56,640 --> 00:15:01,760
+and the number of retrieved documents, k itself, could certainly vary. So we don't really know.
+
+160
+00:15:02,960 --> 00:15:06,720
+To address this uncertainty, the authors propose a solution that they call
+
+161
+00:15:06,720 --> 00:15:12,560
+ensemble inference scheme. The idea is quite simple. Let's just do k separate language model
+
+162
+00:15:12,560 --> 00:15:17,920
+predictions, and then bring them back together at the end. So specifically, we'll concatenate each
+
+163
+00:15:17,920 --> 00:15:24,560
+of those top k documents, d with x. And then once we have k concatenations, we'll make a separate
+
+164
+00:15:24,560 --> 00:15:30,000
+inference call for each, and simply ensemble all of their output probabilities. The benefits, of
+
+165
+00:15:30,000 --> 00:15:34,080
+course, are that the inference calls can be parallelized. And the authors argue that there's
+
+166
+00:15:34,080 --> 00:15:40,560
+minimal overhead compared to a single inference that contains all k documents. The language models,
+
+167
+00:15:40,640 --> 00:15:45,840
+context window only needs to be large enough in order to fit x and the largest of the k documents.
+
+168
+00:15:46,880 --> 00:15:51,280
+At the bottom here, we have a mathematical definition for the probability distribution,
+
+169
+00:15:51,280 --> 00:15:55,920
+which is simply a product of the generator using the concatenation of d and x,
+
+170
+00:15:55,920 --> 00:16:00,480
+multiplied by a similarity function between d and x, which is supposed to represent the retriever here.
+
+171
+00:16:03,360 --> 00:16:08,560
+As mentioned earlier, replug can optionally fine tune a retriever, in which case their variant
+
+172
+00:16:08,560 --> 00:16:14,400
+is known as replug lsr. Language models supervise retrieval. The idea behind this
+
+173
+00:16:14,400 --> 00:16:19,360
+optimization is to train the retriever to find documents that minimize the language model's
+
+174
+00:16:19,360 --> 00:16:24,880
+perplexity. They have a couple steps for this. It starts by retrieving the top k documents,
+
+175
+00:16:24,880 --> 00:16:31,840
+d prime. Then we compute the retrieval likelihood of each of those documents. It's a simple softmax
+
+176
+00:16:31,840 --> 00:16:37,600
+function that uses the similarity between that document and x. We then compute the language
+
+177
+00:16:37,600 --> 00:16:42,000
+model's likelihood of each document using ground truth from the training data set.
+
+178
+00:16:42,640 --> 00:16:47,520
+This is a simple softmax function, very similar in terms of the probabilities from the language
+
+179
+00:16:47,520 --> 00:16:54,320
+model. Finally, we minimize the KL divergence between these two probability distributions
+
+180
+00:16:54,320 --> 00:16:59,840
+in order to jointly align them. The training implementation in this paper is, of course,
+
+181
+00:16:59,840 --> 00:17:05,120
+much simpler than the last paper, since they're doing less fine tuning. The regular replug approach
+
+182
+00:17:05,120 --> 00:17:10,560
+doesn't call for any fine tuning, so we can use an off-the-shelf retriever model and off-the-shelf
+
+183
+00:17:10,560 --> 00:17:16,480
+language model. In this paper, they're using contriver or contriever and GPT-3 curry for the
+
+184
+00:17:16,480 --> 00:17:22,720
+language model. For replug lsr, they're sampling training queries from the pile dataset, which
+
+185
+00:17:22,720 --> 00:17:30,480
+is a very large dataset of scraped text. Each of these is 256 tokens and they have 800,000 sequences.
+
+186
+00:17:30,720 --> 00:17:37,200
+The queries are split into input context, x, and ground truth continuation, y. Each of these are
+
+187
+00:17:37,200 --> 00:17:44,000
+128 tokens, and these x, y pairs become the basis of our fine tuning dataset. For the retriever,
+
+188
+00:17:44,000 --> 00:17:50,240
+we sample external documents from the pile, the same dataset. Each of these will be 128 tokens,
+
+189
+00:17:50,240 --> 00:17:57,360
+resulting in 36 million documents. The authors do note that they check for overlapping queries
+
+190
+00:17:58,080 --> 00:18:02,480
+and documents, and verify that there are no overlapping queries and documents.
+
+191
+00:18:04,160 --> 00:18:08,480
+Once again, we have a nice diagram to put everything together and summarize things visually.
+
+192
+00:18:09,440 --> 00:18:14,640
+In the bottom left, we can see a test context, x, which is an example of a query being asked,
+
+193
+00:18:14,640 --> 00:18:21,040
+in this case, Jobs is the CEO of Blank. The answer, of course, is Apple, and we can see that the
+
+194
+00:18:21,040 --> 00:18:26,240
+retriever finds a couple of documents that are related to Steve Jobs and Apple, and then feeds
+
+195
+00:18:26,240 --> 00:18:30,720
+the test context, x, and each of these documents, d, into a black box language model.
+
+196
+00:18:31,520 --> 00:18:35,280
+Then on the right, we see the ensemble approach, where each of these documents
+
+197
+00:18:35,280 --> 00:18:39,040
+is paired with the test context, x, and then fed to a language model.
+
+198
+00:18:39,760 --> 00:18:44,240
+Then these output probabilities are ensemble together to get an answer of Apple.
+
+199
+00:18:46,240 --> 00:18:50,160
+Moving now to the experiment section, the authors have three tasks in this paper that
+
+200
+00:18:50,160 --> 00:18:54,080
+they're evaluating their approach with. The first is general language modeling,
+
+201
+00:18:54,640 --> 00:18:59,040
+followed by their performance on massive multitask language understanding,
+
+202
+00:18:59,600 --> 00:19:05,200
+MMLU for short. This is followed with the open domain question answering task,
+
+203
+00:19:05,200 --> 00:19:11,040
+similar to the previous paper. In this first task, the authors are trying to understand
+
+204
+00:19:11,040 --> 00:19:15,440
+how Replug improves language modeling in language models. So the metric they're
+
+205
+00:19:15,440 --> 00:19:20,720
+using to evaluate this is known as bits per byte, which is a very popular metric to gauge
+
+206
+00:19:20,720 --> 00:19:26,800
+language modeling performance. They're using the pile dataset once again, and for the setup,
+
+207
+00:19:26,800 --> 00:19:34,320
+Replug will use 128 token context windows. The retrieval corpus is 367 million documents,
+
+208
+00:19:34,320 --> 00:19:40,320
+each of them being 128 tokens that are sampled from the pile. The retriever will then retrieve
+
+209
+00:19:40,320 --> 00:19:47,120
+the top 10 documents. The specific baselines what we're going to integrate Replug into are a number
+
+210
+00:19:47,120 --> 00:19:52,560
+of GPT two models and a number of GPT three models spanning various different sizes.
+
+211
+00:19:54,560 --> 00:19:58,720
+For each of these models, we see that adding Replug consistently shows improvement for this
+
+212
+00:19:58,720 --> 00:20:04,960
+language modeling task. Highlighted in blue, we have gain percentage columns showing that by adding
+
+213
+00:20:04,960 --> 00:20:10,720
+regular Replug with no fine tuning, we can gain anywhere from about three to six percent improvement.
+
+214
+00:20:10,720 --> 00:20:15,520
+And then by adding Replug LSR, we gain anywhere from six to nine percent improvement on the
+
+215
+00:20:15,520 --> 00:20:21,600
+language modeling task, which is quite impressive. In this second task, the authors are interested
+
+216
+00:20:21,600 --> 00:20:28,400
+in understanding whether Replug has performance benefits for the MMLU benchmark. MMLU, which
+
+217
+00:20:28,400 --> 00:20:34,000
+once again stands for Massive Multitask Language Understanding, is a dataset of multiple choice
+
+218
+00:20:34,000 --> 00:20:40,000
+questions. These questions span 57 different tasks and four different categories,
+
+219
+00:20:40,000 --> 00:20:47,360
+humanities, STEM, social sciences, and other. In this setup, they're using Codex, a language model,
+
+220
+00:20:47,360 --> 00:20:51,200
+and adding Replug to that and evaluating everything in a five shot setting.
+
+221
+00:20:52,000 --> 00:20:59,520
+For each of the MMLU test queries, we retrieve and prepend 10 k equals 10 Wikipedia documents
+
+222
+00:20:59,520 --> 00:21:05,760
+from the December 2018 dump, and then we ensemble the output. The baselines in this comparison are
+
+223
+00:21:05,760 --> 00:21:11,200
+language models that are state-of-the-art for MMLU, which include Codex, Palm, and Flan Palm,
+
+224
+00:21:11,920 --> 00:21:18,480
+as well as RAG LLM approaches, Atlas in particular. The metric for this particular task
+
+225
+00:21:18,480 --> 00:21:25,440
+is simply the accuracy of these questions. In these results, we see consistent improvement
+
+226
+00:21:25,440 --> 00:21:31,120
+of Codex simply by integrating Replug. In the top row highlighted in blue, we see the performance
+
+227
+00:21:31,120 --> 00:21:37,040
+of Codex on its own. And then the bottom two rows highlighted in blue, we see Codex with Replug
+
+228
+00:21:37,040 --> 00:21:43,680
+integrated. The difference between Replug and Replug LSR being integrated is somewhat negligible,
+
+229
+00:21:43,680 --> 00:21:48,640
+but generally by integrating Replug, we can improve the performance of Codex by several points.
+
+230
+00:21:50,880 --> 00:21:54,800
+In this final task, the authors are testing open domain question answering,
+
+231
+00:21:54,800 --> 00:22:00,080
+just like in the last paper. So the task is again answering objective factual questions.
+
+232
+00:22:00,960 --> 00:22:05,280
+This time, they're only looking at two datasets, natural questions, and trivia QB.
+
+233
+00:22:06,240 --> 00:22:10,240
+The setup is quite similar to the previous task. They're using the Codex language model
+
+234
+00:22:10,240 --> 00:22:15,680
+and integrating Replug and evaluating this in a 16-shot setting. They're using Wikipedia for
+
+235
+00:22:15,680 --> 00:22:22,400
+retrieval and retrieving the top 10 documents. For baselines, they're using Chinchilla, Palm,
+
+236
+00:22:22,400 --> 00:22:30,000
+and just plain Codex. And they're using a couple RAG LLM approaches, such as Retro, R2D2, and Atlas.
+
+237
+00:22:30,240 --> 00:22:37,040
+Once again, we see that by integrating Replug into Codex, we can gain substantial performance
+
+238
+00:22:37,040 --> 00:22:42,480
+improvements, about four to five points here. Compared to plain language models and even
+
+239
+00:22:42,480 --> 00:22:47,280
+other RAG enabled models, we see that Codex and Replug beats them all, at least in the
+
+240
+00:22:47,280 --> 00:22:54,080
+few-shot setting which is being evaluated here. This concludes my presentation about these two
+
+241
+00:22:54,080 --> 00:22:58,800
+retrieval augmented generation papers. Thanks for your attention. If you have any questions,
+
+242
+00:22:58,800 --> 00:23:01,600
+feel free to reach out at the email on screen.
+

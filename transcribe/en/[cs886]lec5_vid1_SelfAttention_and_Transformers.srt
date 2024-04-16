@@ -1,0 +1,4184 @@
+1
+00:00:00,000 --> 00:00:07,200
+Hello, my name is Evelyn Riddell and with me is my co-presenter James Riddell.
+
+2
+00:00:07,200 --> 00:00:11,640
+We are going to be giving a presentation on self-attention and transformers.
+
+3
+00:00:11,640 --> 00:00:16,040
+This presentation was originally prepared for a computer science course at the University
+
+4
+00:00:16,040 --> 00:00:21,640
+of Waterloo, where we're both graduate students, and the course was given by Professor Wenhu
+
+5
+00:00:21,640 --> 00:00:22,640
+Chen.
+
+6
+00:00:22,640 --> 00:00:26,320
+All right, with that, let's get started.
+
+7
+00:00:26,320 --> 00:00:32,440
+So the goal for this presentation is to talk about what attention looked like before the
+
+8
+00:00:32,440 --> 00:00:35,880
+transformer architecture was introduced.
+
+9
+00:00:35,880 --> 00:00:40,040
+In particular, this attention mechanism was highly coupled with an RNN structure, so we'll
+
+10
+00:00:40,040 --> 00:00:41,320
+go over that.
+
+11
+00:00:41,320 --> 00:00:46,320
+Then we'll shift to the attention is all you need paper that radically changed this field
+
+12
+00:00:46,320 --> 00:00:53,320
+of study, where they decoupled this from RNNs, introduced the transformer architecture,
+
+13
+00:00:53,320 --> 00:00:57,040
+and had quite an impact with their paper.
+
+14
+00:00:57,040 --> 00:01:03,160
+We'll also touch on transformers in other domains, in particular, the early adoption
+
+15
+00:01:03,160 --> 00:01:06,600
+of transformers in computer vision.
+
+16
+00:01:06,600 --> 00:01:12,800
+And the goal is to tackle some misconceptions along the way.
+
+17
+00:01:12,800 --> 00:01:19,120
+So the notion of exploiting context in machine learning and deep learning isn't new.
+
+18
+00:01:19,120 --> 00:01:25,880
+So with CNNs, these exploit context from spatial locality, and this is particularly useful
+
+19
+00:01:25,880 --> 00:01:35,240
+for images, where regions around a patch in an image give context for that particular
+
+20
+00:01:35,240 --> 00:01:36,520
+patch.
+
+21
+00:01:36,520 --> 00:01:42,840
+With RNNs, context is exploited from temporal locality, and this is useful for sequences
+
+22
+00:01:42,840 --> 00:01:44,720
+or time series data.
+
+23
+00:01:44,720 --> 00:01:50,720
+But the way these work, the way that context is exploited is through the embedding of
+
+24
+00:01:50,720 --> 00:01:56,800
+priors into the model, and this forces them to pay attention to relevant features for
+
+25
+00:01:56,800 --> 00:01:58,360
+a given problem.
+
+26
+00:01:58,360 --> 00:02:01,960
+And that given problem again is highly tied to the architecture and the way that these
+
+27
+00:02:01,960 --> 00:02:04,240
+priors are embedded.
+
+28
+00:02:04,240 --> 00:02:09,640
+What we now call self-attention in deep learning is, again, still this idea of paying attention
+
+29
+00:02:09,640 --> 00:02:17,760
+to the most relevant parts or important parts of an input at a given time step, but without
+
+30
+00:02:17,760 --> 00:02:22,640
+these embedded priors, and ideally we'd like to learn what to pay attention to.
+
+31
+00:02:22,640 --> 00:02:29,000
+This is very useful for sequence-to-sequence modeling.
+
+32
+00:02:29,000 --> 00:02:34,360
+Now the attention mechanism typically refers to a function that allows a model to attend
+
+33
+00:02:34,360 --> 00:02:37,800
+to different context and content.
+
+34
+00:02:37,800 --> 00:02:40,680
+And like I said before, ideally we'd like to learn this.
+
+35
+00:02:40,680 --> 00:02:45,760
+So what we're learning here is the set attention functions or the parameters of this function.
+
+36
+00:02:45,760 --> 00:02:48,920
+Now there's different ways that we can calculate attention.
+
+37
+00:02:48,920 --> 00:02:54,360
+It can be additive or multiplicative, like with a dot product.
+
+38
+00:02:54,360 --> 00:02:58,800
+And we can also, we have different names to distinguish attention based on what is being
+
+39
+00:02:58,800 --> 00:03:00,400
+attended to.
+
+40
+00:03:00,400 --> 00:03:06,080
+So for self-attention, content is being attended to itself.
+
+41
+00:03:06,080 --> 00:03:10,080
+We typically refer to this as intra-attention as well.
+
+42
+00:03:10,080 --> 00:03:15,160
+With cross-attention, content is attended to different content.
+
+43
+00:03:15,160 --> 00:03:21,720
+We often refer to this as encoder-decoder attention or intra-attention.
+
+44
+00:03:21,720 --> 00:03:28,400
+Now we'll talk about these, the ways to calculate attention and the different types of attention
+
+45
+00:03:28,400 --> 00:03:34,040
+a little bit more later on, but this gives you a high-level overview of the different
+
+46
+00:03:34,040 --> 00:03:38,560
+terminologies used when talking about attention.
+
+47
+00:03:38,560 --> 00:03:44,520
+So like I said earlier, the attention function or attention mechanism is really useful for
+
+48
+00:03:44,520 --> 00:03:46,400
+sequence-to-sequence modeling.
+
+49
+00:03:46,400 --> 00:03:50,320
+So what this means is, when we're talking about sequence-to-sequence modeling, the goal
+
+50
+00:03:50,320 --> 00:03:57,840
+is to take an input sequence, x, and produce a meaningful sequence, y, or an output sequence,
+
+51
+00:03:57,840 --> 00:03:58,840
+y.
+
+52
+00:03:58,840 --> 00:04:02,920
+Now this could look like text-to-text, where the input sequence is text and the output
+
+53
+00:04:02,920 --> 00:04:04,400
+sequence is text.
+
+54
+00:04:04,400 --> 00:04:10,500
+Think of tasks like question answering, translation, or text summarization.
+
+55
+00:04:10,500 --> 00:04:15,640
+Now this input sequence doesn't have to be text, it could also be an image.
+
+56
+00:04:15,640 --> 00:04:20,680
+Think of image captioning, where we take an image and produce a caption, which embodies
+
+57
+00:04:20,680 --> 00:04:22,480
+the output sequence.
+
+58
+00:04:22,480 --> 00:04:28,160
+Now we don't just go from the input sequence to the output sequence with some sort of magical
+
+59
+00:04:28,160 --> 00:04:33,840
+black box, often we use encoder decoder models.
+
+60
+00:04:33,840 --> 00:04:39,360
+The way that this works is the input sequence is encoded by an encoder, which then shares
+
+61
+00:04:39,360 --> 00:04:46,160
+a state and a context vector, which captures the information and all the context from the
+
+62
+00:04:46,160 --> 00:04:53,080
+input sequence, shares that with the decoder, which then meaningfully decodes this information
+
+63
+00:04:53,080 --> 00:04:55,560
+to produce an output sequence.
+
+64
+00:04:55,560 --> 00:05:01,040
+And it all depends on what the task is, of course, and what these sequences are.
+
+65
+00:05:01,040 --> 00:05:08,240
+And usually these encoder decoder models are implemented using RNNs, these are highly useful
+
+66
+00:05:08,240 --> 00:05:10,440
+for sequences sequence modeling.
+
+67
+00:05:10,440 --> 00:05:15,440
+And also the transformer architecture is a type of encoder decoder model useful for these
+
+68
+00:05:15,440 --> 00:05:16,440
+types of tasks.
+
+69
+00:05:16,440 --> 00:05:18,320
+And of course we'll cover that later.
+
+70
+00:05:18,320 --> 00:05:23,520
+But first we're going to start talking, we'll start first with an explanation of how RNNs
+
+71
+00:05:23,520 --> 00:05:27,960
+can be used for sequence to sequence modeling.
+
+72
+00:05:27,960 --> 00:05:34,840
+Here we have a paper from 2014 called Sequence to Sequence Learning with Neural Networks
+
+73
+00:05:34,840 --> 00:05:41,320
+that does sequence to sequence modeling with RNNs using this encoder decoder structure.
+
+74
+00:05:41,320 --> 00:05:47,720
+The encoder and the decoder are both instantiated using an LSDM, which is a type of recurrent
+
+75
+00:05:47,720 --> 00:05:48,720
+neural network.
+
+76
+00:05:49,720 --> 00:05:55,160
+And the way this works is the encoder starts with the input sequence.
+
+77
+00:05:55,160 --> 00:06:01,160
+Let's say for now this input sequence has four tokens, X1, X2, X3, and X4.
+
+78
+00:06:01,160 --> 00:06:08,080
+Using these input tokens, we calculate the hidden states of the encoder.
+
+79
+00:06:08,080 --> 00:06:12,680
+Now for each token, we calculate its corresponding hidden states.
+
+80
+00:06:12,680 --> 00:06:17,600
+So let's say for token X2, we calculate hidden state 2.
+
+81
+00:06:17,600 --> 00:06:22,720
+But it also requires the previous hidden state to inform that hidden state.
+
+82
+00:06:22,720 --> 00:06:28,440
+So for H2, we use H1 to help inform what that hidden state looks like.
+
+83
+00:06:28,440 --> 00:06:32,280
+And we do this for all of the hidden states and all of the tokens until we get to the
+
+84
+00:06:32,280 --> 00:06:34,120
+end of the sequence.
+
+85
+00:06:34,120 --> 00:06:39,400
+But notice here, when we're calculating H4, we require the previous hidden state and
+
+86
+00:06:39,400 --> 00:06:41,600
+the one before that and the one before that.
+
+87
+00:06:41,600 --> 00:06:51,200
+So we end up with these dependencies where whatever the previous tokens and those hidden
+
+88
+00:06:51,200 --> 00:06:55,400
+states were inform what the next hidden states are.
+
+89
+00:06:55,400 --> 00:07:01,360
+But as the sequences get longer, this information gets watered down.
+
+90
+00:07:01,360 --> 00:07:07,800
+And again, remember RNNs use spatial locality as an embedded prior, right, where the hidden
+
+91
+00:07:07,800 --> 00:07:13,320
+states or the tokens closest to a hidden state or token have the most impact, have
+
+92
+00:07:13,320 --> 00:07:15,520
+the biggest effect.
+
+93
+00:07:15,520 --> 00:07:21,600
+But long range dependencies, so inputs or tokens that happened earlier in the sequence,
+
+94
+00:07:21,600 --> 00:07:25,840
+don't have as much impact anymore.
+
+95
+00:07:25,840 --> 00:07:32,080
+Now the way that this progresses now is once this token has been encoded, or these tokens,
+
+96
+00:07:32,080 --> 00:07:38,520
+this input sequence has been encoded, the last hidden state is used to calculate a context
+
+97
+00:07:38,520 --> 00:07:42,760
+vector and an initial state for the decoder.
+
+98
+00:07:42,760 --> 00:07:48,880
+The context vector captures the information from the input sequence.
+
+99
+00:07:48,880 --> 00:07:57,800
+From there, we do a very similar process where we use previous hidden state and the previous
+
+100
+00:07:57,800 --> 00:08:01,920
+output token to calculate the next output token.
+
+101
+00:08:01,920 --> 00:08:09,240
+So we do this in a recurrent autoregressive fashion, recurrent in this case, because again,
+
+102
+00:08:09,240 --> 00:08:14,520
+we use the previous hidden state to calculate the next one.
+
+103
+00:08:14,520 --> 00:08:20,240
+We do this for each output token that we're generating until we've arrived at an output
+
+104
+00:08:20,240 --> 00:08:21,960
+sequence.
+
+105
+00:08:21,960 --> 00:08:29,720
+Now again, a hidden state is informed by, of course, its previous output token, but also
+
+106
+00:08:29,720 --> 00:08:32,160
+all the hidden states that come before it.
+
+107
+00:08:32,160 --> 00:08:37,160
+Again, it's this notion of leveraging spatial locality, which is that embedded prior that
+
+108
+00:08:37,160 --> 00:08:40,400
+the RNN exploits.
+
+109
+00:08:40,400 --> 00:08:47,920
+But we see that again, whatever happened earlier in the sequence for the output gets watered
+
+110
+00:08:47,920 --> 00:08:51,200
+down as we get further and further in this sequence.
+
+111
+00:08:51,200 --> 00:08:58,080
+Now another issue that we see is this context vector is reused for every hidden state of
+
+112
+00:08:58,080 --> 00:08:59,320
+the decoder.
+
+113
+00:08:59,320 --> 00:09:03,840
+We just use a single context vector that's supposed to capture all of the information
+
+114
+00:09:03,840 --> 00:09:06,600
+from the inputs.
+
+115
+00:09:06,600 --> 00:09:15,080
+But this tends to result in an informational bottleneck because of this fixed length context
+
+116
+00:09:15,080 --> 00:09:16,680
+vector.
+
+117
+00:09:16,680 --> 00:09:22,680
+The problem here is that if our inputs get really long, this context vector might not
+
+118
+00:09:22,680 --> 00:09:28,000
+be able to capture all the information, but more importantly, as we're generating new
+
+119
+00:09:28,360 --> 00:09:33,720
+output tokens, certain parts of the input might be more relevant or might be more important,
+
+120
+00:09:33,720 --> 00:09:38,560
+and this context vector, the single context vector might not capture that.
+
+121
+00:09:38,560 --> 00:09:46,800
+So another paper from 2015 called Neural Machine Translation by Jointly Learning to Align
+
+122
+00:09:46,800 --> 00:09:51,480
+and Translate addressed this informational bottleneck.
+
+123
+00:09:51,480 --> 00:09:57,560
+They introduced the idea of using a different context vector for each time step in the decoder.
+
+124
+00:09:58,000 --> 00:10:03,360
+So the process is very similar, but instead of using that single context vector that's
+
+125
+00:10:03,360 --> 00:10:09,320
+used for each decoder hidden state, we're going to calculate a new one for each decoder
+
+126
+00:10:09,320 --> 00:10:16,240
+hidden state, and we can craft it so that it looks at or captures the most important
+
+127
+00:10:16,240 --> 00:10:20,680
+parts of the input sequence for that time step.
+
+128
+00:10:20,680 --> 00:10:27,800
+So the way we do this is we saw the same setup where we encode, produce an initial state
+
+129
+00:10:27,800 --> 00:10:32,880
+for the decoder, but instead of just calculating a single context vector that's going to be
+
+130
+00:10:32,880 --> 00:10:37,880
+used at every step of the decoder, we're calculating a new one.
+
+131
+00:10:37,880 --> 00:10:47,320
+So how this works is we calculate first the alignment between each hidden state of the
+
+132
+00:10:47,320 --> 00:10:52,080
+encoder with the previous decoder state.
+
+133
+00:10:52,080 --> 00:10:58,120
+So in this case, for S1, to calculate context vector 1, we need that previous hidden state,
+
+134
+00:10:58,120 --> 00:11:00,080
+in this case S0.
+
+135
+00:11:00,080 --> 00:11:04,240
+So we calculate the alignment scores using an attention function.
+
+136
+00:11:04,240 --> 00:11:07,480
+Now for now, let's keep this abstract.
+
+137
+00:11:07,480 --> 00:11:13,120
+We'll get to what this looks like later, but it calculates the alignment or the compatibility
+
+138
+00:11:13,120 --> 00:11:17,000
+between the hidden states and that decoder state.
+
+139
+00:11:17,000 --> 00:11:21,800
+We then normalize these alignment scores to produce the attention weights, and then
+
+140
+00:11:21,800 --> 00:11:26,200
+we calculate a weighted sum.
+
+141
+00:11:26,200 --> 00:11:34,720
+So what's going on here is we use the attention weights to say how much of each hidden state
+
+142
+00:11:34,720 --> 00:11:40,520
+are we going to use to inform what this context vector is.
+
+143
+00:11:40,520 --> 00:11:46,640
+So that way we're saying, okay, hidden states with high attention weights.
+
+144
+00:11:46,640 --> 00:11:54,760
+Our weighted higher city will have more impact when we go to calculate this next hidden state
+
+145
+00:11:54,760 --> 00:11:59,400
+and therefore that next output token.
+
+146
+00:11:59,400 --> 00:12:05,600
+So essentially what these attention weights mean is or represent is they represent the
+
+147
+00:12:05,600 --> 00:12:12,640
+measure that the target word, in this case Y1, is aligned to or translated from a source
+
+148
+00:12:12,640 --> 00:12:20,200
+word XI, which is corresponded with each hidden state HI.
+
+149
+00:12:20,200 --> 00:12:25,640
+It also reflects the importance of the annotation, therefore, the hidden states with respect
+
+150
+00:12:25,640 --> 00:12:31,200
+to the previous hidden state, because we're using the previous hidden state and all of
+
+151
+00:12:31,200 --> 00:12:36,840
+the different annotation vectors or hidden states of the encoder to calculate that context
+
+152
+00:12:36,840 --> 00:12:42,080
+vector and generate the next output token.
+
+153
+00:12:42,080 --> 00:12:50,120
+So we do this for each step or each hidden state of the decoder.
+
+154
+00:12:50,120 --> 00:12:55,360
+We calculate a new context vector using the previous hidden state of the decoder and the
+
+155
+00:12:55,360 --> 00:13:02,600
+previous output token generated by the decoder to inform what the next hidden state and the
+
+156
+00:13:02,600 --> 00:13:05,040
+next output token are going to be.
+
+157
+00:13:05,040 --> 00:13:12,840
+So this is our recurrent autoregressive process in which we do this.
+
+158
+00:13:12,840 --> 00:13:21,600
+So what we've done is we've solved the issue now of capturing the most important parts
+
+159
+00:13:21,600 --> 00:13:26,000
+of the input for generating each token in the output.
+
+160
+00:13:26,000 --> 00:13:33,200
+Now one thing we haven't really solved though is the fact that the recurrent structure
+
+161
+00:13:33,200 --> 00:13:41,660
+of this, as our decoder produces more and more output tokens and each previous decoder
+
+162
+00:13:41,660 --> 00:13:46,440
+state informs what the next decoder state is going to be, we still lose some information
+
+163
+00:13:46,440 --> 00:13:55,200
+about what previous hidden states or output tokens were generated.
+
+164
+00:13:55,200 --> 00:13:59,800
+Now our encoder is bidirectional in this case, which allows for the annotation of each word
+
+165
+00:13:59,800 --> 00:14:03,080
+to summarize both preceding and following words.
+
+166
+00:14:03,080 --> 00:14:05,240
+So we get this back and forth information.
+
+167
+00:14:05,240 --> 00:14:10,880
+We capture the most important parts of the input, so that part is solved with this attention
+
+168
+00:14:10,880 --> 00:14:11,880
+mechanism.
+
+169
+00:14:11,880 --> 00:14:16,080
+Now all steps are differentiable, so we can back propagate through everything and update
+
+170
+00:14:16,080 --> 00:14:19,760
+the model parameters.
+
+171
+00:14:19,760 --> 00:14:29,200
+So to provide a visualization for these attention weights, the authors of this paper produce
+
+172
+00:14:29,200 --> 00:14:32,000
+this visualization for the task of translation.
+
+173
+00:14:32,000 --> 00:14:37,480
+In this case we have an English sentence on top and a French sentence on the left hand
+
+174
+00:14:37,480 --> 00:14:38,480
+side.
+
+175
+00:14:38,480 --> 00:14:47,560
+Here the pixels are colored or pixelated with a brightness that corresponds to the attention
+
+176
+00:14:47,560 --> 00:14:48,560
+weight.
+
+177
+00:14:48,560 --> 00:14:50,760
+So the more bright, the higher the attention weight.
+
+178
+00:14:50,760 --> 00:14:59,520
+What this means is that the model was paying attention to particular inputs when generating
+
+179
+00:14:59,520 --> 00:15:00,840
+an output token.
+
+180
+00:15:00,840 --> 00:15:02,800
+So let's look at the word agreement.
+
+181
+00:15:02,800 --> 00:15:08,880
+When the model was producing the word agreement in French, it was paying attention to the
+
+182
+00:15:08,880 --> 00:15:14,560
+word agreement in the English sentence, so that's why we see a highly pixelated or bright
+
+183
+00:15:14,560 --> 00:15:18,400
+pixel here in this visualization.
+
+184
+00:15:18,400 --> 00:15:27,880
+So when we see a nice diagonal of bright pixels, it represents that there was a nice
+
+185
+00:15:27,880 --> 00:15:30,960
+one-to-one correspondence of English to French words.
+
+186
+00:15:30,960 --> 00:15:34,920
+Now we don't see that everywhere, of course.
+
+187
+00:15:34,920 --> 00:15:41,520
+This is usually due to either a different ordering of words that occur in different languages.
+
+188
+00:15:41,520 --> 00:15:46,200
+So for example, European economic area, we see the diagonal in the other direction because
+
+189
+00:15:46,200 --> 00:15:52,840
+the French ordering of words is different, sort of inverted, or we see some ambiguity
+
+190
+00:15:52,840 --> 00:15:57,040
+that arises because of different semantic meanings of different words.
+
+191
+00:15:57,040 --> 00:16:04,680
+For example, the word was in English and aité in French, again, can represent different
+
+192
+00:16:04,680 --> 00:16:10,800
+things, which means that the model was paying attention to other words as well when generating
+
+193
+00:16:10,800 --> 00:16:19,620
+the words in French that represent the translated representation of those words in the English
+
+194
+00:16:19,620 --> 00:16:22,620
+sentence.
+
+195
+00:16:22,620 --> 00:16:27,400
+But it gives a nice idea for what the attention weights looks like, what the model was paying
+
+196
+00:16:27,400 --> 00:16:38,320
+attention to when generating the outputs for this particular task.
+
+197
+00:16:38,320 --> 00:16:45,840
+The authors compared their approach with the RNN and attention process with just a regular
+
+198
+00:16:45,840 --> 00:16:54,680
+RNN encoder-decoder structure, and they used two training paradigms, one with 30-word sentences
+
+199
+00:16:54,680 --> 00:16:57,440
+and another with 50-word sentences.
+
+200
+00:16:57,440 --> 00:17:04,880
+And what we see here is that the RNN with the attention mechanism built in on the 50-word
+
+201
+00:17:04,880 --> 00:17:11,480
+training paradigm, we observe no performance segregation for longer sentence lengths.
+
+202
+00:17:11,480 --> 00:17:18,720
+Now this is because we made sure that the decoder knew what was important to pay attention
+
+203
+00:17:18,720 --> 00:17:24,960
+to from the input, so we have a specialized context vector for each decoder time step
+
+204
+00:17:24,960 --> 00:17:28,320
+when generating each new output token.
+
+205
+00:17:28,320 --> 00:17:34,640
+Now keep in mind that we're only looking at 50-60 sentence lengths, so we would probably
+
+206
+00:17:34,640 --> 00:17:42,440
+still see some degradation as sentence lengths increase even more because we get that watered
+
+207
+00:17:42,440 --> 00:17:48,680
+down effect in the decoder sequence.
+
+208
+00:17:48,680 --> 00:17:56,240
+Now a different paper from also 2015 called Show, Attend, and Tell, Neural Image Caption
+
+209
+00:17:56,240 --> 00:18:03,080
+Generation with Visual Attention, they use this RNN with attention, but for a different
+
+210
+00:18:03,080 --> 00:18:11,400
+task, they don't use a text input sequence, they use an image sequence for image captioning.
+
+211
+00:18:11,400 --> 00:18:15,680
+It builds directly on this previous paper, and the way they do this is they have a very
+
+212
+00:18:15,680 --> 00:18:21,480
+similar setup, but instead of using the text as the input sequence, they take their image
+
+213
+00:18:21,480 --> 00:18:26,440
+and extract the features using a convolutional neural network to produce the hidden states
+
+214
+00:18:26,440 --> 00:18:27,440
+of the encoder.
+
+215
+00:18:27,800 --> 00:18:36,960
+Essentially these are feature vectors of the image that represent different image regions.
+
+216
+00:18:36,960 --> 00:18:45,760
+So when we then go to generate the output sequence using the decoder, a new context vector is
+
+217
+00:18:45,760 --> 00:18:53,760
+calculated for each decoder hidden state, and it tends to different image regions, which
+
+218
+00:18:53,760 --> 00:18:58,960
+are captured by the feature vectors or the hidden states of the encoder.
+
+219
+00:18:58,960 --> 00:19:04,440
+We still calculate the alignment scores, the attention weights, and then do that weighted
+
+220
+00:19:04,440 --> 00:19:11,720
+sum that informs what the context vector is, and the idea here is that the attention weights
+
+221
+00:19:11,720 --> 00:19:18,440
+indicate how much of the different regions of the image are important when generating
+
+222
+00:19:18,440 --> 00:19:20,680
+that output token.
+
+223
+00:19:20,680 --> 00:19:26,440
+Now we do this still in an autoregressive recurrent fashion, recurrent because we're using the
+
+224
+00:19:26,440 --> 00:19:31,440
+previous decoder states to inform what the next decoder states are going to be, and the
+
+225
+00:19:31,440 --> 00:19:36,520
+next output tokens are going to be, but we're calculating a new context vector for each
+
+226
+00:19:36,520 --> 00:19:37,560
+time step.
+
+227
+00:19:41,160 --> 00:19:44,920
+All steps are differentiable, so we can back propagate through everything and update model
+
+228
+00:19:44,920 --> 00:19:50,520
+parameters, and each context vector in this case attends to different image regions.
+
+229
+00:19:50,680 --> 00:19:55,480
+Telling the model here for this token, for this hidden state, we're paying attention to
+
+230
+00:19:55,480 --> 00:20:00,600
+this region or that region to inform what that token should be for the output.
+
+231
+00:20:01,800 --> 00:20:08,600
+Now to give you a visualization, here it gives insight to where and what the attention focused
+
+232
+00:20:08,600 --> 00:20:13,000
+on when generating each word. So here we still have this image of the bird.
+
+233
+00:20:13,960 --> 00:20:20,920
+Let's look at when the model produced the word bird. At that time step, the model was
+
+234
+00:20:20,920 --> 00:20:26,600
+paying attention to the region where the bird was. So that's how the model knew to produce
+
+235
+00:20:26,600 --> 00:20:35,880
+the word bird for that region of the image. Now if we go down and look further through
+
+236
+00:20:35,880 --> 00:20:41,080
+the sequence where water was produced, at that point the model was paying attention to
+
+237
+00:20:42,040 --> 00:20:47,000
+the area around the bird where the water was, and so it makes sense that the word water was
+
+238
+00:20:47,000 --> 00:20:53,800
+then produced by the model. Now the paper, they introduced two ways of calculating attention.
+
+239
+00:20:53,800 --> 00:21:00,600
+There's a deterministic soft attention, which is what I've explained to you so far. There's another
+
+240
+00:21:00,600 --> 00:21:06,200
+way to do it, which they refer to as stochastic hard attention, which requires reinforcement
+
+241
+00:21:06,200 --> 00:21:11,400
+learning. This is something you're interested in. I highly recommend you read the paper.
+
+242
+00:21:11,400 --> 00:21:17,960
+It's beyond the scope for this presentation. Now here's a couple more visualizations
+
+243
+00:21:19,080 --> 00:21:24,680
+to really just reinforce this idea. Let's look at the first picture where a woman is throwing
+
+244
+00:21:24,680 --> 00:21:31,400
+a frisbee. At the time where the model was paying attention to this region where the frisbee was,
+
+245
+00:21:31,400 --> 00:21:34,440
+it produced the word frisbee in the caption.
+
+246
+00:21:38,280 --> 00:21:45,480
+Okay, so we've talked now about how attention was incorporated into the encoder-decoder structure
+
+247
+00:21:45,480 --> 00:21:54,040
+with RNNs. Now in 2017, Vaswani and his colleagues published the Attention is All You Need paper,
+
+248
+00:21:54,760 --> 00:22:00,520
+and this was a pretty radical paper at the time, and it still is. It's been very impactful and
+
+249
+00:22:00,520 --> 00:22:08,040
+fundamental for a lot of AI technologies that we now know and use today. They decoupled attention
+
+250
+00:22:08,040 --> 00:22:12,840
+from the RNN structure and introduced the transformer architecture.
+
+251
+00:22:15,480 --> 00:22:21,880
+So let's dive right into that, but before we do it, I want to take a brief moment to talk to you
+
+252
+00:22:21,880 --> 00:22:28,440
+about feature superposition and polycemiticity. So remember working with deep neural networks,
+
+253
+00:22:28,440 --> 00:22:35,160
+neural activations often do not represent a single thing, and this happens because neural networks
+
+254
+00:22:35,160 --> 00:22:41,240
+want to represent more features than they have neurons for. And we see this with deep neural
+
+255
+00:22:41,240 --> 00:22:49,400
+networks like the transformer architecture. With this, we observe that often many unrelated
+
+256
+00:22:50,200 --> 00:22:56,840
+concepts are packed into single neurons. This results in the superposition of features.
+
+257
+00:22:58,760 --> 00:23:04,440
+This is important because when we're talking about tokens and inputs and outputs to
+
+258
+00:23:05,960 --> 00:23:14,120
+deep learning network layers or parts of those layers, it doesn't make sense to think of these
+
+259
+00:23:14,120 --> 00:23:20,760
+inputs and outputs as tokens or words like we've been doing before. These tend to lose meaning
+
+260
+00:23:20,760 --> 00:23:25,720
+as we get deeper and deeper into the network. Instead, we're going to be thinking of them as
+
+261
+00:23:26,680 --> 00:23:34,680
+abstract or generic vectors, let's say. And again, this is due to this polycemiticity that
+
+262
+00:23:34,680 --> 00:23:43,480
+arises with deep neural networks. Now, the unfortunate side effect of this is the decreased
+
+263
+00:23:43,480 --> 00:23:50,760
+explainability in deep neural networks. There is some research being done in this area to
+
+264
+00:23:50,760 --> 00:23:58,920
+add explainability back into deep neural networks like LLMs, which is being done by Anthropic.
+
+265
+00:24:00,760 --> 00:24:07,880
+But for now, it's still quite an unsolved problem, and we just need to be careful when working with
+
+266
+00:24:07,880 --> 00:24:13,400
+deep neural networks or talking or thinking about them that we don't associate inputs and outputs
+
+267
+00:24:13,400 --> 00:24:19,880
+with tangible things like words or tokens because that's not what happens. It's because of the
+
+268
+00:24:19,880 --> 00:24:28,440
+superposition and polycemiticity that occurs. Okay, with that in mind, let's move on.
+
+269
+00:24:30,360 --> 00:24:33,640
+I'm going to give a quick overview of the attention that we've seen so far.
+
+270
+00:24:34,840 --> 00:24:40,680
+What we've seen so far is what we now refer to as additive recurrent attention. So additive
+
+271
+00:24:41,240 --> 00:24:47,240
+because of the choice for the attention function, which in both cases that I've talked about before,
+
+272
+00:24:48,200 --> 00:24:56,920
+is a simple feedforward network. It's an MLP network, and it's an additive calculation.
+
+273
+00:24:58,360 --> 00:25:05,080
+The recurrent part of this attention mechanism is the fact that we need the previous decoder
+
+274
+00:25:05,080 --> 00:25:11,480
+hidden state to calculate the next one. In this case, this image, the ST-1 is the previous
+
+275
+00:25:11,560 --> 00:25:18,280
+decoder hidden state. We calculate the alignment of this hidden state with all of the encoder hidden
+
+276
+00:25:18,280 --> 00:25:25,640
+state that H is to then inform what the context vector is to then produce the next decoder hidden
+
+277
+00:25:25,640 --> 00:25:31,080
+state. So this is this recurrent notion of need the previous to produce the next.
+
+278
+00:25:32,760 --> 00:25:39,480
+Now, there's some issues with this recurrent structure. The first is the scalability issue
+
+279
+00:25:39,480 --> 00:25:47,240
+with this. Performance degrades as a distance between words increases. Now, we talked already about
+
+280
+00:25:48,520 --> 00:25:55,640
+that context vector bottleneck that the attention mechanism addresses. We address this
+
+281
+00:25:56,440 --> 00:26:02,120
+dilution of information from the encoder that captures the information from the inputs to
+
+282
+00:26:02,120 --> 00:26:11,160
+the decoder. But still, as we produce longer outputs, output sequences in the decoder,
+
+283
+00:26:11,160 --> 00:26:18,360
+information from earlier decoder hidden states and output tokens, these get watered down and
+
+284
+00:26:18,360 --> 00:26:29,400
+diluted. We see these long range dependencies, and that's just why recurrent neural networks
+
+285
+00:26:29,400 --> 00:26:37,160
+don't scale very well. We also have parallelization limitations. Recurrent processes lack the ability
+
+286
+00:26:37,160 --> 00:26:43,400
+to be parallelized. There's really only so much we can parallelize because we need previous hidden
+
+287
+00:26:43,400 --> 00:26:48,440
+states and previous output tokens to inform what the next hidden states and next output tokens are
+
+288
+00:26:48,440 --> 00:26:56,120
+going to be. And then we have memory constraints. RNNs are notoriously known for having limited
+
+289
+00:26:56,120 --> 00:27:02,280
+memories, memory and struggle with those long range dependencies. There's that diluted impact of
+
+290
+00:27:02,280 --> 00:27:09,880
+earlier elements on output sequences as the sequence progresses. So how can we address these
+
+291
+00:27:09,880 --> 00:27:16,520
+issues? Well, one way to do it is to decouple the attention from the RNN structure. We want to
+
+292
+00:27:16,520 --> 00:27:22,120
+separate, the goal is to separate the attention mechanism into smaller self-contained components
+
+293
+00:27:22,120 --> 00:27:30,840
+that we can hopefully parallelize. Now remember that the attention is purely the
+
+294
+00:27:31,720 --> 00:27:37,960
+act of determining the importance of elements to be passed forward in the model. We do this by
+
+295
+00:27:37,960 --> 00:27:43,320
+calculating the attention weights, which lets the model pay attention to the most significant parts.
+
+296
+00:27:44,040 --> 00:27:49,320
+And the goal for decoupling from RNNs is to produce a more general attention mechanism
+
+297
+00:27:49,320 --> 00:27:54,680
+that's not confined to that recurrent structure. So we need a modified procedure. We still need
+
+298
+00:27:54,680 --> 00:27:59,160
+to determine the weight space on the context that indicate the elements to attend to, and then we
+
+299
+00:27:59,160 --> 00:28:06,280
+need to apply these weights to enhance attendant features. Now we're going to need a new set of
+
+300
+00:28:06,280 --> 00:28:10,760
+notation for this because the notation that we've been using is highly coupled with
+
+301
+00:28:12,760 --> 00:28:18,440
+the RNN structure, right, with hidden states and context vectors and all of that. Where we're
+
+302
+00:28:18,440 --> 00:28:24,920
+going to use instead is the key value query notation, and this is the notation also used
+
+303
+00:28:24,920 --> 00:28:32,440
+in the attention is all you need paper, and it reinforces the notion that we're working with
+
+304
+00:28:32,440 --> 00:28:37,480
+deep neural networks where we observe the superposition of features. So we're going to think
+
+305
+00:28:37,480 --> 00:28:45,080
+of these keys, values and queries and outputs as just generic or abstract vectors that we're not
+
+306
+00:28:45,080 --> 00:28:51,720
+going to associate meaning to right now. So that's exactly what we're going to do for now,
+
+307
+00:28:51,720 --> 00:28:58,600
+is just think of them as abstract vectors. Okay, so I've just drawn the attention mechanism here,
+
+308
+00:28:59,320 --> 00:29:05,640
+but with the key value and query notation. So the idea here is we're going to find the alignment
+
+309
+00:29:05,640 --> 00:29:14,520
+or compatibility of the keys, so the k is here, with a query. We calculate the alignment using
+
+310
+00:29:14,520 --> 00:29:19,880
+an attention function. We saw before that we could do this using a feedforward network,
+
+311
+00:29:19,880 --> 00:29:23,880
+but there's multiple ways to do this. We're going to keep this just generic for now.
+
+312
+00:29:24,440 --> 00:29:28,600
+Then these alignment scores are normalized to produce the attention weights,
+
+313
+00:29:28,600 --> 00:29:34,120
+and then we use those attention weights right to scale the different values to produce an output
+
+314
+00:29:34,120 --> 00:29:43,640
+vector. Now we can do this with multiple queries because we're trying to move away from this recurrent
+
+315
+00:29:43,720 --> 00:29:49,640
+structure where the previous query is not dependent on the next query,
+
+316
+00:29:49,640 --> 00:29:55,480
+which is what it was with the RNN structure, right, where these queries, so to speak,
+
+317
+00:29:55,480 --> 00:30:01,560
+where the hidden states of the decoder, we're moving away from that. So we can calculate the
+
+318
+00:30:02,200 --> 00:30:08,200
+queries and keys potentially at the same time, as long as we set our attention function up correctly,
+
+319
+00:30:08,280 --> 00:30:14,920
+or in a way that can leverage this. So here the goal, again, is still to find the alignment
+
+320
+00:30:14,920 --> 00:30:21,640
+or compatibility between keys and queries to scale the values, and now we're producing three
+
+321
+00:30:21,640 --> 00:30:29,320
+outputs that correspond to the three queries that we're doing. Now at this point, let's talk about
+
+322
+00:30:29,320 --> 00:30:35,320
+where those keys, values, and queries are coming from, and this is where the term self-attention
+
+323
+00:30:35,400 --> 00:30:42,120
+and cross-attention come in. For self-attention, keys, values, and queries are all derived from
+
+324
+00:30:42,120 --> 00:30:49,960
+the same source, so an arbitrary input x, let's say, that goes through an arbitrary transformation
+
+325
+00:30:49,960 --> 00:30:56,280
+to produce these keys, values, and queries. Now for cross-attention, the keys and values come from
+
+326
+00:30:56,280 --> 00:31:03,960
+one source, and the queries are derived from a separate source. Now it doesn't matter where they
+
+327
+00:31:03,960 --> 00:31:11,480
+come from, because they are all then passed into the attention function, which is agnostic to
+
+328
+00:31:12,600 --> 00:31:17,240
+what the keys, values, and queries are or where they come from. But this is where this notion
+
+329
+00:31:17,240 --> 00:31:25,560
+of self-attention and cross-attention comes from, as in it indicates the separation of the sources
+
+330
+00:31:25,640 --> 00:31:34,680
+for the keys, values, and the queries. Now in terms of implementation of this decoupled
+
+331
+00:31:34,680 --> 00:31:41,000
+attention mechanism, the attention is all you need implemented it with two properties. The first is
+
+332
+00:31:41,000 --> 00:31:47,400
+the choice for the attention function, which was the skilled dot product. Now this is a good
+
+333
+00:31:47,400 --> 00:31:54,120
+representation of compatibility, it's fast, and it's interpretable, it's also parallelizable across
+
+334
+00:31:54,680 --> 00:32:05,640
+all queries, so we can leverage GPUs. We also scale this dot product for stable
+
+335
+00:32:05,640 --> 00:32:13,480
+self-max gradients in high dimensions. Now the other property is a common dimension for keys,
+
+336
+00:32:13,480 --> 00:32:18,920
+values, and queries. Now this is a requirement for the dot product, we can't dot product to
+
+337
+00:32:18,920 --> 00:32:25,480
+vectors of different sizes, but it also simplifies the transformer architecture, which we'll talk
+
+338
+00:32:25,480 --> 00:32:30,840
+about later, with predictable attention output shapes, and it just provides more consistent
+
+339
+00:32:30,840 --> 00:32:40,680
+hidden state dimensions for easier model analysis. So now back to this attention diagram,
+
+340
+00:32:41,560 --> 00:32:45,880
+we've added in these two properties, first is we see the shared dimension for the keys,
+
+341
+00:32:45,960 --> 00:32:51,960
+values, and queries, as well as the output vector o, and we've now specified the choice for the
+
+342
+00:32:51,960 --> 00:32:58,200
+attention function, which is the dot product between each query and each key scaled by the
+
+343
+00:32:58,200 --> 00:33:10,200
+square root of the shared dimension, dk. Now we can calculate these dot products in parallel
+
+344
+00:33:10,200 --> 00:33:16,920
+with matrix multiplications, so we can group all the keys into a matrix k, group all the queries
+
+345
+00:33:16,920 --> 00:33:22,680
+into a matrix q, and simply do a matrix multiplication, because this is doing the exact same thing as
+
+346
+00:33:22,680 --> 00:33:29,160
+doing a dot product between each key and each query. We can do the same thing for the values,
+
+347
+00:33:29,160 --> 00:33:33,880
+and put all of the attention weights also in a matrix, so we can do another matrix multiplication
+
+348
+00:33:33,960 --> 00:33:41,240
+to produce the matrix o, the outputs. Now the reason that this is really useful is because
+
+349
+00:33:41,240 --> 00:33:46,760
+it's highly concurrent on modern hardware, and we independently calculate each query.
+
+350
+00:33:53,880 --> 00:33:58,040
+Hi, so I'm going to take over from Aveline to do the next portion of this presentation.
+
+351
+00:33:59,000 --> 00:34:03,640
+I'm going to talk to you really quickly about the multi-head attention, which builds on the
+
+352
+00:34:03,640 --> 00:34:07,800
+mechanism Aveline just explained. I'll then go into a little bit of a talk about what
+
+353
+00:34:07,800 --> 00:34:13,240
+transformers are doing and what that architecture looks like. We'll then progress into a little
+
+354
+00:34:13,240 --> 00:34:17,160
+bit more of an implementational focus, and take you through how you might implement a
+
+355
+00:34:17,160 --> 00:34:21,560
+transformer yourself, and then hopefully throughout this process I'd like to clear up some misconceptions
+
+356
+00:34:21,560 --> 00:34:26,120
+about the transformer that come up colloquially, just because of people's understanding about the
+
+357
+00:34:26,120 --> 00:34:32,200
+notation and how it's presented commonly. So with that said, I'm going to jump into the first
+
+358
+00:34:32,200 --> 00:34:37,000
+misconception that arises about transformers, and this has to do with the attention mechanism
+
+359
+00:34:37,000 --> 00:34:43,400
+Aveline just outlined. So this is a misconception about what transformers are doing, and there's
+
+360
+00:34:43,400 --> 00:34:49,640
+this common idea that because of the terminology that being queries, keys, and values, people think
+
+361
+00:34:49,720 --> 00:34:56,520
+that this is doing some sort of vector similarity search. And because this notation is very
+
+362
+00:34:56,520 --> 00:35:01,800
+convenient, a lot of people will have reference for what a database might do, or a dictionary,
+
+363
+00:35:01,800 --> 00:35:06,360
+where you look up something that is similar and then grab the corresponding value. People get
+
+364
+00:35:06,360 --> 00:35:11,640
+overly attached to this, and it's really great to introduce users to the notion of I guess a
+
+365
+00:35:11,640 --> 00:35:17,720
+similarity inner product using this definition. That being said, people don't know how to look
+
+366
+00:35:17,720 --> 00:35:24,200
+past it, and this arises with the issue of people not understanding where we're getting our values
+
+367
+00:35:24,200 --> 00:35:28,680
+from, and then what this transformer or attention mechanism when we go about learning it is actually
+
+368
+00:35:28,680 --> 00:35:34,360
+learning. So the question arises, are we learning something that is parametric where the meaning
+
+369
+00:35:34,360 --> 00:35:40,280
+is distilled into a preset number of parameters or weights, or is it non-parametric like you'd see
+
+370
+00:35:40,280 --> 00:35:45,240
+with a database where you're just storing embedded representations that you can then look into.
+
+371
+00:35:46,200 --> 00:35:50,920
+What I'm going to tell you is that the transformer is a parametric process through and through.
+
+372
+00:35:50,920 --> 00:35:56,120
+There are systems or further implementations that have been proposed like RAG, where you
+
+373
+00:35:56,120 --> 00:36:00,600
+augment the transformer process by retrieving information that kind of muddies this, and they
+
+374
+00:36:00,600 --> 00:36:05,240
+actually do use dictionaries to grab that information. But for today, we're just talking
+
+375
+00:36:05,240 --> 00:36:09,400
+about the transformer in its vanilla format. And in this situation, we are just learning
+
+376
+00:36:09,400 --> 00:36:15,720
+parametrically. So talking about what is being learned, Aveline has mentioned that the attention
+
+377
+00:36:15,720 --> 00:36:20,680
+mechanism that Vaswani and his colleagues put forward is this scaled dot product attention.
+
+378
+00:36:21,320 --> 00:36:25,000
+But when we look at this, no matter where we're coming from, whether that self-attention where
+
+379
+00:36:25,000 --> 00:36:29,400
+you're getting everything from a single input where you're attending to yourself, or cross
+
+380
+00:36:29,400 --> 00:36:34,520
+attention where you have an arbitrary input attending to another input to generate the
+
+381
+00:36:34,600 --> 00:36:40,680
+queries, keys, and values. Regardless of this, the dot product attention is just an operation.
+
+382
+00:36:40,680 --> 00:36:45,720
+It's not learning any parameters as part of that, which means we need to look elsewhere to try to
+
+383
+00:36:45,720 --> 00:36:49,240
+figure out what we're going to be learning. And this is where the real power of the transformer
+
+384
+00:36:49,240 --> 00:36:56,280
+comes in, is we want to learn linear maps or weight matrices that are going to take our arbitrary
+
+385
+00:36:56,280 --> 00:37:01,480
+input, no matter where it's coming from, and transform that into the independent parts that
+
+386
+00:37:01,480 --> 00:37:05,240
+will feed into this attention mechanism. Those are the queries, the keys, and the values.
+
+387
+00:37:06,200 --> 00:37:11,640
+So to produce the queries, let's look at the self-attention example. We have our input x,
+
+388
+00:37:11,640 --> 00:37:16,920
+which again, since we've got this polysemanticity of the representations in a deep neural network,
+
+389
+00:37:16,920 --> 00:37:22,520
+we're just going to consider an arbitrary vector or an arbitrary sequence of vectors in the situation
+
+390
+00:37:23,640 --> 00:37:27,800
+where we look at all of x. And what we do is we multiply that with a weights matrix, and these
+
+391
+00:37:27,800 --> 00:37:32,920
+are parameters that we're learning for the network that'll make us produce queries that are useful
+
+392
+00:37:32,920 --> 00:37:36,760
+to then grab the relevant information. We likewise do this to inform what the keys are,
+
+393
+00:37:37,320 --> 00:37:41,240
+and again, we're looking at that similarity between the keys and queries, and we want those to be
+
+394
+00:37:41,240 --> 00:37:46,760
+distinct depending on what needs to be attended to. And then finally, the values. So when we're
+
+395
+00:37:46,760 --> 00:37:51,880
+actually talking about attention, a lot of times, because this notation is overloaded, and you'll
+
+396
+00:37:51,880 --> 00:37:55,800
+see the multi-head attention that we'll talk about in a couple of slides takes in keys, queries,
+
+397
+00:37:55,800 --> 00:38:00,040
+values, but the attention mechanism it calls also takes in keys, values, and queries.
+
+398
+00:38:01,240 --> 00:38:05,400
+Because they're overloaded so much, people think, well, the input in the situation
+
+399
+00:38:06,200 --> 00:38:13,560
+is the exact same as the value. So if you have a query and a value, they could be the same,
+
+400
+00:38:13,560 --> 00:38:17,080
+but while they could theoretically, when you're actually learning this through the process of
+
+401
+00:38:17,080 --> 00:38:21,720
+optimization, these weights matrices are going to learn different things. So our keys and queries
+
+402
+00:38:21,720 --> 00:38:27,000
+will be aligned, yes, but when we talk about self-attention, it's not just doing a attention
+
+403
+00:38:27,000 --> 00:38:32,760
+between its input and itself. These are independent, or sorry, they are dependent on one another
+
+404
+00:38:32,760 --> 00:38:39,160
+because they come from the same source, but they have been learned to have different representations
+
+405
+00:38:39,160 --> 00:38:43,640
+that can then ask each other questions of, are you an important feature that I want to be using
+
+406
+00:38:44,360 --> 00:38:50,040
+to carry that information forward? So now that we have a little bit more
+
+407
+00:38:50,040 --> 00:38:55,480
+intuition about where our values are coming from, where our keys and queries are also coming from,
+
+408
+00:38:55,480 --> 00:39:00,120
+and we've talked about what is being learned in this process, I'm going to move into the idea
+
+409
+00:39:00,120 --> 00:39:04,280
+of multi-head attention, which builds on top of that original attention, and it's what the paper
+
+410
+00:39:04,280 --> 00:39:10,440
+really leverages to get this increased performance. So as I've mentioned a couple of times, it builds
+
+411
+00:39:10,440 --> 00:39:15,640
+on top of the scaled dot product attention that the authors implement. It's an extension of this
+
+412
+00:39:15,640 --> 00:39:21,320
+generalized attention mechanism outlined previously in our presentation, and the real idea here is
+
+413
+00:39:21,320 --> 00:39:25,720
+that it's going to leverage multiple heads to attend to different things. So like we saw with
+
+414
+00:39:25,720 --> 00:39:30,840
+the recurrent neural network situation earlier, having a singular context that only takes one
+
+415
+00:39:30,840 --> 00:39:35,480
+perspective about what is important, even if we're doing it each time, which we've kind of introduced
+
+416
+00:39:35,480 --> 00:39:40,200
+with this attention mechanism, is still an informational bottleneck. So even though we've
+
+417
+00:39:40,200 --> 00:39:44,360
+gotten better because we've introduced attention, we can make it even better than that by having
+
+418
+00:39:44,360 --> 00:39:48,760
+different sub-representations, and I'll get into how we learn these different representations
+
+419
+00:39:48,760 --> 00:39:54,200
+in a minute. But the main idea is if we can look at the data from different angles, we can have the
+
+420
+00:39:54,200 --> 00:39:59,480
+model learn to jointly attend to different views of that data, so that when we have the decoder
+
+421
+00:39:59,480 --> 00:40:05,480
+finally go to access that information, it can take on a view and be comfortable that that information
+
+422
+00:40:05,480 --> 00:40:09,080
+is there, that it needs to decode the next token or element of the arbitrary sequence.
+
+423
+00:40:09,960 --> 00:40:13,720
+So I'm going to give a little bit of intuition for why multi-head
+
+424
+00:40:13,720 --> 00:40:19,720
+attention is even needed in the first place. When we go through the top half of the attention block,
+
+425
+00:40:19,720 --> 00:40:23,000
+so we're talking about taking the attention weights and multiplying it with the values,
+
+426
+00:40:23,000 --> 00:40:27,720
+what you'll notice is because we're doing this as a multiplication in addition or a matrix
+
+427
+00:40:27,720 --> 00:40:32,200
+multiplication when you put everything together and parallelize it, we multiply the values,
+
+428
+00:40:32,200 --> 00:40:37,000
+but then we sum through the dimension of the values. So this is corresponding with the keys
+
+429
+00:40:37,720 --> 00:40:43,480
+and the actual values themselves. So from one sequence, we're summing through based on a singular
+
+430
+00:40:43,480 --> 00:40:48,840
+view. And since we summed through, we've lost resolution about what is important. Essentially,
+
+431
+00:40:48,840 --> 00:40:54,520
+we've committed to one perspective. And the goal with multi-head attention is to learn multiple
+
+432
+00:40:54,520 --> 00:40:59,080
+sets of weights. So we have one attention head that has one set of weights to produce the keys,
+
+433
+00:40:59,080 --> 00:41:04,040
+values, and queries given an input, and then another head that has a different separate
+
+434
+00:41:04,040 --> 00:41:09,800
+set of weights to learn a different set of queries, keys, and values, etc., etc. The paper
+
+435
+00:41:09,800 --> 00:41:14,200
+actually extends this to learn eight separate heads and modern architectures that use the
+
+436
+00:41:14,200 --> 00:41:21,080
+transformer have much, much, much more number of heads. And the real goal here is to learn
+
+437
+00:41:21,080 --> 00:41:25,640
+sub-representations that give you different perspectives on the data so we can learn a
+
+438
+00:41:25,640 --> 00:41:31,000
+richer representation and pack all that context together about how each element in a sequence
+
+439
+00:41:31,080 --> 00:41:35,400
+relates to the other elements in that sequence, regardless of that this is the input sequence
+
+440
+00:41:35,400 --> 00:41:40,200
+that has a direct meaning from the tokens or if we're further up in the network and dealing with
+
+441
+00:41:40,200 --> 00:41:46,120
+just arbitrary sequences that have positional information or semantic or grammatical information
+
+442
+00:41:46,120 --> 00:41:53,240
+packed into it. So you might ask yourself, well, if we're going to add a whole bunch of different
+
+443
+00:41:53,240 --> 00:41:57,720
+attention heads, aren't we going to increase the computational cost dramatically? And you'd be
+
+444
+00:41:57,720 --> 00:42:03,800
+correct if we didn't take extra precautions. Now what the authors find as a kind of compromise to
+
+445
+00:42:03,800 --> 00:42:09,240
+this is if they shrink the dimension of the sub-representation, so we go down to a smaller
+
+446
+00:42:09,240 --> 00:42:15,560
+dimensional space for each attention head, we can reduce or compress the information given a certain
+
+447
+00:42:15,560 --> 00:42:21,080
+lens to make it more useful for that perspective, but have lower computational cost. And what they
+
+448
+00:42:21,080 --> 00:42:25,880
+find is if they divide the total dimension of the model, since we have that imposed fixed dimension
+
+449
+00:42:25,880 --> 00:42:30,360
+that Aveline mentioned earlier, by the number of heads, we end up with a smaller dimensional
+
+450
+00:42:30,360 --> 00:42:35,880
+subspace that still lets us compute in roughly the same amount of time as if we had a single head,
+
+451
+00:42:36,440 --> 00:42:41,080
+but we can get a lot more rich information just because that compression isn't actually by that
+
+452
+00:42:41,080 --> 00:42:47,800
+big of a factor. So a visual representation of what happens here is say we have some
+
+453
+00:42:48,680 --> 00:42:52,360
+source that's going to flow into our weights matrices, and I haven't rendered that on the
+
+454
+00:42:52,360 --> 00:42:56,360
+slide here, but just imagine it's coming from the left, it would then flow through these weight
+
+455
+00:42:56,360 --> 00:43:01,880
+matrices that are for each head, produce the keys, values, and queries, and then out of that each
+
+456
+00:43:01,880 --> 00:43:07,400
+attention head will produce a separate output matrix, and this is going to represent the,
+
+457
+00:43:07,400 --> 00:43:14,360
+it's going to be dimension of t by dk, t referring to the number of elements in the decoding sequence,
+
+458
+00:43:14,360 --> 00:43:21,240
+or where the queries are coming from in the first place. Now if you recall that we have this
+
+459
+00:43:21,240 --> 00:43:26,280
+constant imposed dimensionality of the model, you might look at the fact that we have multiple
+
+460
+00:43:26,280 --> 00:43:30,200
+outputs now and say well that's not going to fly with our understanding that the model has
+
+461
+00:43:30,200 --> 00:43:35,000
+consistent dimension throughout it. We need something that the rest of the model is set up to use
+
+462
+00:43:35,000 --> 00:43:40,920
+and understand. So you'd be correct in that assumption, and what we finally want to do is
+
+463
+00:43:40,920 --> 00:43:46,120
+introduce a final weights matrix that is also learned as a set of parameters to kind of pack up
+
+464
+00:43:46,120 --> 00:43:50,040
+that rich amount of context from all these different views into the problem,
+
+465
+00:43:50,040 --> 00:43:54,840
+into a singular output. So we can catenate all of the heads and then do a matrix multiplication
+
+466
+00:43:54,840 --> 00:44:01,640
+of that finally with this weight 0, which represents the weights for this output transformation,
+
+467
+00:44:01,640 --> 00:44:06,120
+and it's going to bring us back to that proper dimension of the model. So from dk times the
+
+468
+00:44:06,120 --> 00:44:12,040
+number of heads to the d model. So we've talked now about multi-head attention, and that's kind of
+
+469
+00:44:12,040 --> 00:44:16,760
+the understanding that we've just went through and why it's so important. Now I want to talk about
+
+470
+00:44:16,760 --> 00:44:22,520
+how the transformer architecture uses that to escape the problems that RNNs had. So I'm going
+
+471
+00:44:22,520 --> 00:44:28,680
+to say that the attention architecture in the transformer, this multi-head idea, is leveraged
+
+472
+00:44:28,680 --> 00:44:32,840
+in three different ways in the transformer. One is it does self-attention in the encoder,
+
+473
+00:44:33,560 --> 00:44:38,760
+the next is that it does masked self-attention in the decoder, and finally we have that auto
+
+474
+00:44:38,760 --> 00:44:43,880
+regressive element where we're doing the encoder-decoder cross-attention. Because we're going through
+
+475
+00:44:43,880 --> 00:44:50,200
+the process of decoding a sequence and we need to produce token at a time, we do end up with this
+
+476
+00:44:50,200 --> 00:44:55,080
+auto regressive element that's still there, but the goal is to use these new self-attention elements
+
+477
+00:44:55,080 --> 00:44:59,720
+that I'll explain a little bit more in a second to offload a lot of that work so that the computer
+
+478
+00:44:59,720 --> 00:45:05,080
+can run it in parallel and we do the minimal amount of time as possible kind of going from one
+
+479
+00:45:05,080 --> 00:45:09,320
+sequence to the next sequence, or from one element of the sequence to the next element.
+
+480
+00:45:10,120 --> 00:45:15,640
+So recall that we've got a custom context per layer, so we've got different heads per layer of the
+
+481
+00:45:15,640 --> 00:45:20,920
+architecture, and we want to reduce the amount of time that's going into that. So what you might
+
+482
+00:45:20,920 --> 00:45:25,720
+say is whereas the recurrent neural network architecture needs the previous input and we
+
+483
+00:45:25,720 --> 00:45:30,920
+run all of them in sequence, instead let's take away the idea of this recurrence. Instead we're
+
+484
+00:45:30,920 --> 00:45:37,160
+going to run the idea of self-attention on the entire input that we're looking at. So at a given
+
+485
+00:45:37,160 --> 00:45:43,640
+time step, the history of the model, the tokens that have already been seen, are then encoded as
+
+486
+00:45:43,640 --> 00:45:48,440
+part of this self-attention block, and it allows the model to jointly attend to all positions of
+
+487
+00:45:48,440 --> 00:45:53,240
+the encoder. So it doesn't need to just flow through a path of the previous hidden states,
+
+488
+00:45:53,240 --> 00:45:57,960
+but each area, because we add in a little bit of positional information at the very start,
+
+489
+00:45:58,600 --> 00:46:03,320
+can then look at all of the other elements and understand how it relates to the other
+
+490
+00:46:03,320 --> 00:46:09,000
+context that's there. And this embeds context about how the elements not only relate to one
+
+491
+00:46:09,000 --> 00:46:16,840
+another, but then can be useful downstream. So each layers or each attention block is optimized
+
+492
+00:46:16,840 --> 00:46:21,480
+so that it's feeding forward in the network the most important information. Now the mass
+
+493
+00:46:21,480 --> 00:46:27,720
+self-attention in the decoder also eliminates this idea of dependency on the previous tokens
+
+494
+00:46:27,720 --> 00:46:32,360
+as part of the architecture. We still have this autoregressive process, but at any single
+
+495
+00:46:33,320 --> 00:46:38,360
+iteration of that autoregressive process, we're running with all of the previously decoded tokens.
+
+496
+00:46:39,000 --> 00:46:45,480
+And instead of needing to do a complex path traversal to get that information, we treat it
+
+497
+00:46:45,480 --> 00:46:50,120
+the exact same way as the self-attention in the encoder. So we have each element look at everything
+
+498
+00:46:50,120 --> 00:46:55,480
+else that was previously there to try to inform, well, what is the context that I need to share
+
+499
+00:46:55,480 --> 00:47:00,200
+to generate this token? And at this point, since we've decoupled from the recurrent structure,
+
+500
+00:47:00,200 --> 00:47:03,720
+we're just talking about the next token that would be produced as if it was a single output.
+
+501
+00:47:04,760 --> 00:47:09,800
+Now, this comes up with an issue of forward-looking bias because certain elements weren't produced
+
+502
+00:47:09,800 --> 00:47:14,680
+at the time that they would be actually seen, right? As you go from left to right in an encoded
+
+503
+00:47:14,680 --> 00:47:18,920
+sequence, or a sequence that you're trying to decode, by the time you get to token three,
+
+504
+00:47:18,920 --> 00:47:24,680
+you have not seen the information or context about token four, five, etc. So you don't want
+
+505
+00:47:24,680 --> 00:47:31,480
+those impacting how it makes its embedding. So in this situation, what we do is the authors
+
+506
+00:47:31,480 --> 00:47:39,240
+introduce a notion of masking or contextual masking that blocks out the future so that you can't
+
+507
+00:47:39,240 --> 00:47:45,400
+inform the important information that you're going to express based off of future information.
+
+508
+00:47:45,400 --> 00:47:49,320
+And what this allows us to do is still do this in parallel because we've got the entire sequence
+
+509
+00:47:49,320 --> 00:47:54,920
+at once. And all of the queries that the model will be seeing are able to be independent of
+
+510
+00:47:54,920 --> 00:47:58,440
+one another because the architecture doesn't force them to have that recurrent structure.
+
+511
+00:48:00,360 --> 00:48:03,800
+And that's the real strength of what's going on here is we've offloaded a lot of that work,
+
+512
+00:48:04,680 --> 00:48:08,600
+even though we have to do this out of aggressively, to the self-attention part.
+
+513
+00:48:09,720 --> 00:48:14,520
+Finally, we have the encoder-decoder cross-attention. And what this is going to allow us to do is have
+
+514
+00:48:14,600 --> 00:48:19,080
+our decoder look at the information from the encoder and extract and pull in the relevant
+
+515
+00:48:19,080 --> 00:48:23,880
+context to inform how it's going to continue decoding. So we still have that encoder that's
+
+516
+00:48:23,880 --> 00:48:28,120
+going to take all the information and press it into useful context in a latent space,
+
+517
+00:48:28,120 --> 00:48:33,240
+and then the decoder that's going to exploit that. But the area between the two where we're
+
+518
+00:48:33,240 --> 00:48:37,720
+actually doing calculations are regressively is minimized. And that's the real essence of why
+
+519
+00:48:37,720 --> 00:48:43,880
+the transformer is so much more efficient. So the authors further motivate this with kind of a
+
+520
+00:48:43,880 --> 00:48:48,840
+why self-attention section. If I was to summarize it quickly, they break their analysis down into
+
+521
+00:48:48,840 --> 00:48:54,280
+three components. One is the complexity per layer, one is the sequential number of operations that
+
+522
+00:48:54,280 --> 00:49:00,040
+needed to be run, and the final one is the maximum path length. So working right to left,
+
+523
+00:49:00,040 --> 00:49:04,840
+I'm going to talk about the maximum path length. First, this comes from the notion of the recurrent
+
+524
+00:49:04,840 --> 00:49:09,640
+neural network, where to get information about your hidden state from your dependencies, you
+
+525
+00:49:09,640 --> 00:49:16,280
+actually needed to flow through the previous hidden states. So at any single time, your time
+
+526
+00:49:16,280 --> 00:49:20,840
+complexity is based on how long that path is, or the number of elements you've seen. In the
+
+527
+00:49:20,840 --> 00:49:26,360
+self-attention block, because we've encoded that understanding of position into it, and our architecture
+
+528
+00:49:26,360 --> 00:49:30,680
+doesn't enforce any type of dependency here, we don't need to go looking for that information
+
+529
+00:49:30,680 --> 00:49:34,760
+elsewhere. It will be encoded into the position that I'm actually referring to at the time of
+
+530
+00:49:34,760 --> 00:49:40,280
+doing the calculation. So the maximum path length is considered constant. As far as sequential
+
+531
+00:49:40,280 --> 00:49:45,080
+operations go, this is just referring to how much can be parallelized. So again, because we've removed
+
+532
+00:49:45,080 --> 00:49:50,920
+that recurrent operation, even though we're doing it iteration by iteration at a single iteration,
+
+533
+00:49:50,920 --> 00:49:55,400
+it's a fixed or constant time, because I'm not dependent on flowing through the model state at
+
+534
+00:49:55,400 --> 00:50:01,160
+a time. Finally, we have the complexity per layer, and for self-attention, since we've talked about
+
+535
+00:50:01,160 --> 00:50:05,000
+this at length as a scale dot product that we can then use as a matrix multiplication,
+
+536
+00:50:05,560 --> 00:50:09,240
+we end up with a time complexity of n squared d, just because we're doing these matrix
+
+537
+00:50:09,240 --> 00:50:14,760
+multiplications per iteration through the network, and this is per layer. So that explains what's
+
+538
+00:50:14,760 --> 00:50:18,760
+going on here, and what we notice is that the self-attention mechanism on modern hardware,
+
+539
+00:50:18,760 --> 00:50:23,560
+where we can really use that concurrency that's been so optimized for doing matrix multiplications,
+
+540
+00:50:23,560 --> 00:50:28,120
+we end up with a lower computational complexity, a greater amount of the computation that can
+
+541
+00:50:28,120 --> 00:50:32,840
+actually be parallelized, and we end up with a representation that encodes the positional
+
+542
+00:50:32,840 --> 00:50:38,680
+and referential information about each element with relationship to each other in the sequence.
+
+543
+00:50:40,440 --> 00:50:44,520
+So this just emphasizes the idea that this is much cheaper, and when things are cheaper,
+
+544
+00:50:44,520 --> 00:50:49,960
+we actually have the ability for the same cost to go deeper, which will allow us to be more powerful,
+
+545
+00:50:50,600 --> 00:50:57,000
+given a fixed number of parameters. It's also faster to train, because we have the ability,
+
+546
+00:50:57,000 --> 00:51:01,240
+we don't have that recurrent relationship, so when we're going through a training process,
+
+547
+00:51:01,240 --> 00:51:05,880
+we don't need to iteratively predict each token in a row. You can take a single sequence and just
+
+548
+00:51:05,880 --> 00:51:11,320
+phrase it as predict the next token, and batch up based on, okay, given this input, predict the
+
+549
+00:51:11,320 --> 00:51:17,640
+single next token, and you can run all of those in parallel. Finally, as a little bit of conversation,
+
+550
+00:51:17,640 --> 00:51:22,040
+when the vocabulary that you're trying to express, or the sequence length n,
+
+551
+00:51:23,000 --> 00:51:27,000
+for a given input that you're trying to turn into another sequence,
+
+552
+00:51:27,000 --> 00:51:31,800
+is smaller than the actual dimension of your model. So the hidden representation state,
+
+553
+00:51:31,800 --> 00:51:36,200
+which it often is when we're dealing with sequences, it's going to be much faster to
+
+554
+00:51:36,200 --> 00:51:40,200
+use the self-attention mechanism than the recurrent one. So we also have the benefit
+
+555
+00:51:41,080 --> 00:51:43,720
+just by nature of the problem that people are using this for.
+
+556
+00:51:46,840 --> 00:51:51,000
+So now that we've motivated how the transformer is going to be using these
+
+557
+00:51:51,000 --> 00:51:54,680
+elements of self-attention, I'm going to talk about the architecture a little bit,
+
+558
+00:51:54,680 --> 00:51:58,680
+and this is going to be a high-level glance. We'll get into more of the implementation details
+
+559
+00:51:58,680 --> 00:52:02,200
+down the road, but if you're going to take anything from this presentation, I want it to be
+
+560
+00:52:02,200 --> 00:52:06,760
+the multi-head attention and why the transformer is able to decouple from the RNN and why that's
+
+561
+00:52:06,760 --> 00:52:12,600
+a good thing, and also how they work together to build this overall transformer architecture.
+
+562
+00:52:12,600 --> 00:52:17,160
+So when you hear about it in literature or presentations or just projects in general,
+
+563
+00:52:17,160 --> 00:52:23,240
+you understand what's going on architecturally. So given this image that I've got on the screen,
+
+564
+00:52:23,240 --> 00:52:27,640
+let's talk about what this task is. We're going from an arbitrary input sequence to an arbitrary
+
+565
+00:52:28,360 --> 00:52:34,760
+decoded sequence or target sequence, and the idea is that for this model to work,
+
+566
+00:52:34,760 --> 00:52:43,160
+we need to go to a floating point dimension system. These neural networks aren't designed to work on
+
+567
+00:52:43,160 --> 00:52:48,360
+tokens or symbols explicitly, instead they use a numerical approach. So we're going to take our
+
+568
+00:52:48,360 --> 00:52:53,240
+input and our output, because both of them are going to flow through these encoder and decoder
+
+569
+00:52:53,240 --> 00:53:00,600
+stacks, and we're going to embed them into a numerical space, right? So this goes through an
+
+570
+00:53:00,600 --> 00:53:08,680
+embedding input embedding space, sorry, an input embedding layer, let's say, and an output embedding
+
+571
+00:53:08,680 --> 00:53:13,720
+layer to then flow into the rest of the model. Next, these sequences will go into the process of
+
+572
+00:53:13,720 --> 00:53:21,720
+positional encoding. Now the positional encoding element of this architecture is going to weave in
+
+573
+00:53:21,720 --> 00:53:27,160
+or superimpose into the signal information about where the element is with reference to all the
+
+574
+00:53:27,160 --> 00:53:31,960
+other elements, and this is why we're able to get rid of this recurrent relationship. We don't need
+
+575
+00:53:31,960 --> 00:53:36,680
+the path to define what came before or what comes after, because that information is directly
+
+576
+00:53:36,680 --> 00:53:44,120
+available in the representation of that element of the sequence. We then have that common encoder
+
+577
+00:53:44,120 --> 00:53:49,000
+decoder architecture that we talked about earlier, and we'll zoom in on these in a second, but the
+
+578
+00:53:49,000 --> 00:53:53,160
+main idea is we're going to compress that information in the encoder, and then in the decoder
+
+579
+00:53:53,160 --> 00:53:57,560
+expand it out to generate that next token flowing through the prediction head or generator at the
+
+580
+00:53:57,560 --> 00:54:04,280
+top. That prediction head will output a set of probabilities about what the token could be in a
+
+581
+00:54:04,360 --> 00:54:09,720
+preset vocal caporum or vocabulary that you're using to represent these sequences,
+
+582
+00:54:10,520 --> 00:54:15,720
+and then that'll flow through a decoding procedure that'll select what the next token is given those
+
+583
+00:54:15,720 --> 00:54:21,240
+probabilities, and that's the part that's auto regressive here, is that given a previous amount
+
+584
+00:54:21,240 --> 00:54:26,280
+of decoded tokens, we're going to predict what the next token could be and use some decoding
+
+585
+00:54:26,280 --> 00:54:33,880
+procedure to select the one that is most likely. So zooming in on the encoder block,
+
+586
+00:54:36,600 --> 00:54:41,480
+the encoder is essentially going to be applying this self-attention to add on context about how
+
+587
+00:54:41,480 --> 00:54:47,560
+the elements relate to one another. So in a language to language or text to text task,
+
+588
+00:54:47,560 --> 00:54:53,000
+this is really adding in grammatical or sequential context to the representation itself as it flows
+
+589
+00:54:53,000 --> 00:54:58,040
+through the model, and it's all about extracting features that have this superimposed context
+
+590
+00:54:58,040 --> 00:55:04,520
+that's insanely powerful to allow the decoder to then get different perspectives into the data,
+
+591
+00:55:04,520 --> 00:55:08,120
+so that for every token it can grab the context that is most important for it.
+
+592
+00:55:11,000 --> 00:55:15,160
+The decoder, on the other hand, is going to have a similar process, but it's going to mask
+
+593
+00:55:15,160 --> 00:55:19,400
+the self-attention so that we don't have that forward-looking bias, and it's going to have an
+
+594
+00:55:19,400 --> 00:55:24,200
+additional cross-attention into the encoder to grab that information that's useful from before.
+
+595
+00:55:25,000 --> 00:55:29,240
+Now in both these situations, as we get further into the implementation, I'll talk about it,
+
+596
+00:55:29,800 --> 00:55:34,920
+but we have a final feedforward network that's added into these blocks, and what this feedforward
+
+597
+00:55:34,920 --> 00:55:39,800
+network is going to do is if the multi-head attention is adding context about what's important,
+
+598
+00:55:39,800 --> 00:55:43,080
+the feedforward network is going to allow us to exploit that context
+
+599
+00:55:44,200 --> 00:55:48,600
+so that we can get a richer representation going forwards. So the multi-head attention says these
+
+600
+00:55:48,600 --> 00:55:52,280
+things are the things you should be paying attention to, and the feedforward network at any
+
+601
+00:55:52,280 --> 00:55:57,640
+single situation is going to say, okay, based on this attention, this is what I want to be doing
+
+602
+00:55:57,640 --> 00:56:04,280
+with my signal. Between all of these kind of sub-layers or sub-attention blocks, we have
+
+603
+00:56:05,240 --> 00:56:09,320
+these connections, so these sub-layer connections, and I'll talk more about those in the future,
+
+604
+00:56:09,320 --> 00:56:14,280
+but they're really there to regularize the signal and make sure that we don't have any problems with
+
+605
+00:56:14,360 --> 00:56:18,360
+exploding or vanishing gradients or we don't overfit the data that we've seen.
+
+606
+00:56:20,520 --> 00:56:26,200
+The generator is a final head that's attached to the architecture, and it's very simple. It's
+
+607
+00:56:26,200 --> 00:56:30,280
+going to take a linear layer, flow into a softmax, and that's going to produce based on the
+
+608
+00:56:30,280 --> 00:56:35,240
+logits that the model produced. It's going to take that and transform them into output probabilities
+
+609
+00:56:35,240 --> 00:56:41,480
+in the vocabulary that you're training. Now as far as the decoding process goes,
+
+610
+00:56:41,480 --> 00:56:46,280
+this is typically done greedily, so you just do kind of like an argmax. You take the most likely
+
+611
+00:56:46,280 --> 00:56:52,360
+probability and just decode that directly as the next token. When you're training the model,
+
+612
+00:56:52,360 --> 00:56:57,160
+we don't really deal with the decoded tokens. We always keep it in an encoded state. That way,
+
+613
+00:56:57,160 --> 00:57:03,400
+we can just continue to flow through the training process. As Aveline mentioned earlier, Veswanian
+
+614
+00:57:03,400 --> 00:57:12,440
+is colleagues use a fixed dimensional implementation. They use D model throughout the architecture,
+
+615
+00:57:12,440 --> 00:57:17,960
+at least as far as what's handed between layers. The reason for this is it's going to make it very
+
+616
+00:57:17,960 --> 00:57:22,840
+easy to stack these blocks, so the encoder blocks and the decoder blocks, to achieve depth in our
+
+617
+00:57:22,840 --> 00:57:28,040
+model. The more parameters, the better the neural network is going to be at approximating whatever
+
+618
+00:57:28,040 --> 00:57:33,480
+the task you're doing is. Now I want to clear up real quick while I've got this diagram on screen,
+
+619
+00:57:34,120 --> 00:57:38,680
+the notion of stacking transformer blocks, and I'll do this a little bit further when I clear
+
+620
+00:57:38,680 --> 00:57:44,440
+up another misconception later on, but where you see this times n, this is referring to that actual
+
+621
+00:57:44,440 --> 00:57:49,000
+block itself. So when we stack encoder blocks, it's going to be an encoder on top of another
+
+622
+00:57:49,000 --> 00:57:54,360
+encoder and a decoder on top of another decoder. The paper that the authors produced themselves
+
+623
+00:57:54,360 --> 00:58:00,760
+used six stacked encoder blocks and stacked decoder blocks, but as far as this figure goes,
+
+624
+00:58:00,760 --> 00:58:05,080
+I think it can be a little bit misleading about what the times n means here, and you want to
+
+625
+00:58:05,080 --> 00:58:09,480
+think of it as stacking the encoders and the decoders, not stacking full transformers.
+
+626
+00:58:11,800 --> 00:58:15,160
+Okay, so with that out of the way, I want to go into a little bit of the
+
+627
+00:58:15,160 --> 00:58:19,000
+implementational details, and I'm going to be leveraging the annotated transformer,
+
+628
+00:58:19,000 --> 00:58:23,000
+which is an excellent resource, I put the link down below on the slide, to go through this
+
+629
+00:58:23,240 --> 00:58:27,400
+as part of my explanation, and I encourage you to actually go and read this yourself.
+
+630
+00:58:27,400 --> 00:58:31,320
+You'll have more time to look at the code and reflect on what that means with
+
+631
+00:58:31,320 --> 00:58:35,560
+relationship to the actual paper, which they include snippets of and essentially just walk
+
+632
+00:58:35,560 --> 00:58:40,520
+through what the paper means step by step. So it's a great resource. For the presentation today,
+
+633
+00:58:40,520 --> 00:58:45,480
+I want to treat building the transformer kind of like building a Lego house. We're going to start
+
+634
+00:58:45,480 --> 00:58:50,200
+really small with little blocks and then build up different modules that we can then compose
+
+635
+00:58:50,280 --> 00:58:54,680
+together and build out the final transformer architecture that you might use or implement in
+
+636
+00:58:54,680 --> 00:58:58,760
+real life. And I'm going to present it in a slightly different order than what the annotated
+
+637
+00:58:58,760 --> 00:59:03,000
+transformer does, because I think it fits the narrative that we're trying to display to you
+
+638
+00:59:03,000 --> 00:59:09,560
+a little bit better. So if I was to go about building the Lego house that is this transformer,
+
+639
+00:59:09,560 --> 00:59:14,360
+when we want to talk about this, it might be helpful so that you don't have a lot of repeated
+
+640
+00:59:14,360 --> 00:59:19,320
+code to introduce some type of cloning or copying function. So if we design a subcomponent,
+
+641
+00:59:20,280 --> 00:59:25,080
+say it's a wall of this hypothetical house, I want to be able to make a whole bunch of walls that
+
+642
+00:59:25,080 --> 00:59:29,320
+look the same so that I can then use that to build the infrastructure or in this situation,
+
+643
+00:59:29,320 --> 00:59:35,640
+the architecture of the transformer. So the main motivation here is if we can repeat elements,
+
+644
+00:59:35,640 --> 00:59:42,760
+we can then stack them deeper with no real design cost behind it. And like the VGG implementation,
+
+645
+00:59:42,760 --> 00:59:48,360
+which was a computer vision implementation, not necessarily related to this, but they
+
+646
+00:59:48,360 --> 00:59:52,200
+added this idea of having composable blocks that you can stack. So we want to be doing that with
+
+647
+00:59:52,200 --> 00:59:56,840
+our transformers as well. So this function is going to be called clones. And essentially what
+
+648
+00:59:56,840 --> 01:00:02,680
+it's going to do is given a module, in this case, we're doing this in PyTorch, create n copies of
+
+649
+01:00:02,680 --> 01:00:08,520
+it. Now whenever you're creating clones of something that has learned parameters in either PyTorch or
+
+650
+01:00:08,520 --> 01:00:14,520
+TensorFlow, it's important that these, unless explicitly designed that way, these clones should
+
+651
+01:00:14,520 --> 01:00:17,960
+not share the same parameters. And with the transformer, we want to make sure they're separate
+
+652
+01:00:17,960 --> 01:00:23,320
+so that the different heads learn separate things, or that the different stacks learn,
+
+653
+01:00:23,960 --> 01:00:30,120
+or different stacked blocks of the encoder or decoder are learning separate parameters,
+
+654
+01:00:30,120 --> 01:00:34,040
+that way they have the full power of being able to optimize to that specific part of the network.
+
+655
+01:00:34,680 --> 01:00:38,520
+So when we actually go to make this model, you need to remember the very end to
+
+656
+01:00:38,520 --> 01:00:42,760
+reinitialize all of the model parameters so that they're separate and independent per clone.
+
+657
+01:00:43,560 --> 01:00:51,080
+Okay, so with that understood, let's build the first part of our architecture, our Lego house.
+
+658
+01:00:51,080 --> 01:00:54,440
+And in this situation, we need to understand how we're going to get information
+
+659
+01:00:54,440 --> 01:00:58,440
+into our transformer in the first place. So I mentioned earlier that we're going to use
+
+660
+01:00:58,440 --> 01:01:04,840
+embeddings into kind of a numerical system of the input vocabulary. Now if these are tokens,
+
+661
+01:01:04,840 --> 01:01:09,640
+such as those associated with words, we essentially need to be able to take
+
+662
+01:01:09,640 --> 01:01:14,280
+the independent parts or the individual parts of say a phrase like I am James,
+
+663
+01:01:14,840 --> 01:01:19,080
+and break that up into little sub pieces that can then be turned into numerical
+
+664
+01:01:20,120 --> 01:01:24,520
+vectors of fixed length that we can then feed into the model. And this is mainly because neural
+
+665
+01:01:24,520 --> 01:01:31,800
+architectures, they work on numbers. Additionally, when you're dealing with a large possible vocabulary,
+
+666
+01:01:31,800 --> 01:01:37,000
+like the entirety of the English language, or in modern large language models, maybe the entire
+
+667
+01:01:37,000 --> 01:01:44,920
+vocabulary of all languages, we have a large number of words or symbols that represent or
+
+668
+01:01:44,920 --> 01:01:49,720
+communicate meaning for that sequence. And we don't want our neural network to be
+
+669
+01:01:49,720 --> 01:01:54,440
+extremely wide as far as the dimension goes, because it's going to be inefficient and take
+
+670
+01:01:54,440 --> 01:01:59,640
+a long, long time to calculate each layer. So as part of this embedding process, a benefit
+
+671
+01:01:59,640 --> 01:02:03,720
+of converting to this numerical system is we're going to reduce the dimensionality
+
+672
+01:02:03,720 --> 01:02:09,800
+and make computation more efficient. Now how we go about kind of building these embeddings
+
+673
+01:02:09,800 --> 01:02:13,960
+is using a learned mapping. You can think of this like a standard linear projection that you'd have
+
+674
+01:02:13,960 --> 01:02:19,960
+in a neural network, except instead of doing like a linear layer, we're going to have a dictionary
+
+675
+01:02:19,960 --> 01:02:27,720
+that's going to look up or map to the vocabulary and have corresponding unique vectors. So we
+
+676
+01:02:27,720 --> 01:02:31,320
+essentially learn weights that are going to go and do that look up to find out what the
+
+677
+01:02:31,320 --> 01:02:37,880
+corresponding word is. But it's still doing this linear layer. Once you've got it into the numerical
+
+678
+01:02:37,880 --> 01:02:40,920
+space, we still do a linear layer to get it to that final embedding.
+
+679
+01:02:42,760 --> 01:02:47,000
+Now the next element of how we're going to get data into our transformer is the positional
+
+680
+01:02:47,000 --> 01:02:52,840
+encoding. And what this is doing is it's going to add information about the element in the
+
+681
+01:02:52,840 --> 01:02:58,920
+sequences position with reference to the other elements. And we do this explicitly so that
+
+682
+01:02:58,920 --> 01:03:03,400
+we can avoid the recurrence or convolutional structure, because when you're doing computation,
+
+683
+01:03:03,400 --> 01:03:08,760
+the representation itself has that information kind of layered on top of it or interweaved
+
+684
+01:03:08,760 --> 01:03:14,680
+with that signal. And how we can go about doing this is because we've produced a fixed dimensional
+
+685
+01:03:14,680 --> 01:03:21,480
+embedded representation of the feature for the input sequence, since it's fixed dimensional,
+
+686
+01:03:21,480 --> 01:03:28,040
+we can actually do an element wise addition to add in that positional element or information.
+
+687
+01:03:28,120 --> 01:03:35,160
+As long as that positional information shares the same dimension with the embedded feature.
+
+688
+01:03:37,080 --> 01:03:41,240
+So the authors go about this in a couple of ways. The one that they highlight in their paper is that
+
+689
+01:03:41,240 --> 01:03:47,640
+they utilize the sinusoidal positional encoding. And they do this in favor of other approaches
+
+690
+01:03:47,640 --> 01:03:52,840
+like a learned positional encoding using an MLP that they also experimented with,
+
+691
+01:03:53,320 --> 01:03:57,800
+because the sinusoidal representation is number one, a little bit more intuitive
+
+692
+01:03:57,800 --> 01:04:03,160
+to understand. And number two, because sine waves have that repeating fashion and you can represent
+
+693
+01:04:03,160 --> 01:04:11,400
+an offset from one position to another position as a linear function, they hypothesize that as
+
+694
+01:04:11,400 --> 01:04:16,440
+context lengths get longer and longer, it'll allow the model to easily learn how to attend to
+
+695
+01:04:16,440 --> 01:04:21,320
+relevant positions between different elements and possibly generalize to longer sequence lengths
+
+696
+01:04:21,400 --> 01:04:27,160
+than they were trained on, a little bit better. So as far as this goes, what they do is essentially
+
+697
+01:04:27,160 --> 01:04:34,040
+interweave the cosine signal and a sine signal. I've got the equations for these off to the side
+
+698
+01:04:34,600 --> 01:04:41,560
+where I is going to represent the position in the sequence and L is going to be the
+
+699
+01:04:43,240 --> 01:04:48,520
+index into the dimension of the representation for that given element in the sequence.
+
+700
+01:04:49,240 --> 01:04:57,080
+So the signal gets embedded into that representation of the element based on the index L,
+
+701
+01:04:57,080 --> 01:05:02,120
+and then for each token in the sequence or each element in this arbitrary sequence,
+
+702
+01:05:02,120 --> 01:05:06,360
+we're going to be adding in that positional information based on where it is or its index I.
+
+703
+01:05:07,560 --> 01:05:11,880
+There are further works that have built on top of the transformer to kind of improve how we're
+
+704
+01:05:11,880 --> 01:05:16,840
+getting this positional encoding. Rope is a great method that was produced after the fact
+
+705
+01:05:17,560 --> 01:05:21,000
+and is highly used nowadays. I encourage you to kind of go and look at that up. If you're
+
+706
+01:05:21,000 --> 01:05:25,560
+going to implement this yourself, it's important to understand where the foundation is, so what
+
+707
+01:05:25,560 --> 01:05:29,800
+the original transformer paper used, and it's easy to wrap your head around what's happening,
+
+708
+01:05:29,800 --> 01:05:35,480
+where we're adding or embedding this positional encoding. But if you use a rotary positional
+
+709
+01:05:35,480 --> 01:05:39,800
+encoding, which is more of a modern feature, you can get the same level of expressiveness,
+
+710
+01:05:39,800 --> 01:05:44,120
+but without needing two separate signals. So it's something I encourage you to go and look at after.
+
+711
+01:05:45,080 --> 01:05:48,840
+Nonetheless, the main idea is as far as implementation goes, we're going to have
+
+712
+01:05:48,840 --> 01:05:54,840
+some function that's going to add in that positional information to the actual
+
+713
+01:05:54,840 --> 01:05:58,680
+feature representation that the model is going to take, so the information is going to be there.
+
+714
+01:05:58,680 --> 01:06:03,640
+And if we look at our high torch code off to the side, you can see I've highlighted the element
+
+715
+01:06:03,640 --> 01:06:09,000
+where we're computing the sine wave and the cost wave for each element, and then we just interleave
+
+716
+01:06:09,000 --> 01:06:14,680
+them together and then do our linear projection. So we're not linear projection, we're doing the
+
+717
+01:06:15,320 --> 01:06:19,560
+in-place addition of that signal with the actual feature representation.
+
+718
+01:06:22,280 --> 01:06:25,480
+So with that understood, we've talked about how we're going to get information
+
+719
+01:06:25,480 --> 01:06:30,040
+into our model, and you keep in mind that this happens in the encoder, but also with the previously
+
+720
+01:06:30,040 --> 01:06:36,120
+decoded token. So we also go through that embedding and positional encoding to get ready to go into
+
+721
+01:06:36,120 --> 01:06:40,760
+the decoder layer. But once we've got information that's ready to be taken by this encoder-decoder
+
+722
+01:06:40,760 --> 01:06:45,320
+structure, we need to talk about what the encoder-decoder structure actually looks like.
+
+723
+01:06:46,280 --> 01:06:53,000
+So both the encoder and the decoder have a number of sub-layers that are going to be
+
+724
+01:06:53,000 --> 01:06:58,840
+useful for building out their structure, one of which is the multi-head attention sub-layer,
+
+725
+01:06:58,840 --> 01:07:03,240
+and this is going to carry out that multi-head attention, learning the weights that allow us
+
+726
+01:07:03,240 --> 01:07:08,120
+to create keys, values, and queries like we talked about earlier. And the main idea behind this,
+
+727
+01:07:08,120 --> 01:07:12,040
+like we've talked about earlier, is to extract the relevant context from an input sequence
+
+728
+01:07:12,760 --> 01:07:16,840
+and we leverage multiple heads to provide a greater resolution or different views
+
+729
+01:07:17,400 --> 01:07:23,960
+into the problem so that that context is available from different angles. And how this is implemented
+
+730
+01:07:23,960 --> 01:07:28,840
+is directly how we explained it earlier. If you want to look at a code representation of this,
+
+731
+01:07:28,920 --> 01:07:34,200
+we're still using that scaled dot product implementation. So if we're doing just the
+
+732
+01:07:34,200 --> 01:07:39,000
+attention here, and keep in mind that these are the keys, values, and queries after doing that
+
+733
+01:07:39,000 --> 01:07:44,280
+linear projection, right? So this is just the attention function itself. We do our matrix
+
+734
+01:07:44,280 --> 01:07:52,440
+multiplication of our query and our keys, scale it by the dimension dk, and then if you see at
+
+735
+01:07:52,440 --> 01:07:55,960
+the very bottom here, we're then going to take the attention weights after normalizing through
+
+736
+01:07:56,040 --> 01:08:00,520
+softmax and multiply them by the values to extract how much of each value we're using or
+
+737
+01:08:00,520 --> 01:08:04,600
+how much we need to attend to that. Now, there are a couple of useful things that you can build
+
+738
+01:08:04,600 --> 01:08:10,120
+into your implementation when you're doing it. One is this idea of masking and the other is dropout.
+
+739
+01:08:10,760 --> 01:08:16,680
+The main idea for incorporating these when you're designing your own implementation is it's going
+
+740
+01:08:16,680 --> 01:08:21,800
+to speed up the ability to compose these models because you don't need to design a custom attention
+
+741
+01:08:21,800 --> 01:08:26,360
+function for the encoder or a custom one for the decoder because we know the decoder is going to
+
+742
+01:08:26,360 --> 01:08:30,840
+be using this masking. We can set it as a parameter of this function so that you can use the exact
+
+743
+01:08:30,840 --> 01:08:36,760
+same attention function for both the encoder and decoder. The dropout here is just a benefit of
+
+744
+01:08:37,400 --> 01:08:42,040
+our sublayer connections and in general just a regularization strategy that we're going to use
+
+745
+01:08:42,040 --> 01:08:48,760
+throughout the model. Dropout just essentially drops the some random features inside of our
+
+746
+01:08:48,760 --> 01:08:53,960
+representation so that our model doesn't tend to overfit to the data that it's seeing. So this is
+
+747
+01:08:53,960 --> 01:08:58,520
+a form of implicit regularization that's a useful pattern to build into networks as you get deeper
+
+748
+01:08:58,520 --> 01:09:04,760
+and deeper to avoid overfitting. Now, building on this attention function is the idea of the
+
+749
+01:09:04,760 --> 01:09:10,440
+multi-head attention. Now, again, there's this ambiguity about what the multi-head attention's
+
+750
+01:09:10,440 --> 01:09:15,960
+notation is. When we look at the forward pass here where we're taking a query, a key, and a value,
+
+751
+01:09:15,960 --> 01:09:21,400
+I would name these something different, but the common implementations that are corresponding
+
+752
+01:09:21,400 --> 01:09:26,120
+with the paper are going to name them the query, key, and value. Think of these as the actual
+
+753
+01:09:26,120 --> 01:09:30,120
+signals themselves before they go through that linear projection that's going to take them to
+
+754
+01:09:31,880 --> 01:09:38,200
+that other space, the subrepresentation that is being learned. So in this situation,
+
+755
+01:09:38,200 --> 01:09:42,200
+if we were doing self-attention, the query, key, and value would all be the same thing.
+
+756
+01:09:42,760 --> 01:09:47,560
+And when we're doing a cross-attention implementation, the query would be from one
+
+757
+01:09:47,560 --> 01:09:54,520
+source, the decoded sequence that we're decoding, and the key and value would come from a memory
+
+758
+01:09:54,520 --> 01:10:00,920
+of what the encoded source looks like. Either way, I've highlighted the relevant parts here.
+
+759
+01:10:01,480 --> 01:10:05,400
+Namely, we're going to go through, and because we've got this matrix multiplication and we want
+
+760
+01:10:05,400 --> 01:10:10,040
+to accelerate this on modern hardware, we can build in this notion of batching to really take
+
+761
+01:10:10,120 --> 01:10:14,680
+advantage of the self-attention and make it concurrent and fast. So if we do all of our
+
+762
+01:10:14,680 --> 01:10:19,640
+linear projections at once, and that's what you see in this block with the comment that
+
+763
+01:10:19,640 --> 01:10:24,520
+starts with the number one, we're going to go through, carry out all of these projections,
+
+764
+01:10:24,520 --> 01:10:28,600
+and it's going to let us get to the point where we can feed it into our attention mechanism,
+
+765
+01:10:28,600 --> 01:10:34,840
+which follows right beneath it very quickly and in parallel. We then go through the process of
+
+766
+01:10:34,840 --> 01:10:39,480
+concatenating all of the different multiple attention heads, and then finally at the very
+
+767
+01:10:39,480 --> 01:10:45,000
+bottom we do a linear projection using that learned weights matrix to take us back to the
+
+768
+01:10:45,000 --> 01:10:48,680
+dimension of the model that we can feed into the rest of it. So this is really just taking us
+
+769
+01:10:48,680 --> 01:10:52,360
+through that multi-head attention process that I explained earlier, but giving a little bit
+
+770
+01:10:52,360 --> 01:10:57,480
+of an implementation detail here. You can see on the left hand side where we're initializing
+
+771
+01:10:57,480 --> 01:11:04,200
+the multi-head attention block for sublayer, that we are cloning the actual layers that are
+
+772
+01:11:04,200 --> 01:11:09,320
+going to be used to learn the matrix sees, or the parameters of the model. That way we can
+
+773
+01:11:09,960 --> 01:11:17,640
+essentially, instead of needing to copy each one as a code block, we just copy the module itself
+
+774
+01:11:17,640 --> 01:11:21,800
+to build out the eight attention heads that this model is going to expect, keeping in mind that
+
+775
+01:11:21,800 --> 01:11:25,800
+we need to reinitialize all those values so that they're independent of one another before we
+
+776
+01:11:25,800 --> 01:11:33,800
+start training. Okay, so with the first sublayer understood, I'm going to move into the second
+
+777
+01:11:33,800 --> 01:11:40,040
+one, which is the position-wise feedforward network. And what's happening here, or an intuition
+
+778
+01:11:40,040 --> 01:11:44,520
+for it, is that it's going to apply a learned transformation to each position in the input
+
+779
+01:11:44,520 --> 01:11:49,080
+representation, but they're applied separately and identically. So when we go through the
+
+780
+01:11:49,080 --> 01:11:54,200
+multi-head attention, we're essentially going to convert our values dimension into our queries
+
+781
+01:11:54,200 --> 01:12:00,200
+dimension, right? So we sum through the values per query. What we want to do with the position-wide
+
+782
+01:12:00,200 --> 01:12:05,720
+feedforward network is we've added in that context per query. We now want to per query, so keep that
+
+783
+01:12:06,760 --> 01:12:11,560
+independence of each query lane, but now exploit that context. So we're going to blow it up,
+
+784
+01:12:12,280 --> 01:12:17,080
+learn how to map it to something more useful, and then recompress it in dimension. So we want to
+
+785
+01:12:17,080 --> 01:12:22,760
+exploit the context that's already been added by previous sublayers. And the main idea is that
+
+786
+01:12:22,760 --> 01:12:27,640
+we're adding more parameters to the network so that it can approximate a greater complexity.
+
+787
+01:12:27,640 --> 01:12:31,800
+And at the end of the day, a neural network is a universal approximator as you get
+
+788
+01:12:31,800 --> 01:12:36,760
+deeper or wider arbitrarily. And the main idea is we want to learn how to go from one sequence to
+
+789
+01:12:36,760 --> 01:12:41,080
+another sequence with the task of sequencing a sequence translation. So the more parameters,
+
+790
+01:12:41,080 --> 01:12:47,080
+the better your model will be, assuming it's been trained well. And then the main idea here,
+
+791
+01:12:47,080 --> 01:12:52,600
+or how it's going about exploiting this context, is it's going to increase the resolution of
+
+792
+01:12:53,160 --> 01:12:58,040
+each position momentarily to allow the model to simulate something that's got,
+
+793
+01:12:58,920 --> 01:13:03,080
+or to exploit this superposition of context. So unravel it a little bit,
+
+794
+01:13:03,800 --> 01:13:09,960
+do some computation, and then remap back to that fixed dimension of the model. So they do this
+
+795
+01:13:09,960 --> 01:13:17,000
+through a linear MLP or a fully connected feedforward network with ReLU activations in between.
+
+796
+01:13:17,000 --> 01:13:21,080
+And the keynote is that the hidden space is going to have higher dimensionality.
+
+797
+01:13:22,040 --> 01:13:25,240
+So I've drawn a picture off to the side just to explain this a little bit. When you've got the
+
+798
+01:13:25,240 --> 01:13:30,520
+superposition of contexts, you might see that the positional nodes have different elements
+
+799
+01:13:30,520 --> 01:13:35,400
+that are adding to the context. Now, because as you go deeper in neural networks, we kind of lose
+
+800
+01:13:35,400 --> 01:13:40,360
+that discernible meaning, the meaning's still there, but there's a lot of contesies that are
+
+801
+01:13:40,360 --> 01:13:44,440
+wrapped up into a single node's representation. So it's hard to isolate that. So I've just come
+
+802
+01:13:44,440 --> 01:13:48,040
+up with like some colors that I've assigned. You could think maybe one of them is about what the
+
+803
+01:13:48,040 --> 01:13:53,240
+actual words meaning was in an encoded sequence. Some of it is the relation to another element,
+
+804
+01:13:53,240 --> 01:13:58,520
+maybe the purple is relation to another element in the sequence, or one of its neighbors.
+
+805
+01:13:58,520 --> 01:14:03,720
+But the main idea is during this feedforward, or the position-wise feedforward sub-layer,
+
+806
+01:14:03,720 --> 01:14:07,880
+we're going to blow up the dimension so that different parts of the features can represent
+
+807
+01:14:07,880 --> 01:14:13,320
+different things. And then when we go and recombine that, we can recombine it in a different way
+
+808
+01:14:13,320 --> 01:14:18,680
+that makes that context more accessible and more useful down the line. As far as the implementation
+
+809
+01:14:18,680 --> 01:14:23,080
+goes, the feedforward part of this model is very simple. We're just going to have two linear layers
+
+810
+01:14:23,080 --> 01:14:27,960
+that are stacked. We're going to add in some dropout to increase the ability to do regularization.
+
+811
+01:14:27,960 --> 01:14:31,640
+And in a forward pass, we're just going to do one linear projection,
+
+812
+01:14:31,640 --> 01:14:34,360
+do our ReLU on it, then do the next linear projection.
+
+813
+01:14:37,720 --> 01:14:42,120
+Perfect. And with that understood, we have the sub-blocks assembled, so these sub-layers.
+
+814
+01:14:42,920 --> 01:14:48,280
+But how we go about connecting them is also important. So as far as the implementation goes,
+
+815
+01:14:49,640 --> 01:14:53,480
+I went one slide too far, here we go. So as far as the implementation goes,
+
+816
+01:14:54,120 --> 01:14:58,840
+the transformer incorporates a sub-layer connection between these sub-layers,
+
+817
+01:15:00,040 --> 01:15:04,440
+or surrounding each of the sub-layers. And what this is going to do is add in that regularization
+
+818
+01:15:05,320 --> 01:15:12,600
+and I guess combat poor gradient behavior throughout the model. So this is just making
+
+819
+01:15:12,600 --> 01:15:17,560
+it so that we can train stably and we don't overfit to the data. They do this through
+
+820
+01:15:17,560 --> 01:15:22,360
+three different mechanisms. One is a residual connection. The next is this dropout, which I've
+
+821
+01:15:22,360 --> 01:15:28,120
+already explained, so I've glossed over a little bit. And finally, they use a layer norm as part
+
+822
+01:15:28,120 --> 01:15:32,440
+of the sub-layer connection. And I've put the formula for what this is down below. So they do a layer
+
+823
+01:15:32,440 --> 01:15:38,680
+norm on the original signal, which is what the residual connection is. Essentially, you only
+
+824
+01:15:39,560 --> 01:15:44,120
+pass through in the model to represent a residual element, because it's a lot cheaper to learn a
+
+825
+01:15:44,120 --> 01:15:51,400
+residual than it is to learn the entire signal, and add the original signal with that learned
+
+826
+01:15:51,400 --> 01:15:56,600
+residual. And this preserves more of the original signal through this idea of a skip connection,
+
+827
+01:15:56,600 --> 01:16:01,960
+so where you add x plus the thing you've learned. And it also alleviates some of the issues with
+
+828
+01:16:01,960 --> 01:16:07,480
+vanishing gradient, because we aren't computing as much of a number. So the gradient doesn't have
+
+829
+01:16:07,480 --> 01:16:13,640
+the problem of having too large of a number where it becomes poorly behaved. So in general,
+
+830
+01:16:13,640 --> 01:16:18,120
+that's the residual connection. You see that that's wrapped in the layer norm in the situation,
+
+831
+01:16:18,120 --> 01:16:22,200
+and what a layer norm is going to do is just scale down the values so that they're well behaved per
+
+832
+01:16:22,200 --> 01:16:27,080
+layer. So based on all of the numbers that are in that single layer, we're going to scale them so
+
+833
+01:16:27,080 --> 01:16:31,880
+that they're well behaved and we don't have vanishing or exploding gradients. As far as
+
+834
+01:16:31,880 --> 01:16:35,640
+implementations go, I've put the layer norm off to the side, because I think it's kind of interesting
+
+835
+01:16:35,640 --> 01:16:41,240
+that this isn't the same as, say, like a, if you're doing a batch norm where you have an
+
+836
+01:16:41,240 --> 01:16:46,600
+entire batch, it's not per batch, it's per layer in the situation. So we just essentially calculate
+
+837
+01:16:46,600 --> 01:16:52,120
+the mean and the standard deviation, and then normalize what that layer's activations look like
+
+838
+01:16:52,120 --> 01:16:57,160
+based on that. And then the actual sublayer connection I've put a photo of down and off to
+
+839
+01:16:57,160 --> 01:17:01,080
+the right, and this is the more important element. This is how we compose or add in all these
+
+840
+01:17:01,080 --> 01:17:06,200
+different types of regularization to the connections between these sublayers.
+
+841
+01:17:07,800 --> 01:17:12,520
+You see in the forward pass, we're just going to pass in the dropout on the sublayer,
+
+842
+01:17:13,640 --> 01:17:19,720
+on the layer normed version of the signal, and the sublayer itself is either that multi-head
+
+843
+01:17:19,720 --> 01:17:24,760
+attention or the point position-wise feedforward network. Now, you might notice that this is in
+
+844
+01:17:24,760 --> 01:17:30,120
+a separate order than what the actual equation is that I put earlier. The equation is derived
+
+845
+01:17:30,120 --> 01:17:34,440
+from the paper, and this is one area where the annotated transformers deviates from the source
+
+846
+01:17:34,440 --> 01:17:40,040
+text a little bit, and they find that it's relatively the same, but a little bit cheaper
+
+847
+01:17:40,040 --> 01:17:45,720
+when you're going through the process of applying or of learning this to just reorder the steps of
+
+848
+01:17:45,720 --> 01:17:50,440
+applying these regularizations in this fashion. When it comes time for your implementation,
+
+849
+01:17:50,440 --> 01:17:55,960
+you can toy around a little bit with this. I prefer doing the implementation of the paper
+
+850
+01:17:55,960 --> 01:18:01,480
+proposes because we have that layer norm on the signal plus the residual instead of just the residual component.
+
+851
+01:18:04,920 --> 01:18:09,880
+Now, we have all of the pieces that are needed to build the encoder and the decoder. Let's talk
+
+852
+01:18:09,880 --> 01:18:15,640
+about the encoder first. The encoder itself, or an encoder layer, is a composable block
+
+853
+01:18:15,640 --> 01:18:20,280
+for the task of encoding an input sequence representation with this self-attention that
+
+854
+01:18:20,280 --> 01:18:24,360
+we've talked about. It's going to be taking in whatever the arbitrary input. Maybe it's the
+
+855
+01:18:24,360 --> 01:18:29,720
+original signal. Maybe it's one of the hidden states as we get deeper and deeper in this network,
+
+856
+01:18:29,720 --> 01:18:33,880
+and carrying out the self-attention to layer in that context, in the feedforward network,
+
+857
+01:18:33,880 --> 01:18:40,040
+to exploit that context. The main idea of why we want to compose it in this repeatable block
+
+858
+01:18:40,040 --> 01:18:44,920
+with fixed input and output dimensions is it makes it very easy to construct our model.
+
+859
+01:18:44,920 --> 01:18:50,040
+We can essentially stack these to get arbitrary depth, depending on how far we want to stack it,
+
+860
+01:18:50,040 --> 01:18:56,360
+and it allows the encoder to have this repeated multi-head attention, which gives us more parameters
+
+861
+01:18:56,360 --> 01:19:02,040
+and the ability to model more complex positional interactions just by nature that we've gone a
+
+862
+01:19:02,040 --> 01:19:07,560
+lot deeper. We've had more time to extract a relationship and then say, okay, this is contributing
+
+863
+01:19:07,560 --> 01:19:12,040
+this much. The next time that we abstract a layer further, we can say, well, that was contributing
+
+864
+01:19:12,040 --> 01:19:16,840
+that much, and another element was contributing this much. Together, when those contribute that much,
+
+865
+01:19:16,840 --> 01:19:22,040
+this is what happens. We can build in more complex conditioning to the model just by going
+
+866
+01:19:22,040 --> 01:19:27,560
+deep. How we go about achieving this is implementing an encoder block with these
+
+867
+01:19:27,560 --> 01:19:31,720
+sub-layer connections. We have the multi-head self-attention and then the feedforward with
+
+868
+01:19:31,720 --> 01:19:38,840
+the sub-layer connections between each of them. As far as implementation goes, it's exactly what
+
+869
+01:19:38,840 --> 01:19:46,520
+I've described. The key is that we create our clones of the sub-layers so that we have multiple
+
+870
+01:19:46,520 --> 01:19:51,160
+of them, and then we're just going to stack as many as we need. In this situation,
+
+871
+01:19:53,400 --> 01:19:59,560
+we flow into the feedforward or the multi-head self-attention first using this sub-layer connection,
+
+872
+01:19:59,560 --> 01:20:03,880
+and then from the output of that sub-layer connection, we're going to flow into the feedforward,
+
+873
+01:20:03,880 --> 01:20:08,520
+where it's modeling the residual, and then the rest of the sub-layer connection is going to
+
+874
+01:20:08,520 --> 01:20:12,520
+pull through that rest of that signal, and then we can stack these arbitrarily deep.
+
+875
+01:20:12,520 --> 01:20:18,120
+The decoder, on the other hand, is going to be very similar to the encoder, but we need that
+
+876
+01:20:18,120 --> 01:20:23,160
+element of masking for the multi-head attention, so this causal masking that prevents you from
+
+877
+01:20:23,160 --> 01:20:28,680
+seeing the future, and we need an additional sub-layer that's going to be doing the exact
+
+878
+01:20:28,680 --> 01:20:33,560
+same operation, except it's doing cross-attention. Where we're getting the signal from is going
+
+879
+01:20:33,560 --> 01:20:40,040
+to come from the encoder for the keys and values rather than the decoded sequence thus far.
+
+880
+01:20:41,000 --> 01:20:45,000
+As far as motivation for why we want to do the masking, I think I've explained this a little
+
+881
+01:20:45,000 --> 01:20:48,600
+bit previously, but the main idea is it's preventing cheating, where the model is,
+
+882
+01:20:49,240 --> 01:20:53,480
+I guess, forward-looking in the output when it's trying to learn how to predict the next token.
+
+883
+01:20:53,480 --> 01:20:57,720
+So if you're going through the training task and it can see the future data, the model might fit
+
+884
+01:20:57,720 --> 01:21:03,000
+just to look at that next token. In fact, that's the best thing it could do to predict what the
+
+885
+01:21:03,000 --> 01:21:07,320
+token should be, and it won't learn this causal relationship between previous tokens
+
+886
+01:21:07,400 --> 01:21:12,440
+and what should flow next. So we shield it from that information so that it can purely attend to
+
+887
+01:21:12,440 --> 01:21:19,640
+past context. As far as implementations go, we're going to have a very similar structure using
+
+888
+01:21:19,640 --> 01:21:24,440
+those sub-layer blocks that we talked about earlier, except what I've highlighted down below
+
+889
+01:21:24,440 --> 01:21:31,560
+is with the self-attention that's masked, we go from x, x, x, so from one sequence
+
+890
+01:21:32,440 --> 01:21:35,960
+attending to itself with a mask that stops the future looking.
+
+891
+01:21:37,800 --> 01:21:41,240
+And then the next layer where we're doing this cross-attention, you'll notice that we have the
+
+892
+01:21:41,240 --> 01:21:47,720
+queries coming from one source, but our keys and values are coming from this memory, which is
+
+893
+01:21:47,720 --> 01:21:55,080
+the multi, it's coming from the attention to the encoder, so the encoded context that's gone
+
+894
+01:21:55,080 --> 01:22:01,080
+through and been developed. Finally, that'll pass through the feed-forward block to exploit
+
+895
+01:22:01,080 --> 01:22:05,080
+that context again, and because we have this composable structure, we can stack them one on
+
+896
+01:22:05,080 --> 01:22:11,240
+top of each other to exploit and leverage all of that context that we've interwind into this
+
+897
+01:22:11,240 --> 01:22:17,720
+polysemantic representation. So once we've established what the encoder blocks and decoder
+
+898
+01:22:17,720 --> 01:22:24,360
+blocks look like, before we can assemble the actual encoder-decoder structure itself,
+
+899
+01:22:24,360 --> 01:22:28,920
+we need to define the prediction head. As I described earlier, this is just the final
+
+900
+01:22:28,920 --> 01:22:32,440
+thing that's going to take us to the output probabilities, and it's very simple. We do a
+
+901
+01:22:32,440 --> 01:22:37,560
+linear layer to convert into logits, and then we're going to throw through a softmax to produce
+
+902
+01:22:37,560 --> 01:22:42,440
+the probabilities for what the next token should be, and this is going to map us back to the
+
+903
+01:22:43,400 --> 01:22:51,480
+vocabulary capora that the actual tokens are from. So in an image space, these would be the
+
+904
+01:22:51,480 --> 01:22:56,120
+patches of an image. Where we're talking about a text space, these would be the tokens
+
+905
+01:22:56,840 --> 01:23:02,600
+that the sequence holds. Implementation is very straightforward. If you want, you can pause the
+
+906
+01:23:02,600 --> 01:23:09,560
+presentation at this time and look at that. I'm just going to keep going to the actual assembly
+
+907
+01:23:09,560 --> 01:23:13,880
+of the encoder-decoder structure, and I think this is where it's important to talk about
+
+908
+01:23:13,880 --> 01:23:17,560
+what's going on and clear up a misconception. So I'll give you the picture here real quick.
+
+909
+01:23:18,760 --> 01:23:22,600
+We essentially stack a whole bunch of the encoder blocks on top of each other and a
+
+910
+01:23:22,600 --> 01:23:27,960
+whole bunch of the decoder blocks on top of each other. We then flow into that generator to produce
+
+911
+01:23:27,960 --> 01:23:34,120
+our most likely probabilities for what the next token should be, and then we know down the line
+
+912
+01:23:34,120 --> 01:23:38,440
+that's going to flow into that decoding process that's actually going to produce that token.
+
+913
+01:23:40,600 --> 01:23:45,160
+Implementation-wise, this is very simple. We're just going to use that clones. We're going to
+
+914
+01:23:45,160 --> 01:23:50,200
+exploit that clones helper function that we made to create copies of the encoder and decoder blocks.
+
+915
+01:23:50,200 --> 01:23:53,800
+We're going to stack them on top of each other, and then when it comes time to predict,
+
+916
+01:23:53,800 --> 01:23:58,680
+you see in the forward pass, we just go through the number of blocks. They call the layers in
+
+917
+01:23:58,680 --> 01:24:03,800
+their implementation here, but we're just going to do signal into the first encoder block, take
+
+918
+01:24:03,800 --> 01:24:09,880
+that output, put it into the next decoder block, and so on. Or encoder goes into encoder, decoders
+
+919
+01:24:09,880 --> 01:24:13,720
+flow into the decoders using that learn memory from the encoder as well.
+
+920
+01:24:15,800 --> 01:24:19,720
+And this brings us to that misconception about transformers, and this really, I believe,
+
+921
+01:24:19,800 --> 01:24:23,160
+originated because of that figure that I keep showing with the times n,
+
+922
+01:24:23,800 --> 01:24:27,000
+and it's an incorrect understanding of what it means to stack layers.
+
+923
+01:24:28,600 --> 01:24:34,440
+So the notion of a whole transformer block being stacked on top of each other is incorrect,
+
+924
+01:24:34,440 --> 01:24:40,360
+and the main reason is that where an encoder flowing into the decoder for the cross-attention,
+
+925
+01:24:41,960 --> 01:24:46,440
+one might think you just stack them on top of each other. You then don't get to exploit
+
+926
+01:24:46,440 --> 01:24:53,960
+in the earlier layers of the decoder, sorry, the rich context that's been accumulated throughout
+
+927
+01:24:53,960 --> 01:24:58,360
+the encoder. So rather than having an encoder flow into the decoder and then the output of
+
+928
+01:24:58,360 --> 01:25:03,960
+that decoder flow into the next block or something like that, when we talk about stacking transformers,
+
+929
+01:25:03,960 --> 01:25:09,240
+we're talking about either stacking the encoders themselves to build a more rich representation
+
+930
+01:25:09,240 --> 01:25:14,600
+with the relational context embedded in the signal, or we're talking about stacking the
+
+931
+01:25:14,600 --> 01:25:21,320
+decoders to do the same thing, maybe do some cross-attention to grab information from somewhere
+
+932
+01:25:21,320 --> 01:25:25,400
+else, but the main idea is we want to be doing that self-attention and building a comprehensive
+
+933
+01:25:25,400 --> 01:25:29,160
+representation through the signal, but with the purpose of producing a token in that case.
+
+934
+01:25:29,720 --> 01:25:33,560
+So when we talk about stacking transformers, it's stacking all of the encoders,
+
+935
+01:25:33,560 --> 01:25:39,880
+producing a single representation that has multiple bits of context about different
+
+936
+01:25:39,880 --> 01:25:44,120
+ways you could view the problem, so the decoder does have a rich representation it can query into.
+
+937
+01:25:45,320 --> 01:25:49,160
+And then after having each decoder stacked on top of each other with a flow,
+
+938
+01:25:49,160 --> 01:25:53,800
+but they all grab information during the cross-attention from the final output of the
+
+939
+01:25:53,800 --> 01:26:01,320
+final encoder block. And this is exactly what we do when we assemble the encoder-decoder. We build
+
+940
+01:26:01,320 --> 01:26:05,560
+our encoder by stacking the encoder blocks, the decoder by stacking the decoder blocks,
+
+941
+01:26:05,560 --> 01:26:09,800
+we throw a generator on top, and we put it all together to get this encoder-decoder,
+
+942
+01:26:09,800 --> 01:26:14,840
+where inputs will flow in through the encoder that we see inside of the encode process,
+
+943
+01:26:14,840 --> 01:26:17,800
+and in the forward process we can see we're calling the encode on the source,
+
+944
+01:26:18,600 --> 01:26:25,400
+and then that output will flow into the decoder process as the memory, along with the previously
+
+945
+01:26:25,400 --> 01:26:33,480
+decoded sequence. Putting that all together, we get this architecture that is highly paralyzable,
+
+946
+01:26:33,480 --> 01:26:37,080
+and then to move from one iteration to another, we just decode
+
+947
+01:26:37,640 --> 01:26:42,600
+auto-regressively by predicting the next token, and then appending that to the previously
+
+948
+01:26:42,600 --> 01:26:49,080
+decoded list, and continuing in that process. Here's a final implementation for actually
+
+949
+01:26:49,080 --> 01:26:54,200
+making this model. The most important part is at the very bottom here, where we make sure we go
+
+950
+01:26:54,200 --> 01:27:00,920
+through the process of independently initializing all of the parameters in the model, since we've
+
+951
+01:27:00,920 --> 01:27:05,400
+used this clone helper function so pervasively. We want to make sure that we don't accidentally
+
+952
+01:27:05,400 --> 01:27:10,840
+have shared parameters that are trying to learn too many tasks or converging to one modality of
+
+953
+01:27:10,840 --> 01:27:17,160
+prediction. With that, we've gone through the implementation of the transformer from the ground
+
+954
+01:27:17,160 --> 01:27:21,880
+up, kind of assembling out the architecture like a Lego house. I'm now going to talk briefly about
+
+955
+01:27:21,880 --> 01:27:28,360
+training transformers. The notion of a model, I think, is incomplete if we just talk about
+
+956
+01:27:28,360 --> 01:27:35,000
+architecture, like with people where nature and nurture both play a role in how we express and
+
+957
+01:27:35,080 --> 01:27:39,960
+evolve in our world. Models are a product of both their architecture, so the structure that they
+
+958
+01:27:39,960 --> 01:27:45,400
+have, and how they were trained. The training influences how the parameters in the model are
+
+959
+01:27:45,400 --> 01:27:51,320
+expressed or what they have learned. This comes to the notion of garbage in, garbage out. If you go
+
+960
+01:27:51,320 --> 01:27:55,560
+through a terrible training process, no matter how good your architecture is, your model is going
+
+961
+01:27:55,560 --> 01:27:59,960
+to underperform, because the model at the end of the day or the architecture is fitting to the training
+
+962
+01:27:59,960 --> 01:28:06,440
+data through this training process. If a transformer architecture, which we know has the ability to
+
+963
+01:28:06,440 --> 01:28:11,800
+attend bidirectionally through the self-attention to all elements in a sequence, if it is shown
+
+964
+01:28:11,800 --> 01:28:17,400
+examples that encourage bidirectional attention, it will learn that. Subsequent papers like BERT
+
+965
+01:28:17,400 --> 01:28:23,800
+use large-scale pre-training to learn and encourage that bidirectional expression of the
+
+966
+01:28:23,800 --> 01:28:29,880
+transformer parameters. But on the alternative side, if it's shown examples that only require
+
+967
+01:28:29,880 --> 01:28:34,840
+rightward-looking attention, so that causal attention where you are looking at the past only,
+
+968
+01:28:34,840 --> 01:28:38,840
+it may express more unidirectional behavior, and it won't generalize as well.
+
+969
+01:28:40,280 --> 01:28:45,320
+So this is just a quick synopsis of the fact that when we have a transformer architecture, we want
+
+970
+01:28:45,320 --> 01:28:50,360
+to make sure we go through a good training procedure. But what Vaswani and his colleagues do in the
+
+971
+01:28:50,360 --> 01:28:57,320
+paper is they train using mass attention. So they build out this attention mechanism that can
+
+972
+01:28:57,320 --> 01:29:02,680
+prevent forward-looking bias, where they give a set of pre-tokens, and they want to predict
+
+973
+01:29:02,680 --> 01:29:09,400
+an output target token based on only the previous inputs. And how they do this at a large scale is
+
+974
+01:29:09,400 --> 01:29:15,800
+they batch up all of the training jobs by just saying, this is what you can see in a previous
+
+975
+01:29:15,800 --> 01:29:20,040
+window, and this is the single token you're trying to predict. So that for a full sequence,
+
+976
+01:29:20,040 --> 01:29:23,960
+you don't need to run through iterating, generating the first one, then the second
+
+977
+01:29:23,960 --> 01:29:29,560
+token, then the third token, etc. You can just give in some finite window of the past,
+
+978
+01:29:29,560 --> 01:29:33,720
+predict what the next token would be, and you can essentially build a sliding window over all the
+
+979
+01:29:33,720 --> 01:29:40,680
+data and train on all windows and all targets at the same time. So we've talked about this a
+
+980
+01:29:40,680 --> 01:29:45,000
+little bit, how it's actually implemented is creating a subsequent mask or this causal mask.
+
+981
+01:29:45,960 --> 01:29:53,240
+This is done by just saying for a window, so let's say we are at token four, I can see tokens
+
+982
+01:29:53,240 --> 01:29:58,680
+three, two, one, and zero, but none of the future. So that's what the figure off to the side shows.
+
+983
+01:29:59,560 --> 01:30:04,520
+We can generate that mask, and because we've baked in the parameter of a mask to our attention
+
+984
+01:30:04,520 --> 01:30:10,200
+function, it's actually really easy to implement this and use it. So we pass in the subsequent mask
+
+985
+01:30:10,280 --> 01:30:15,000
+to our mass self-attention in the decoder block when we're training,
+
+986
+01:30:15,000 --> 01:30:20,840
+and we make sure that it can only see the past. Now, when we're handing this in, how the authors
+
+987
+01:30:21,560 --> 01:30:27,640
+apply this masking is they do it before the softmax, but because the softmax is going to be going
+
+988
+01:30:27,640 --> 01:30:34,280
+and normalizing to present to convert this to a probability, we need to set the number as negatively
+
+989
+01:30:34,280 --> 01:30:39,400
+as we can. So the authors do negative one to the power of negative nine, which is a very negative
+
+990
+01:30:39,400 --> 01:30:49,080
+number. So when it goes through the softmax for these keys and queries, the keys and queries,
+
+991
+01:30:49,080 --> 01:30:53,320
+when we're referring to the keys that the query shouldn't have the information from,
+
+992
+01:30:53,320 --> 01:30:58,200
+the values of them are going to be so negative that it becomes zero or it doesn't wait
+
+993
+01:30:58,760 --> 01:31:04,360
+into what that stage of the iteration looks like during this autoregressive generation.
+
+994
+01:31:04,360 --> 01:31:09,320
+So that's the main idea here. Set it very negatively. We can then pass that in to our
+
+995
+01:31:09,320 --> 01:31:13,880
+softmax, and it's going to convert these into zeros or non-impacking terms, things that don't
+
+996
+01:31:13,880 --> 01:31:18,280
+have weight, so we're not paying attention to them because we couldn't be paying attention. Those
+
+997
+01:31:18,280 --> 01:31:24,280
+tokens haven't been seen yet. With that said, I'm going to hand back over to Aveline. She's going
+
+998
+01:31:24,280 --> 01:31:29,080
+to tie up the presentation with a little bit of results and conversation on the impact along with
+
+999
+01:31:30,120 --> 01:31:32,440
+some early adoption of transformers for other domains.
+
+1000
+01:31:34,440 --> 01:31:42,280
+Yeah, so like James said, I will touch on the experimentations that the authors of the
+
+1001
+01:31:42,280 --> 01:31:49,800
+Attention to All You Need paper reported. They, similarly to the previous attention papers,
+
+1002
+01:31:49,800 --> 01:31:54,280
+their experimentations were based on text translation, so between English and German and
+
+1003
+01:31:54,280 --> 01:31:59,960
+English and French. For their experimentations, they reported two different metrics. One was a
+
+1004
+01:31:59,960 --> 01:32:05,160
+performance metric, and another one was the training cost required for training their models.
+
+1005
+01:32:06,120 --> 01:32:15,000
+What we see here is for the transformer models, the big model performs quite well on the blue score.
+
+1006
+01:32:16,760 --> 01:32:24,040
+It outperforms most of the other state-of-the-art models at the time. As for the training cost,
+
+1007
+01:32:24,040 --> 01:32:33,480
+what we notice here is that both the big and the base model have a lower training cost than the
+
+1008
+01:32:33,480 --> 01:32:39,880
+other state-of-the-art models. The big model had a training cost that was about 10 to the 19,
+
+1009
+01:32:39,880 --> 01:32:46,440
+whereas all the other ones were as small as 10 to the 20. This is a pretty
+
+1010
+01:32:47,960 --> 01:32:53,000
+revolutionary thing where we see an increase in performance, but we see a decrease in training
+
+1011
+01:32:53,000 --> 01:33:02,920
+cost. Now, this paper itself has been highly influential. Its citation count from this week
+
+1012
+01:33:02,920 --> 01:33:09,560
+at the end of March was 113,000 citations, and I'm sure that will change as time goes on,
+
+1013
+01:33:10,840 --> 01:33:17,000
+but the transformer architecture has been used as the basis for many state-of-the-art models.
+
+1014
+01:33:17,000 --> 01:33:25,160
+It is a fundamental backbone or building block for all LLMs that we know and use today, like GPT-4,
+
+1015
+01:33:25,160 --> 01:33:32,200
+Lama-2, Gemini. In that sense, it's been quite revolutionary for AI tools and technologies
+
+1016
+01:33:32,760 --> 01:33:40,360
+that have really emerged since this paper was published back in 2017.
+
+1017
+01:33:41,000 --> 01:33:50,840
+So, as for early adoption in other domains, in particular computer vision, we see the image
+
+1018
+01:33:50,840 --> 01:33:58,360
+transformer emerge in 2018. Now, they didn't use the transformer architecture directly,
+
+1019
+01:33:58,360 --> 01:34:04,760
+but they were inspired by this architecture on text and wanted to apply it on images. So,
+
+1020
+01:34:04,760 --> 01:34:11,720
+the way that they used this idea was they positionally encode image pixels and then used a sort of
+
+1021
+01:34:11,720 --> 01:34:20,040
+local self-attention mechanism for different pixels in a query block to other pixels surrounding
+
+1022
+01:34:20,040 --> 01:34:28,200
+that query block, making up a memory block. So, it considers pixels in a local neighborhood
+
+1023
+01:34:28,200 --> 01:34:35,320
+around the query position. Nowadays, this methodology or process isn't heavily used.
+
+1024
+01:34:35,320 --> 01:34:41,800
+What people have found is that global attention in images is more effective and it's just global
+
+1025
+01:34:41,800 --> 01:34:49,000
+attention is needed to acquire the results and the performance that we're looking for with these
+
+1026
+01:34:49,000 --> 01:34:54,760
+types of tools and subsequent models that use this global attention have been found to be much more
+
+1027
+01:34:55,320 --> 01:35:04,600
+powerful. An example of this is the vision transformer, which does use the encode, the
+
+1028
+01:35:04,600 --> 01:35:11,320
+transformer architecture directly. In particular, they use the encoder for image classification.
+
+1029
+01:35:11,320 --> 01:35:18,680
+This is the original paper from 2020, which called an images worth 16 by 16 words,
+
+1030
+01:35:18,680 --> 01:35:23,720
+transformers for image recognition at scale. Now, this is a whole field of study,
+
+1031
+01:35:23,720 --> 01:35:27,160
+but this was the original paper that I'm just going to briefly mention here.
+
+1032
+01:35:28,520 --> 01:35:36,200
+Like I said, they only use the vanilla transformer encoder, and what they do is they take an image,
+
+1033
+01:35:36,760 --> 01:35:43,640
+they slice this into different patches to produce a sort of sequence, then they embed
+
+1034
+01:35:44,520 --> 01:35:52,280
+with positional encodings these patches into embedded and encoded sequences,
+
+1035
+01:35:52,360 --> 01:36:00,200
+and then pass this into the transformer encoder, add on an MLP head for classification,
+
+1036
+01:36:00,200 --> 01:36:08,840
+and build an image classifier that way. This was found to be very powerful,
+
+1037
+01:36:08,840 --> 01:36:16,280
+and like I said, lots have been built on top of this in recent years.
+
+1038
+01:36:22,760 --> 01:36:27,640
+All right, so that concludes our presentation. I hope you enjoyed
+
+1039
+01:36:29,880 --> 01:36:34,600
+all of this information about self-attention and transformers that we have presented here.
+
+1040
+01:36:35,160 --> 01:36:39,720
+Feel free to leave any comments or questions if you'd like.
+
+1041
+01:36:39,720 --> 01:36:43,800
+Yeah, and the YouTube comments. We also have an additional sign just with a couple of discussion
+
+1042
+01:36:43,800 --> 01:36:49,240
+questions that I'm just going to put up here. We're not going to discuss this at length in
+
+1043
+01:36:49,240 --> 01:36:53,960
+our presentation or at all, really, but just feel free to pause the video at this point and think
+
+1044
+01:36:53,960 --> 01:36:58,920
+about your understanding or how you've come to learn more about the transformer through our
+
+1045
+01:36:58,920 --> 01:37:04,200
+presentation. Additionally, if you have further questions, feel free to leave them in the comment
+
+1046
+01:37:04,200 --> 01:37:09,480
+section of this video, and if we have some time, I'd love to kind of start a discourse up there.
+
