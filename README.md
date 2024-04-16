@@ -4,6 +4,8 @@
 AI Learning Course transcribe <br>
 [kor][dutch][en]
 
+워털루 대학에 감사를 하며, 해당 자료는 상업용이 아닌 교육용 자료로만 활용될 것 입니다.<br>
+We are Grateful to the University of Waterloo, and this material will only be used for educational purposes and not for commercial purposes.
 
 ### Intorduction to Foundation Models
 | 강의 번호 | 주제 | 날짜 | 영상 여부 | 
@@ -50,3 +52,6 @@ AI Learning Course transcribe <br>
 |----------------|-------|------|--------|
 | 21 | Tool Augmentation | | O | 
 | 22 | Retrieval Augmentation | | O |
+
+### Ref Link
+https://cs.uwaterloo.ca/~wenhuche/teaching/cs886/
