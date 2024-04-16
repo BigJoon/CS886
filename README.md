@@ -1,7 +1,7 @@
 # CS886
-## Waterloo Academic(워털루 학부 강의 한글자막)
+## Waterloo Academic(워털루 AI 강의 한글자막)
 
-AI Learning Course transcribe
+AI Learning Course transcribe <br>
 [kor][dutch][en]
 
 
