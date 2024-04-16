@@ -4,7 +4,7 @@
 AI Learning Course transcribe <br>
 [kor][dutch][en]
 
-워털루 대학에 감사를 하며, 해당 자료는 상업용이 아닌 교육용 자료로만 활용될 것 입니다.<br>
+워털루 대학에 감사를 표하며, 해당 자료는 상업용이 아닌 교육용 자료로만 활용 됩니다.<br>
 We are Grateful to the University of Waterloo, and this material will only be used for educational purposes and not for commercial purposes.
 
 ### Intorduction to Foundation Models
@@ -12,9 +12,10 @@ We are Grateful to the University of Waterloo, and this material will only be us
 |----------------|-------|------|--------|
 | 1 | Foundation Models and its Applications | Jan 10th | X |
 | 2 | Course Logistics | Jan 10th | X | 
-| 3 | RNN & CNN | Jan 17th | O |
+| 3 | RNN & CNN | Jan 17th | X |
 | 4 | NLP & CV | Jan 17th | X |
 <br>
+RNN과 CNN 파트는 CS231n 강의를 참조하는 것이 좋을 것 같습니다..
 
 ### Transformer Architecture
 | 강의 번호 | 주제 | 날짜 | 영상 여부 | 
@@ -31,7 +32,7 @@ We are Grateful to the University of Waterloo, and this material will only be us
 | 9 | Large Language Models | Feb 7th | O | 
 | 10 | Scaling Law | Feb 7th | O | 
 | 11 | Instruction Tuning & RLHF | | O | 
-| 12 | Efficient LLM Training | | O | 
+| 12 | Optimized LLM Training | | O | 
 | 13 | Efficient LLM Inference | | O | 
 | 14 | Compress and Sparsify LLM | | O | 
 | 15 | LLM Prompting | | O | 
