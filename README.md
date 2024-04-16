@@ -17,36 +17,36 @@ AI Learning Course transcribe
 ### Transformer Architecture
 | 강의 번호 | 주제 | 날짜 | 영상 여부 | 
 |----------------|-------|------|--------|
-| 5 | Self Attention & Transformer | | | 
-| 6 | Efficient Transformers | | | 
-| 7 | Parameter Efficient Tuning | | | 
-| 8 | Language Model Pretraining | | | 
+| 5 | Self Attention & Transformer | Jan 24th | O | 
+| 6 | Efficient Transformers | Jan 24th | O | 
+| 7 | Parameter Efficient Tuning | Jan 31st | O | 
+| 8 | Language Model Pretraining | Jan 31st | O | 
 <br> 
 
 ### Large Language Models
 | 강의 번호 | 주제 | 날짜 | 영상 여부 | 
 |----------------|-------|------|--------|
-| 9 | Large Language Models | | | 
-| 10 | Scaling Law | | | 
-| 11 | Instruction Tuning & RLHF | | | 
-| 12 | Efficient LLM Training | | | 
-| 13 | Efficient LLM Inference | | | 
-| 14 | Compress and Sparsify LLM | | | 
-| 15 | LLM Prompting | | | 
+| 9 | Large Language Models | Feb 7th | O | 
+| 10 | Scaling Law | Feb 7th | O | 
+| 11 | Instruction Tuning & RLHF | | O | 
+| 12 | Efficient LLM Training | | O | 
+| 13 | Efficient LLM Inference | | O | 
+| 14 | Compress and Sparsify LLM | | O | 
+| 15 | LLM Prompting | | O | 
 <br>
 
 ### (Large) Multimodal Models
 | 강의 번호 | 주제 | 날짜 | 영상 여부 | 
 |----------------|-------|------|--------|
-| 16 | Vision Transformers | | | 
-| 17 | Diffusion Models | | | 
-| 18 | Image Generation | | | 
-| 19 | Multimodal Model Pre-training | | | 
-| 20 | Large Multimodal Models | | |
+| 16 | Vision Transformers | | O | 
+| 17 | Diffusion Models | | O | 
+| 18 | Image Generation | | O | 
+| 19 | Multimodal Model Pre-training | | O | 
+| 20 | Large Multimodal Models | | O |
 <br>
 
 ### Augmenting Foundation Models
 | 강의 번호 | 주제 | 날짜 | 영상 여부 | 
 |----------------|-------|------|--------|
-| 21 | Tool Augmentation | | | 
-| 22 | Retrieval Augmentation | | |
+| 21 | Tool Augmentation | | O | 
+| 22 | Retrieval Augmentation | | O |
