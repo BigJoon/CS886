@@ -1,7 +1,9 @@
 # CS886
 ## Waterloo Academic(워털루 학부 강의 한글자막)
 
-AI Learning Course transcribe[kor][dutch][en]
+AI Learning Course transcribe
+[kor][dutch][en]
+
 
 ### Intorduction to Foundation Models
 | 강의 번호 | 주제 | 날짜 | 영상 여부 | 
