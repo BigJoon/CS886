@@ -25,4 +25,5 @@ AI Learning Course Kor transcribe
 | 18 | Image Generation | | | 
 | 19 | Multimodal Model Pre-training | | | 
 | 20 | Large Multimodal Models | | |
-||Augmenting Foundation Models |||
+|Augmenting Foundation Models ||||
+|----------------|-------|------|--------|
