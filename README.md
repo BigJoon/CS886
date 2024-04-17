@@ -4,8 +4,8 @@
 AI Learning Course transcribe <br>
 [kor][dutch][en]
 
-워털루 대학에 감사를 표하며, 해당 자료는 상업용이 아닌 교육용 자료로만 활용 됩니다.<br>
-We are Grateful to the University of Waterloo, and this material will only be used for educational purposes and not for commercial purposes.
+워털루 대학에 감사를 표하며, 해당 자료는 상업용이 아닌 개인적 공부 자료로만 활용 됩니다.<br>
+We would like to express our gratitude to the University of Waterloo, and this material is to be used only as personal study material and not for commercial use.
 <br>
 
 ### Intorduction to Foundation Models
